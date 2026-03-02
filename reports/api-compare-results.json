@@ -1,0 +1,5105 @@
+{
+  "summary": {
+    "total": 16,
+    "matched": 16,
+    "mismatched": 0,
+    "base_old": "http://local-wallet.usongrat.tw",
+    "base_new": "http://local-wallet2.usongrat.tw"
+  },
+  "results": [
+    {
+      "name": "auth-login",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": false,
+        "code": 400,
+        "message": "密碼有誤",
+        "data": {}
+      },
+      "new_normalized": {
+        "status": false,
+        "code": 400,
+        "message": "密碼有誤",
+        "data": {}
+      }
+    },
+    {
+      "name": "auth-cache",
+      "method": "GET",
+      "path": "/api/auth/cache",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": null,
+        "data": []
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": null,
+        "data": []
+      }
+    },
+    {
+      "name": "option-category",
+      "method": "GET",
+      "path": "/api/option/category",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": [
+          {
+            "id": 1,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "早餐",
+            "icon": null
+          },
+          {
+            "id": 2,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "午餐",
+            "icon": null
+          },
+          {
+            "id": 3,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "晚餐",
+            "icon": null
+          },
+          {
+            "id": 4,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "飲品",
+            "icon": null
+          },
+          {
+            "id": 5,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "點心",
+            "icon": null
+          },
+          {
+            "id": 6,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "交通",
+            "icon": null
+          },
+          {
+            "id": 7,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "購物",
+            "icon": null
+          },
+          {
+            "id": 8,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "日用品",
+            "icon": null
+          },
+          {
+            "id": 9,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "房租",
+            "icon": null
+          },
+          {
+            "id": 10,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "娛樂",
+            "icon": null
+          },
+          {
+            "id": 11,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "禮物",
+            "icon": null
+          },
+          {
+            "id": 12,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "母嬰用品",
+            "icon": null
+          },
+          {
+            "id": 13,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "醫療",
+            "icon": null
+          },
+          {
+            "id": 14,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "社交",
+            "icon": null
+          },
+          {
+            "id": 15,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "學習",
+            "icon": null
+          },
+          {
+            "id": 16,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "其他",
+            "icon": null
+          }
+        ]
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": [
+          {
+            "id": 1,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "早餐",
+            "icon": null
+          },
+          {
+            "id": 2,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "午餐",
+            "icon": null
+          },
+          {
+            "id": 3,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "晚餐",
+            "icon": null
+          },
+          {
+            "id": 4,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "飲品",
+            "icon": null
+          },
+          {
+            "id": 5,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "點心",
+            "icon": null
+          },
+          {
+            "id": 6,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "交通",
+            "icon": null
+          },
+          {
+            "id": 7,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "購物",
+            "icon": null
+          },
+          {
+            "id": 8,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "日用品",
+            "icon": null
+          },
+          {
+            "id": 9,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "房租",
+            "icon": null
+          },
+          {
+            "id": 10,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "娛樂",
+            "icon": null
+          },
+          {
+            "id": 11,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "禮物",
+            "icon": null
+          },
+          {
+            "id": 12,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "母嬰用品",
+            "icon": null
+          },
+          {
+            "id": 13,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "醫療",
+            "icon": null
+          },
+          {
+            "id": 14,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "社交",
+            "icon": null
+          },
+          {
+            "id": 15,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "學習",
+            "icon": null
+          },
+          {
+            "id": 16,
+            "parent_id": null,
+            "wallet_id": null,
+            "name": "其他",
+            "icon": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "option-rate",
+      "method": "GET",
+      "path": "/api/option/exchangeRate?unit=TWD",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "option": [
+            "TWD",
+            "AED",
+            "AFN",
+            "ALL",
+            "AMD",
+            "ANG",
+            "AOA",
+            "ARS",
+            "AUD",
+            "AWG",
+            "AZN",
+            "BAM",
+            "BBD",
+            "BDT",
+            "BGN",
+            "BHD",
+            "BIF",
+            "BMD",
+            "BND",
+            "BOB",
+            "BRL",
+            "BSD",
+            "BTN",
+            "BWP",
+            "BYN",
+            "BZD",
+            "CAD",
+            "CDF",
+            "CHF",
+            "CLF",
+            "CLP",
+            "CNH",
+            "CNY",
+            "COP",
+            "CRC",
+            "CUP",
+            "CVE",
+            "CZK",
+            "DJF",
+            "DKK",
+            "DOP",
+            "DZD",
+            "EGP",
+            "ERN",
+            "ETB",
+            "EUR",
+            "FJD",
+            "FKP",
+            "FOK",
+            "GBP",
+            "GEL",
+            "GGP",
+            "GHS",
+            "GIP",
+            "GMD",
+            "GNF",
+            "GTQ",
+            "GYD",
+            "HKD",
+            "HNL",
+            "HRK",
+            "HTG",
+            "HUF",
+            "IDR",
+            "ILS",
+            "IMP",
+            "INR",
+            "IQD",
+            "IRR",
+            "ISK",
+            "JEP",
+            "JMD",
+            "JOD",
+            "JPY",
+            "KES",
+            "KGS",
+            "KHR",
+            "KID",
+            "KMF",
+            "KRW",
+            "KWD",
+            "KYD",
+            "KZT",
+            "LAK",
+            "LBP",
+            "LKR",
+            "LRD",
+            "LSL",
+            "LYD",
+            "MAD",
+            "MDL",
+            "MGA",
+            "MKD",
+            "MMK",
+            "MNT",
+            "MOP",
+            "MRU",
+            "MUR",
+            "MVR",
+            "MWK",
+            "MXN",
+            "MYR",
+            "MZN",
+            "NAD",
+            "NGN",
+            "NIO",
+            "NOK",
+            "NPR",
+            "NZD",
+            "OMR",
+            "PAB",
+            "PEN",
+            "PGK",
+            "PHP",
+            "PKR",
+            "PLN",
+            "PYG",
+            "QAR",
+            "RON",
+            "RSD",
+            "RUB",
+            "RWF",
+            "SAR",
+            "SBD",
+            "SCR",
+            "SDG",
+            "SEK",
+            "SGD",
+            "SHP",
+            "SLE",
+            "SLL",
+            "SOS",
+            "SRD",
+            "SSP",
+            "STN",
+            "SYP",
+            "SZL",
+            "THB",
+            "TJS",
+            "TMT",
+            "TND",
+            "TOP",
+            "TRY",
+            "TTD",
+            "TVD",
+            "TZS",
+            "UAH",
+            "UGX",
+            "USD",
+            "UYU",
+            "UZS",
+            "VES",
+            "VND",
+            "VUV",
+            "WST",
+            "XAF",
+            "XCD",
+            "XCG",
+            "XDR",
+            "XOF",
+            "XPF",
+            "YER",
+            "ZAR",
+            "ZMW",
+            "ZWG",
+            "ZWL"
+          ],
+          "rates": {
+            "TWD": 1,
+            "AED": 0.117,
+            "AFN": 2,
+            "ALL": 2.6,
+            "AMD": 12.01,
+            "ANG": 0.057,
+            "AOA": 29.39,
+            "ARS": 46.28,
+            "AUD": 0.0451,
+            "AWG": 0.057,
+            "AZN": 0.0542,
+            "BAM": 0.0529,
+            "BBD": 0.0637,
+            "BDT": 3.89,
+            "BGN": 0.0529,
+            "BHD": 0.012,
+            "BIF": 94.49,
+            "BMD": 0.0319,
+            "BND": 0.0404,
+            "BOB": 0.221,
+            "BRL": 0.164,
+            "BSD": 0.0319,
+            "BTN": 2.91,
+            "BWP": 0.42,
+            "BYN": 0.0922,
+            "BZD": 0.0637,
+            "CAD": 0.0436,
+            "CDF": 72.26,
+            "CHF": 0.0245,
+            "CLF": 0.000699,
+            "CLP": 27.64,
+            "CNH": 0.219,
+            "CNY": 0.221,
+            "COP": 119.38,
+            "CRC": 15.08,
+            "CUP": 0.765,
+            "CVE": 2.98,
+            "CZK": 0.655,
+            "DJF": 5.66,
+            "DKK": 0.202,
+            "DOP": 1.92,
+            "DZD": 4.14,
+            "EGP": 1.53,
+            "ERN": 0.478,
+            "ETB": 4.98,
+            "EUR": 0.0271,
+            "FJD": 0.0699,
+            "FKP": 0.0237,
+            "FOK": 0.202,
+            "GBP": 0.0237,
+            "GEL": 0.0852,
+            "GGP": 0.0237,
+            "GHS": 0.34,
+            "GIP": 0.0237,
+            "GMD": 2.36,
+            "GNF": 278.32,
+            "GTQ": 0.245,
+            "GYD": 6.67,
+            "HKD": 0.249,
+            "HNL": 0.844,
+            "HRK": 0.204,
+            "HTG": 4.18,
+            "HUF": 10.16,
+            "IDR": 535.15,
+            "ILS": 0.0999,
+            "IMP": 0.0237,
+            "INR": 2.91,
+            "IQD": 41.77,
+            "IRR": 41340.58,
+            "ISK": 3.87,
+            "JEP": 0.0237,
+            "JMD": 4.97,
+            "JOD": 0.0226,
+            "JPY": 4.99,
+            "KES": 4.11,
+            "KGS": 2.79,
+            "KHR": 128.04,
+            "KID": 0.0448,
+            "KMF": 13.32,
+            "KRW": 45.9,
+            "KWD": 0.00973,
+            "KYD": 0.0266,
+            "KZT": 15.95,
+            "LAK": 687.3,
+            "LBP": 2852.3,
+            "LKR": 9.85,
+            "LRD": 5.85,
+            "LSL": 0.508,
+            "LYD": 0.201,
+            "MAD": 0.292,
+            "MDL": 0.545,
+            "MGA": 133.57,
+            "MKD": 1.67,
+            "MMK": 67,
+            "MNT": 112.81,
+            "MOP": 0.257,
+            "MRU": 1.28,
+            "MUR": 1.48,
+            "MVR": 0.493,
+            "MWK": 55.36,
+            "MXN": 0.549,
+            "MYR": 0.124,
+            "MZN": 2.04,
+            "NAD": 0.508,
+            "NGN": 43.3,
+            "NIO": 1.17,
+            "NOK": 0.304,
+            "NPR": 4.65,
+            "NZD": 0.0535,
+            "OMR": 0.0123,
+            "PAB": 0.0319,
+            "PEN": 0.107,
+            "PGK": 0.138,
+            "PHP": 1.84,
+            "PKR": 8.91,
+            "PLN": 0.114,
+            "PYG": 205.99,
+            "QAR": 0.116,
+            "RON": 0.138,
+            "RSD": 3.17,
+            "RUB": 2.46,
+            "RWF": 46.39,
+            "SAR": 0.12,
+            "SBD": 0.256,
+            "SCR": 0.443,
+            "SDG": 14.62,
+            "SEK": 0.289,
+            "SGD": 0.0403,
+            "SHP": 0.0237,
+            "SLE": 0.78,
+            "SLL": 779.9,
+            "SOS": 18.19,
+            "SRD": 1.2,
+            "SSP": 145.88,
+            "STN": 0.663,
+            "SYP": 3.58,
+            "SZL": 0.508,
+            "THB": 0.99,
+            "TJS": 0.301,
+            "TMT": 0.112,
+            "TND": 0.0913,
+            "TOP": 0.0764,
+            "TRY": 1.4,
+            "TTD": 0.216,
+            "TVD": 0.0448,
+            "TZS": 81.73,
+            "UAH": 1.38,
+            "UGX": 114.55,
+            "USD": 0.0319,
+            "UYU": 1.22,
+            "UZS": 389.19,
+            "VES": 13.38,
+            "VND": 828.78,
+            "VUV": 3.79,
+            "WST": 0.086,
+            "XAF": 17.75,
+            "XCD": 0.086,
+            "XCG": 0.057,
+            "XDR": 0.0232,
+            "XOF": 17.75,
+            "XPF": 3.23,
+            "YER": 7.6,
+            "ZAR": 0.508,
+            "ZMW": 0.6,
+            "ZWG": 0.821,
+            "ZWL": 0.821
+          }
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "option": [
+            "TWD",
+            "AED",
+            "AFN",
+            "ALL",
+            "AMD",
+            "ANG",
+            "AOA",
+            "ARS",
+            "AUD",
+            "AWG",
+            "AZN",
+            "BAM",
+            "BBD",
+            "BDT",
+            "BGN",
+            "BHD",
+            "BIF",
+            "BMD",
+            "BND",
+            "BOB",
+            "BRL",
+            "BSD",
+            "BTN",
+            "BWP",
+            "BYN",
+            "BZD",
+            "CAD",
+            "CDF",
+            "CHF",
+            "CLF",
+            "CLP",
+            "CNH",
+            "CNY",
+            "COP",
+            "CRC",
+            "CUP",
+            "CVE",
+            "CZK",
+            "DJF",
+            "DKK",
+            "DOP",
+            "DZD",
+            "EGP",
+            "ERN",
+            "ETB",
+            "EUR",
+            "FJD",
+            "FKP",
+            "FOK",
+            "GBP",
+            "GEL",
+            "GGP",
+            "GHS",
+            "GIP",
+            "GMD",
+            "GNF",
+            "GTQ",
+            "GYD",
+            "HKD",
+            "HNL",
+            "HRK",
+            "HTG",
+            "HUF",
+            "IDR",
+            "ILS",
+            "IMP",
+            "INR",
+            "IQD",
+            "IRR",
+            "ISK",
+            "JEP",
+            "JMD",
+            "JOD",
+            "JPY",
+            "KES",
+            "KGS",
+            "KHR",
+            "KID",
+            "KMF",
+            "KRW",
+            "KWD",
+            "KYD",
+            "KZT",
+            "LAK",
+            "LBP",
+            "LKR",
+            "LRD",
+            "LSL",
+            "LYD",
+            "MAD",
+            "MDL",
+            "MGA",
+            "MKD",
+            "MMK",
+            "MNT",
+            "MOP",
+            "MRU",
+            "MUR",
+            "MVR",
+            "MWK",
+            "MXN",
+            "MYR",
+            "MZN",
+            "NAD",
+            "NGN",
+            "NIO",
+            "NOK",
+            "NPR",
+            "NZD",
+            "OMR",
+            "PAB",
+            "PEN",
+            "PGK",
+            "PHP",
+            "PKR",
+            "PLN",
+            "PYG",
+            "QAR",
+            "RON",
+            "RSD",
+            "RUB",
+            "RWF",
+            "SAR",
+            "SBD",
+            "SCR",
+            "SDG",
+            "SEK",
+            "SGD",
+            "SHP",
+            "SLE",
+            "SLL",
+            "SOS",
+            "SRD",
+            "SSP",
+            "STN",
+            "SYP",
+            "SZL",
+            "THB",
+            "TJS",
+            "TMT",
+            "TND",
+            "TOP",
+            "TRY",
+            "TTD",
+            "TVD",
+            "TZS",
+            "UAH",
+            "UGX",
+            "USD",
+            "UYU",
+            "UZS",
+            "VES",
+            "VND",
+            "VUV",
+            "WST",
+            "XAF",
+            "XCD",
+            "XCG",
+            "XDR",
+            "XOF",
+            "XPF",
+            "YER",
+            "ZAR",
+            "ZMW",
+            "ZWG",
+            "ZWL"
+          ],
+          "rates": {
+            "TWD": 1,
+            "AED": 0.117,
+            "AFN": 2,
+            "ALL": 2.6,
+            "AMD": 12.01,
+            "ANG": 0.057,
+            "AOA": 29.39,
+            "ARS": 46.28,
+            "AUD": 0.0451,
+            "AWG": 0.057,
+            "AZN": 0.0542,
+            "BAM": 0.0529,
+            "BBD": 0.0637,
+            "BDT": 3.89,
+            "BGN": 0.0529,
+            "BHD": 0.012,
+            "BIF": 94.49,
+            "BMD": 0.0319,
+            "BND": 0.0404,
+            "BOB": 0.221,
+            "BRL": 0.164,
+            "BSD": 0.0319,
+            "BTN": 2.91,
+            "BWP": 0.42,
+            "BYN": 0.0922,
+            "BZD": 0.0637,
+            "CAD": 0.0436,
+            "CDF": 72.26,
+            "CHF": 0.0245,
+            "CLF": 0.000699,
+            "CLP": 27.64,
+            "CNH": 0.219,
+            "CNY": 0.221,
+            "COP": 119.38,
+            "CRC": 15.08,
+            "CUP": 0.765,
+            "CVE": 2.98,
+            "CZK": 0.655,
+            "DJF": 5.66,
+            "DKK": 0.202,
+            "DOP": 1.92,
+            "DZD": 4.14,
+            "EGP": 1.53,
+            "ERN": 0.478,
+            "ETB": 4.98,
+            "EUR": 0.0271,
+            "FJD": 0.0699,
+            "FKP": 0.0237,
+            "FOK": 0.202,
+            "GBP": 0.0237,
+            "GEL": 0.0852,
+            "GGP": 0.0237,
+            "GHS": 0.34,
+            "GIP": 0.0237,
+            "GMD": 2.36,
+            "GNF": 278.32,
+            "GTQ": 0.245,
+            "GYD": 6.67,
+            "HKD": 0.249,
+            "HNL": 0.844,
+            "HRK": 0.204,
+            "HTG": 4.18,
+            "HUF": 10.16,
+            "IDR": 535.15,
+            "ILS": 0.0999,
+            "IMP": 0.0237,
+            "INR": 2.91,
+            "IQD": 41.77,
+            "IRR": 41340.58,
+            "ISK": 3.87,
+            "JEP": 0.0237,
+            "JMD": 4.97,
+            "JOD": 0.0226,
+            "JPY": 4.99,
+            "KES": 4.11,
+            "KGS": 2.79,
+            "KHR": 128.04,
+            "KID": 0.0448,
+            "KMF": 13.32,
+            "KRW": 45.9,
+            "KWD": 0.00973,
+            "KYD": 0.0266,
+            "KZT": 15.95,
+            "LAK": 687.3,
+            "LBP": 2852.3,
+            "LKR": 9.85,
+            "LRD": 5.85,
+            "LSL": 0.508,
+            "LYD": 0.201,
+            "MAD": 0.292,
+            "MDL": 0.545,
+            "MGA": 133.57,
+            "MKD": 1.67,
+            "MMK": 67,
+            "MNT": 112.81,
+            "MOP": 0.257,
+            "MRU": 1.28,
+            "MUR": 1.48,
+            "MVR": 0.493,
+            "MWK": 55.36,
+            "MXN": 0.549,
+            "MYR": 0.124,
+            "MZN": 2.04,
+            "NAD": 0.508,
+            "NGN": 43.3,
+            "NIO": 1.17,
+            "NOK": 0.304,
+            "NPR": 4.65,
+            "NZD": 0.0535,
+            "OMR": 0.0123,
+            "PAB": 0.0319,
+            "PEN": 0.107,
+            "PGK": 0.138,
+            "PHP": 1.84,
+            "PKR": 8.91,
+            "PLN": 0.114,
+            "PYG": 205.99,
+            "QAR": 0.116,
+            "RON": 0.138,
+            "RSD": 3.17,
+            "RUB": 2.46,
+            "RWF": 46.39,
+            "SAR": 0.12,
+            "SBD": 0.256,
+            "SCR": 0.443,
+            "SDG": 14.62,
+            "SEK": 0.289,
+            "SGD": 0.0403,
+            "SHP": 0.0237,
+            "SLE": 0.78,
+            "SLL": 779.9,
+            "SOS": 18.19,
+            "SRD": 1.2,
+            "SSP": 145.88,
+            "STN": 0.663,
+            "SYP": 3.58,
+            "SZL": 0.508,
+            "THB": 0.99,
+            "TJS": 0.301,
+            "TMT": 0.112,
+            "TND": 0.0913,
+            "TOP": 0.0764,
+            "TRY": 1.4,
+            "TTD": 0.216,
+            "TVD": 0.0448,
+            "TZS": 81.73,
+            "UAH": 1.38,
+            "UGX": 114.55,
+            "USD": 0.0319,
+            "UYU": 1.22,
+            "UZS": 389.19,
+            "VES": 13.38,
+            "VND": 828.78,
+            "VUV": 3.79,
+            "WST": 0.086,
+            "XAF": 17.75,
+            "XCD": 0.086,
+            "XCG": 0.057,
+            "XDR": 0.0232,
+            "XOF": 17.75,
+            "XPF": 3.23,
+            "YER": 7.6,
+            "ZAR": 0.508,
+            "ZMW": 0.6,
+            "ZWG": 0.821,
+            "ZWL": 0.821
+          }
+        }
+      }
+    },
+    {
+      "name": "wallet-users",
+      "method": "POST",
+      "path": "/api/wallet/user",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "users": [
+              {
+                "id": 544,
+                "name": "Juni",
+                "user_id": 58,
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "name": "Roy",
+                "user_id": 1,
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ]
+          }
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "users": [
+              {
+                "id": 544,
+                "name": "Juni",
+                "user_id": 58,
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "name": "Roy",
+                "user_id": 1,
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "wallet-users-get",
+      "method": "GET",
+      "path": "/api/wallet/user?code=oyH7ZYGt",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "users": [
+              {
+                "id": 544,
+                "name": "Juni",
+                "user_id": 58,
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "name": "Roy",
+                "user_id": 1,
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ]
+          }
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "users": [
+              {
+                "id": 544,
+                "name": "Juni",
+                "user_id": 58,
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "name": "Roy",
+                "user_id": 1,
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "gemini-models",
+      "method": "GET",
+      "path": "/api/gemini/models",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "success": true,
+        "models": [
+          {
+            "name": "models/gemini-2.5-flash",
+            "version": "001",
+            "displayName": "Gemini 2.5 Flash",
+            "description": "Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-pro",
+            "version": "2.5",
+            "displayName": "Gemini 2.5 Pro",
+            "description": "Stable release (June 17th, 2025) of Gemini 2.5 Pro",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.0-flash",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash",
+            "description": "Gemini 2.0 Flash",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-001",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash 001",
+            "description": "Stable version of Gemini 2.0 Flash, our fast and versatile multimodal model for scaling across diverse tasks, released in January of 2025.",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-exp-image-generation",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash (Image Generation) Experimental",
+            "description": "Gemini 2.0 Flash (Image Generation) Experimental",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-lite-001",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash-Lite 001",
+            "description": "Stable version of Gemini 2.0 Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-lite",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash-Lite",
+            "description": "Gemini 2.0 Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.5-flash-preview-tts",
+            "version": "gemini-2.5-flash-exp-tts-2025-05-19",
+            "displayName": "Gemini 2.5 Flash Preview TTS",
+            "description": "Gemini 2.5 Flash Preview TTS",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 16384,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "generateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.5-pro-preview-tts",
+            "version": "gemini-2.5-pro-preview-tts-2025-05-19",
+            "displayName": "Gemini 2.5 Pro Preview TTS",
+            "description": "Gemini 2.5 Pro Preview TTS",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 16384,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "generateContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemma-3-1b-it",
+            "version": "001",
+            "displayName": "Gemma 3 1B",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3-4b-it",
+            "version": "001",
+            "displayName": "Gemma 3 4B",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3-12b-it",
+            "version": "001",
+            "displayName": "Gemma 3 12B",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3-27b-it",
+            "version": "001",
+            "displayName": "Gemma 3 27B",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3n-e4b-it",
+            "version": "001",
+            "displayName": "Gemma 3n E4B",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 2048,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3n-e2b-it",
+            "version": "001",
+            "displayName": "Gemma 3n E2B",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 2048,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemini-flash-latest",
+            "version": "Gemini Flash Latest",
+            "displayName": "Gemini Flash Latest",
+            "description": "Latest release of Gemini Flash",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-flash-lite-latest",
+            "version": "Gemini Flash-Lite Latest",
+            "displayName": "Gemini Flash-Lite Latest",
+            "description": "Latest release of Gemini Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-pro-latest",
+            "version": "Gemini Pro Latest",
+            "displayName": "Gemini Pro Latest",
+            "description": "Latest release of Gemini Pro",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-lite",
+            "version": "001",
+            "displayName": "Gemini 2.5 Flash-Lite",
+            "description": "Stable version of Gemini 2.5 Flash-Lite, released in July of 2025",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-image",
+            "version": "2.0",
+            "displayName": "Nano Banana",
+            "description": "Gemini 2.5 Flash Preview Image",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 32768,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1
+          },
+          {
+            "name": "models/gemini-2.5-flash-lite-preview-09-2025",
+            "version": "2.5-preview-09-25",
+            "displayName": "Gemini 2.5 Flash-Lite Preview Sep 2025",
+            "description": "Preview release (Septempber 25th, 2025) of Gemini 2.5 Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3-pro-preview",
+            "version": "3-pro-preview-11-2025",
+            "displayName": "Gemini 3 Pro Preview",
+            "description": "Gemini 3 Pro Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3-flash-preview",
+            "version": "3-flash-preview-12-2025",
+            "displayName": "Gemini 3 Flash Preview",
+            "description": "Gemini 3 Flash Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3.1-pro-preview",
+            "version": "3.1-pro-preview-01-2026",
+            "displayName": "Gemini 3.1 Pro Preview",
+            "description": "Gemini 3.1 Pro Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3.1-pro-preview-customtools",
+            "version": "3.1-pro-preview-01-2026",
+            "displayName": "Gemini 3.1 Pro Preview Custom Tools",
+            "description": "Gemini 3.1 Pro Preview optimized for custom tool usage",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3-pro-image-preview",
+            "version": "3.0",
+            "displayName": "Nano Banana Pro",
+            "description": "Gemini 3 Pro Image Preview",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 32768,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1,
+            "thinking": true
+          },
+          {
+            "name": "models/nano-banana-pro-preview",
+            "version": "3.0",
+            "displayName": "Nano Banana Pro",
+            "description": "Gemini 3 Pro Image Preview",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 32768,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3.1-flash-image-preview",
+            "version": "3.0",
+            "displayName": "Nano Banana 2",
+            "description": "Gemini 3.1 Flash Image Preview.",
+            "inputTokenLimit": 65536,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-robotics-er-1.5-preview",
+            "version": "1.5-preview",
+            "displayName": "Gemini Robotics-ER 1.5 Preview",
+            "description": "Gemini Robotics-ER 1.5 Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-computer-use-preview-10-2025",
+            "version": "Gemini 2.5 Computer Use Preview 10-2025",
+            "displayName": "Gemini 2.5 Computer Use Preview 10-2025",
+            "description": "Gemini 2.5 Computer Use Preview 10-2025",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/deep-research-pro-preview-12-2025",
+            "version": "deepthink-exp-05-20",
+            "displayName": "Deep Research Pro Preview (Dec-12-2025)",
+            "description": "Preview release (December 12th, 2025) of Deep Research Pro",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-embedding-001",
+            "version": "001",
+            "displayName": "Gemini Embedding 001",
+            "description": "Obtain a distributed representation of a text.",
+            "inputTokenLimit": 2048,
+            "outputTokenLimit": 1,
+            "supportedGenerationMethods": [
+              "embedContent",
+              "countTextTokens",
+              "countTokens",
+              "asyncBatchEmbedContent"
+            ]
+          },
+          {
+            "name": "models/aqa",
+            "version": "001",
+            "displayName": "Model that performs Attributed Question Answering.",
+            "description": "Model trained to return answers to questions that are grounded in provided sources, along with estimating answerable probability.",
+            "inputTokenLimit": 7168,
+            "outputTokenLimit": 1024,
+            "supportedGenerationMethods": [
+              "generateAnswer"
+            ],
+            "temperature": 0.2,
+            "topP": 1,
+            "topK": 40
+          },
+          {
+            "name": "models/imagen-4.0-generate-001",
+            "version": "001",
+            "displayName": "Imagen 4",
+            "description": "Vertex served Imagen 4.0 model",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predict"
+            ]
+          },
+          {
+            "name": "models/imagen-4.0-ultra-generate-001",
+            "version": "001",
+            "displayName": "Imagen 4 Ultra",
+            "description": "Vertex served Imagen 4.0 ultra model",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predict"
+            ]
+          },
+          {
+            "name": "models/imagen-4.0-fast-generate-001",
+            "version": "001",
+            "displayName": "Imagen 4 Fast",
+            "description": "Vertex served Imagen 4.0 Fast model",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predict"
+            ]
+          },
+          {
+            "name": "models/veo-2.0-generate-001",
+            "version": "2.0",
+            "displayName": "Veo 2",
+            "description": "Vertex served Veo 2 model. Access to this model requires billing to be enabled on the associated Google Cloud Platform account. Please visit https://console.cloud.google.com/billing to enable it.",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.0-generate-001",
+            "version": "3.0",
+            "displayName": "Veo 3",
+            "description": "Veo 3",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.0-fast-generate-001",
+            "version": "3.0",
+            "displayName": "Veo 3 fast",
+            "description": "Veo 3 fast",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.1-generate-preview",
+            "version": "3.1",
+            "displayName": "Veo 3.1",
+            "description": "Veo 3.1",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.1-fast-generate-preview",
+            "version": "3.1",
+            "displayName": "Veo 3.1 fast",
+            "description": "Veo 3.1 fast",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/gemini-2.5-flash-native-audio-latest",
+            "version": "Gemini 2.5 Flash Native Audio Latest",
+            "displayName": "Gemini 2.5 Flash Native Audio Latest",
+            "description": "Latest release of Gemini 2.5 Flash Native Audio",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-native-audio-preview-09-2025",
+            "version": "gemini-2.5-flash-preview-native-audio-dialog-2025-05-19",
+            "displayName": "Gemini 2.5 Flash Native Audio Preview 09-2025",
+            "description": "Gemini 2.5 Flash Native Audio Preview 09-2025",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-native-audio-preview-12-2025",
+            "version": "12-2025",
+            "displayName": "Gemini 2.5 Flash Native Audio Preview 12-2025",
+            "description": "Gemini 2.5 Flash Native Audio Preview 12-2025",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          }
+        ]
+      },
+      "new_normalized": {
+        "success": true,
+        "models": [
+          {
+            "name": "models/gemini-2.5-flash",
+            "version": "001",
+            "displayName": "Gemini 2.5 Flash",
+            "description": "Stable version of Gemini 2.5 Flash, our mid-size multimodal model that supports up to 1 million tokens, released in June of 2025.",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-pro",
+            "version": "2.5",
+            "displayName": "Gemini 2.5 Pro",
+            "description": "Stable release (June 17th, 2025) of Gemini 2.5 Pro",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.0-flash",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash",
+            "description": "Gemini 2.0 Flash",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-001",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash 001",
+            "description": "Stable version of Gemini 2.0 Flash, our fast and versatile multimodal model for scaling across diverse tasks, released in January of 2025.",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-exp-image-generation",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash (Image Generation) Experimental",
+            "description": "Gemini 2.0 Flash (Image Generation) Experimental",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-lite-001",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash-Lite 001",
+            "description": "Stable version of Gemini 2.0 Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.0-flash-lite",
+            "version": "2.0",
+            "displayName": "Gemini 2.0 Flash-Lite",
+            "description": "Gemini 2.0 Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 40,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.5-flash-preview-tts",
+            "version": "gemini-2.5-flash-exp-tts-2025-05-19",
+            "displayName": "Gemini 2.5 Flash Preview TTS",
+            "description": "Gemini 2.5 Flash Preview TTS",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 16384,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "generateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemini-2.5-pro-preview-tts",
+            "version": "gemini-2.5-pro-preview-tts-2025-05-19",
+            "displayName": "Gemini 2.5 Pro Preview TTS",
+            "description": "Gemini 2.5 Pro Preview TTS",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 16384,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "generateContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2
+          },
+          {
+            "name": "models/gemma-3-1b-it",
+            "version": "001",
+            "displayName": "Gemma 3 1B",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3-4b-it",
+            "version": "001",
+            "displayName": "Gemma 3 4B",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3-12b-it",
+            "version": "001",
+            "displayName": "Gemma 3 12B",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3-27b-it",
+            "version": "001",
+            "displayName": "Gemma 3 27B",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3n-e4b-it",
+            "version": "001",
+            "displayName": "Gemma 3n E4B",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 2048,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemma-3n-e2b-it",
+            "version": "001",
+            "displayName": "Gemma 3n E2B",
+            "inputTokenLimit": 8192,
+            "outputTokenLimit": 2048,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64
+          },
+          {
+            "name": "models/gemini-flash-latest",
+            "version": "Gemini Flash Latest",
+            "displayName": "Gemini Flash Latest",
+            "description": "Latest release of Gemini Flash",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-flash-lite-latest",
+            "version": "Gemini Flash-Lite Latest",
+            "displayName": "Gemini Flash-Lite Latest",
+            "description": "Latest release of Gemini Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-pro-latest",
+            "version": "Gemini Pro Latest",
+            "displayName": "Gemini Pro Latest",
+            "description": "Latest release of Gemini Pro",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-lite",
+            "version": "001",
+            "displayName": "Gemini 2.5 Flash-Lite",
+            "description": "Stable version of Gemini 2.5 Flash-Lite, released in July of 2025",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-image",
+            "version": "2.0",
+            "displayName": "Nano Banana",
+            "description": "Gemini 2.5 Flash Preview Image",
+            "inputTokenLimit": 32768,
+            "outputTokenLimit": 32768,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1
+          },
+          {
+            "name": "models/gemini-2.5-flash-lite-preview-09-2025",
+            "version": "2.5-preview-09-25",
+            "displayName": "Gemini 2.5 Flash-Lite Preview Sep 2025",
+            "description": "Preview release (Septempber 25th, 2025) of Gemini 2.5 Flash-Lite",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3-pro-preview",
+            "version": "3-pro-preview-11-2025",
+            "displayName": "Gemini 3 Pro Preview",
+            "description": "Gemini 3 Pro Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3-flash-preview",
+            "version": "3-flash-preview-12-2025",
+            "displayName": "Gemini 3 Flash Preview",
+            "description": "Gemini 3 Flash Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3.1-pro-preview",
+            "version": "3.1-pro-preview-01-2026",
+            "displayName": "Gemini 3.1 Pro Preview",
+            "description": "Gemini 3.1 Pro Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3.1-pro-preview-customtools",
+            "version": "3.1-pro-preview-01-2026",
+            "displayName": "Gemini 3.1 Pro Preview Custom Tools",
+            "description": "Gemini 3.1 Pro Preview optimized for custom tool usage",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "createCachedContent",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3-pro-image-preview",
+            "version": "3.0",
+            "displayName": "Nano Banana Pro",
+            "description": "Gemini 3 Pro Image Preview",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 32768,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1,
+            "thinking": true
+          },
+          {
+            "name": "models/nano-banana-pro-preview",
+            "version": "3.0",
+            "displayName": "Nano Banana Pro",
+            "description": "Gemini 3 Pro Image Preview",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 32768,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-3.1-flash-image-preview",
+            "version": "3.0",
+            "displayName": "Nano Banana 2",
+            "description": "Gemini 3.1 Flash Image Preview.",
+            "inputTokenLimit": 65536,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens",
+              "batchGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 1,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-robotics-er-1.5-preview",
+            "version": "1.5-preview",
+            "displayName": "Gemini Robotics-ER 1.5 Preview",
+            "description": "Gemini Robotics-ER 1.5 Preview",
+            "inputTokenLimit": 1048576,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-computer-use-preview-10-2025",
+            "version": "Gemini 2.5 Computer Use Preview 10-2025",
+            "displayName": "Gemini 2.5 Computer Use Preview 10-2025",
+            "description": "Gemini 2.5 Computer Use Preview 10-2025",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/deep-research-pro-preview-12-2025",
+            "version": "deepthink-exp-05-20",
+            "displayName": "Deep Research Pro Preview (Dec-12-2025)",
+            "description": "Preview release (December 12th, 2025) of Deep Research Pro",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 65536,
+            "supportedGenerationMethods": [
+              "generateContent",
+              "countTokens"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-embedding-001",
+            "version": "001",
+            "displayName": "Gemini Embedding 001",
+            "description": "Obtain a distributed representation of a text.",
+            "inputTokenLimit": 2048,
+            "outputTokenLimit": 1,
+            "supportedGenerationMethods": [
+              "embedContent",
+              "countTextTokens",
+              "countTokens",
+              "asyncBatchEmbedContent"
+            ]
+          },
+          {
+            "name": "models/aqa",
+            "version": "001",
+            "displayName": "Model that performs Attributed Question Answering.",
+            "description": "Model trained to return answers to questions that are grounded in provided sources, along with estimating answerable probability.",
+            "inputTokenLimit": 7168,
+            "outputTokenLimit": 1024,
+            "supportedGenerationMethods": [
+              "generateAnswer"
+            ],
+            "temperature": 0.2,
+            "topP": 1,
+            "topK": 40
+          },
+          {
+            "name": "models/imagen-4.0-generate-001",
+            "version": "001",
+            "displayName": "Imagen 4",
+            "description": "Vertex served Imagen 4.0 model",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predict"
+            ]
+          },
+          {
+            "name": "models/imagen-4.0-ultra-generate-001",
+            "version": "001",
+            "displayName": "Imagen 4 Ultra",
+            "description": "Vertex served Imagen 4.0 ultra model",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predict"
+            ]
+          },
+          {
+            "name": "models/imagen-4.0-fast-generate-001",
+            "version": "001",
+            "displayName": "Imagen 4 Fast",
+            "description": "Vertex served Imagen 4.0 Fast model",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predict"
+            ]
+          },
+          {
+            "name": "models/veo-2.0-generate-001",
+            "version": "2.0",
+            "displayName": "Veo 2",
+            "description": "Vertex served Veo 2 model. Access to this model requires billing to be enabled on the associated Google Cloud Platform account. Please visit https://console.cloud.google.com/billing to enable it.",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.0-generate-001",
+            "version": "3.0",
+            "displayName": "Veo 3",
+            "description": "Veo 3",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.0-fast-generate-001",
+            "version": "3.0",
+            "displayName": "Veo 3 fast",
+            "description": "Veo 3 fast",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.1-generate-preview",
+            "version": "3.1",
+            "displayName": "Veo 3.1",
+            "description": "Veo 3.1",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/veo-3.1-fast-generate-preview",
+            "version": "3.1",
+            "displayName": "Veo 3.1 fast",
+            "description": "Veo 3.1 fast",
+            "inputTokenLimit": 480,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "predictLongRunning"
+            ]
+          },
+          {
+            "name": "models/gemini-2.5-flash-native-audio-latest",
+            "version": "Gemini 2.5 Flash Native Audio Latest",
+            "displayName": "Gemini 2.5 Flash Native Audio Latest",
+            "description": "Latest release of Gemini 2.5 Flash Native Audio",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-native-audio-preview-09-2025",
+            "version": "gemini-2.5-flash-preview-native-audio-dialog-2025-05-19",
+            "displayName": "Gemini 2.5 Flash Native Audio Preview 09-2025",
+            "description": "Gemini 2.5 Flash Native Audio Preview 09-2025",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          },
+          {
+            "name": "models/gemini-2.5-flash-native-audio-preview-12-2025",
+            "version": "12-2025",
+            "displayName": "Gemini 2.5 Flash Native Audio Preview 12-2025",
+            "description": "Gemini 2.5 Flash Native Audio Preview 12-2025",
+            "inputTokenLimit": 131072,
+            "outputTokenLimit": 8192,
+            "supportedGenerationMethods": [
+              "countTokens",
+              "bidiGenerateContent"
+            ],
+            "temperature": 1,
+            "topP": 0.95,
+            "topK": 64,
+            "maxTemperature": 2,
+            "thinking": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "wallet-list-get-auth",
+      "method": "GET",
+      "path": "/api/wallet",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "paginate": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 50,
+            "total": 32
+          },
+          "wallets": [
+            {
+              "id": 149,
+              "title": "2025.08",
+              "code": "oyH7ZYGt",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 148,
+              "title": "2025.07",
+              "code": "C1DbzjbQ",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 147,
+              "title": "2025.06",
+              "code": "WW3B4r8D",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 146,
+              "title": "2025.05",
+              "code": "2jbemX9I",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 144,
+              "title": "2025.04",
+              "code": "vBaeqCEY",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 142,
+              "title": "2025.03",
+              "code": "LoAHYBqC",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 66,
+              "title": "澎湖",
+              "code": "zfTMK6Dh",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 108,
+              "title": "多多存款",
+              "code": "THUJpZUg",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 99,
+              "title": "婚禮費用",
+              "code": "dyvo3Z3m",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 139,
+              "title": "2025.02",
+              "code": "k2duLu8R",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 136,
+              "title": "2025.01",
+              "code": "vX59eLKB",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 130,
+              "title": "2024.12",
+              "code": "q6oW9iT5",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 122,
+              "title": "2024.11",
+              "code": "QHOSRdg7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 116,
+              "title": "2024.10",
+              "code": "A4jL0BNl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 111,
+              "title": "沖繩",
+              "code": "WuC3MJeo",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 113,
+              "title": "2024.09",
+              "code": "30wDnatI",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 110,
+              "title": "2024.08",
+              "code": "7ZiC4cwn",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 102,
+              "title": "2024.05",
+              "code": "gCUxCSYH",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 45,
+              "title": "haha",
+              "code": "ABGITr6a",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 107,
+              "title": "2024.07",
+              "code": "i54Du2NE",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 95,
+              "title": "張老師飆股",
+              "code": "IpYL5fiL",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 2,
+                "name": "友菘"
+              }
+            },
+            {
+              "id": 93,
+              "title": "外幣帳本",
+              "code": "zwaMjfrz",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 89,
+              "title": "台幣",
+              "code": "QmwOVrnX",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 84,
+              "title": "測試",
+              "code": "IXE3lGV0",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 96,
+              "title": "2024.04",
+              "code": "jh7UlIS7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 101,
+              "title": "東京2024",
+              "code": "YQ4cDxvl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 2,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 100,
+              "title": "東京04/25-04/30",
+              "code": "SEcUjckv",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 63,
+              "title": "韓國",
+              "code": "f6vrP6o0",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 87,
+              "title": "test",
+              "code": "ISF9upT7",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 88,
+              "title": "test",
+              "code": "AlaS3oyQ",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 86,
+              "title": "test",
+              "code": "N1RDbpvD",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 1,
+              "title": "asdasdasdads122",
+              "code": "Qo8BCj5v",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            }
+          ]
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "paginate": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 50,
+            "total": 32
+          },
+          "wallets": [
+            {
+              "id": 149,
+              "title": "2025.08",
+              "code": "oyH7ZYGt",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 148,
+              "title": "2025.07",
+              "code": "C1DbzjbQ",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 147,
+              "title": "2025.06",
+              "code": "WW3B4r8D",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 146,
+              "title": "2025.05",
+              "code": "2jbemX9I",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 144,
+              "title": "2025.04",
+              "code": "vBaeqCEY",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 142,
+              "title": "2025.03",
+              "code": "LoAHYBqC",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 66,
+              "title": "澎湖",
+              "code": "zfTMK6Dh",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 108,
+              "title": "多多存款",
+              "code": "THUJpZUg",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 99,
+              "title": "婚禮費用",
+              "code": "dyvo3Z3m",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 139,
+              "title": "2025.02",
+              "code": "k2duLu8R",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 136,
+              "title": "2025.01",
+              "code": "vX59eLKB",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 130,
+              "title": "2024.12",
+              "code": "q6oW9iT5",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 122,
+              "title": "2024.11",
+              "code": "QHOSRdg7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 116,
+              "title": "2024.10",
+              "code": "A4jL0BNl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 111,
+              "title": "沖繩",
+              "code": "WuC3MJeo",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 113,
+              "title": "2024.09",
+              "code": "30wDnatI",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 110,
+              "title": "2024.08",
+              "code": "7ZiC4cwn",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 102,
+              "title": "2024.05",
+              "code": "gCUxCSYH",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 45,
+              "title": "haha",
+              "code": "ABGITr6a",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 107,
+              "title": "2024.07",
+              "code": "i54Du2NE",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 95,
+              "title": "張老師飆股",
+              "code": "IpYL5fiL",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 2,
+                "name": "友菘"
+              }
+            },
+            {
+              "id": 93,
+              "title": "外幣帳本",
+              "code": "zwaMjfrz",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 89,
+              "title": "台幣",
+              "code": "QmwOVrnX",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 84,
+              "title": "測試",
+              "code": "IXE3lGV0",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 96,
+              "title": "2024.04",
+              "code": "jh7UlIS7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 101,
+              "title": "東京2024",
+              "code": "YQ4cDxvl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 2,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 100,
+              "title": "東京04/25-04/30",
+              "code": "SEcUjckv",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 63,
+              "title": "韓國",
+              "code": "f6vrP6o0",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 87,
+              "title": "test",
+              "code": "ISF9upT7",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 88,
+              "title": "test",
+              "code": "AlaS3oyQ",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 86,
+              "title": "test",
+              "code": "N1RDbpvD",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 1,
+              "title": "asdasdasdads122",
+              "code": "Qo8BCj5v",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "wallet-list-post-auth",
+      "method": "POST",
+      "path": "/api/wallet/list",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "paginate": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 50,
+            "total": 32
+          },
+          "wallets": [
+            {
+              "id": 149,
+              "title": "2025.08",
+              "code": "oyH7ZYGt",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 148,
+              "title": "2025.07",
+              "code": "C1DbzjbQ",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 147,
+              "title": "2025.06",
+              "code": "WW3B4r8D",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 146,
+              "title": "2025.05",
+              "code": "2jbemX9I",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 144,
+              "title": "2025.04",
+              "code": "vBaeqCEY",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 142,
+              "title": "2025.03",
+              "code": "LoAHYBqC",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 66,
+              "title": "澎湖",
+              "code": "zfTMK6Dh",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 108,
+              "title": "多多存款",
+              "code": "THUJpZUg",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 99,
+              "title": "婚禮費用",
+              "code": "dyvo3Z3m",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 139,
+              "title": "2025.02",
+              "code": "k2duLu8R",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 136,
+              "title": "2025.01",
+              "code": "vX59eLKB",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 130,
+              "title": "2024.12",
+              "code": "q6oW9iT5",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 122,
+              "title": "2024.11",
+              "code": "QHOSRdg7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 116,
+              "title": "2024.10",
+              "code": "A4jL0BNl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 111,
+              "title": "沖繩",
+              "code": "WuC3MJeo",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 113,
+              "title": "2024.09",
+              "code": "30wDnatI",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 110,
+              "title": "2024.08",
+              "code": "7ZiC4cwn",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 102,
+              "title": "2024.05",
+              "code": "gCUxCSYH",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 45,
+              "title": "haha",
+              "code": "ABGITr6a",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 107,
+              "title": "2024.07",
+              "code": "i54Du2NE",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 95,
+              "title": "張老師飆股",
+              "code": "IpYL5fiL",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 2,
+                "name": "友菘"
+              }
+            },
+            {
+              "id": 93,
+              "title": "外幣帳本",
+              "code": "zwaMjfrz",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 89,
+              "title": "台幣",
+              "code": "QmwOVrnX",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 84,
+              "title": "測試",
+              "code": "IXE3lGV0",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 96,
+              "title": "2024.04",
+              "code": "jh7UlIS7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 101,
+              "title": "東京2024",
+              "code": "YQ4cDxvl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 2,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 100,
+              "title": "東京04/25-04/30",
+              "code": "SEcUjckv",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 63,
+              "title": "韓國",
+              "code": "f6vrP6o0",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 87,
+              "title": "test",
+              "code": "ISF9upT7",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 88,
+              "title": "test",
+              "code": "AlaS3oyQ",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 86,
+              "title": "test",
+              "code": "N1RDbpvD",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 1,
+              "title": "asdasdasdads122",
+              "code": "Qo8BCj5v",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            }
+          ]
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "paginate": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 50,
+            "total": 32
+          },
+          "wallets": [
+            {
+              "id": 149,
+              "title": "2025.08",
+              "code": "oyH7ZYGt",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 148,
+              "title": "2025.07",
+              "code": "C1DbzjbQ",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 147,
+              "title": "2025.06",
+              "code": "WW3B4r8D",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 146,
+              "title": "2025.05",
+              "code": "2jbemX9I",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 144,
+              "title": "2025.04",
+              "code": "vBaeqCEY",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 142,
+              "title": "2025.03",
+              "code": "LoAHYBqC",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 66,
+              "title": "澎湖",
+              "code": "zfTMK6Dh",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 108,
+              "title": "多多存款",
+              "code": "THUJpZUg",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 99,
+              "title": "婚禮費用",
+              "code": "dyvo3Z3m",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 139,
+              "title": "2025.02",
+              "code": "k2duLu8R",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 136,
+              "title": "2025.01",
+              "code": "vX59eLKB",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 130,
+              "title": "2024.12",
+              "code": "q6oW9iT5",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 122,
+              "title": "2024.11",
+              "code": "QHOSRdg7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 116,
+              "title": "2024.10",
+              "code": "A4jL0BNl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 111,
+              "title": "沖繩",
+              "code": "WuC3MJeo",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": true,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 113,
+              "title": "2024.09",
+              "code": "30wDnatI",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 110,
+              "title": "2024.08",
+              "code": "7ZiC4cwn",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 102,
+              "title": "2024.05",
+              "code": "gCUxCSYH",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 45,
+              "title": "haha",
+              "code": "ABGITr6a",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 107,
+              "title": "2024.07",
+              "code": "i54Du2NE",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 95,
+              "title": "張老師飆股",
+              "code": "IpYL5fiL",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 2,
+                "name": "友菘"
+              }
+            },
+            {
+              "id": 93,
+              "title": "外幣帳本",
+              "code": "zwaMjfrz",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 89,
+              "title": "台幣",
+              "code": "QmwOVrnX",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 84,
+              "title": "測試",
+              "code": "IXE3lGV0",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 96,
+              "title": "2024.04",
+              "code": "jh7UlIS7",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 101,
+              "title": "東京2024",
+              "code": "YQ4cDxvl",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 2,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 100,
+              "title": "東京04/25-04/30",
+              "code": "SEcUjckv",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 58,
+                "name": "Juni"
+              }
+            },
+            {
+              "id": 63,
+              "title": "韓國",
+              "code": "f6vrP6o0",
+              "status": 1,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": true
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 87,
+              "title": "test",
+              "code": "ISF9upT7",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 88,
+              "title": "test",
+              "code": "AlaS3oyQ",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 86,
+              "title": "test",
+              "code": "N1RDbpvD",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "decimalPlaces": 0,
+                "unitConfigurable": false
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            },
+            {
+              "id": 1,
+              "title": "asdasdasdads122",
+              "code": "Qo8BCj5v",
+              "status": 0,
+              "unit": "TWD",
+              "mode": "multi",
+              "properties": {
+                "unitConfigurable": false,
+                "decimalPlaces": 0
+              },
+              "user": {
+                "id": 1,
+                "name": "roy"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "wallet-calculation-auth",
+      "method": "POST",
+      "path": "/api/wallet/149/calculation",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "id": 149,
+            "total": {
+              "public": {
+                "income": 0,
+                "expenses": 0
+              },
+              "income": 0,
+              "expenses": 0
+            },
+            "users": [
+              {
+                "id": 544,
+                "name": "Juni",
+                "income": 0,
+                "expenses": 0,
+                "total": 0,
+                "wallet_details_id": [],
+                "payment_wallet_details_id": []
+              },
+              {
+                "id": 545,
+                "name": "Roy",
+                "income": 0,
+                "expenses": 0,
+                "total": 0,
+                "wallet_details_id": [],
+                "payment_wallet_details_id": []
+              }
+            ],
+            "details": []
+          }
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "id": 149,
+            "total": {
+              "public": {
+                "income": 0,
+                "expenses": 0
+              },
+              "income": 0,
+              "expenses": 0
+            },
+            "users": [
+              {
+                "id": 544,
+                "name": "Juni",
+                "income": 0,
+                "expenses": 0,
+                "total": 0,
+                "wallet_details_id": [],
+                "payment_wallet_details_id": []
+              },
+              {
+                "id": 545,
+                "name": "Roy",
+                "income": 0,
+                "expenses": 0,
+                "total": 0,
+                "wallet_details_id": [],
+                "payment_wallet_details_id": []
+              }
+            ],
+            "details": []
+          }
+        }
+      }
+    },
+    {
+      "name": "wallet-detail-list-auth",
+      "method": "POST",
+      "path": "/api/wallet/149/detail/list",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "id": 149,
+            "code": "oyH7ZYGt",
+            "title": "2025.08",
+            "status": 1,
+            "mode": "multi",
+            "unit": "TWD",
+            "wallet_user": {
+              "id": 544,
+              "wallet_id": 149,
+              "user_id": 58,
+              "name": "Juni",
+              "is_admin": true,
+              "notify_enable": true
+            },
+            "properties": {
+              "unitConfigurable": false,
+              "decimalPlaces": 0
+            },
+            "details": [],
+            "wallet_users": [
+              {
+                "id": 544,
+                "wallet_id": 149,
+                "user_id": 58,
+                "name": "Juni",
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "wallet_id": 149,
+                "user_id": 1,
+                "name": "Roy",
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ],
+            "total": {
+              "income": 0,
+              "expenses": 0
+            }
+          }
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "id": 149,
+            "code": "oyH7ZYGt",
+            "title": "2025.08",
+            "status": 1,
+            "mode": "multi",
+            "unit": "TWD",
+            "wallet_user": {
+              "id": 544,
+              "wallet_id": 149,
+              "user_id": 58,
+              "name": "Juni",
+              "is_admin": true,
+              "notify_enable": true
+            },
+            "properties": {
+              "unitConfigurable": false,
+              "decimalPlaces": 0
+            },
+            "details": [],
+            "wallet_users": [
+              {
+                "id": 544,
+                "wallet_id": 149,
+                "user_id": 58,
+                "name": "Juni",
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "wallet_id": 149,
+                "user_id": 1,
+                "name": "Roy",
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ],
+            "total": {
+              "income": 0,
+              "expenses": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "wallet-detail-list-get-auth",
+      "method": "GET",
+      "path": "/api/wallet/149/detail",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "id": 149,
+            "code": "oyH7ZYGt",
+            "title": "2025.08",
+            "status": 1,
+            "mode": "multi",
+            "unit": "TWD",
+            "wallet_user": {
+              "id": 544,
+              "wallet_id": 149,
+              "user_id": 58,
+              "name": "Juni",
+              "is_admin": true,
+              "notify_enable": true
+            },
+            "properties": {
+              "unitConfigurable": false,
+              "decimalPlaces": 0
+            },
+            "details": [],
+            "wallet_users": [
+              {
+                "id": 544,
+                "wallet_id": 149,
+                "user_id": 58,
+                "name": "Juni",
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "wallet_id": 149,
+                "user_id": 1,
+                "name": "Roy",
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ],
+            "total": {
+              "income": 0,
+              "expenses": 0
+            }
+          }
+        }
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": {
+          "wallet": {
+            "id": 149,
+            "code": "oyH7ZYGt",
+            "title": "2025.08",
+            "status": 1,
+            "mode": "multi",
+            "unit": "TWD",
+            "wallet_user": {
+              "id": 544,
+              "wallet_id": 149,
+              "user_id": 58,
+              "name": "Juni",
+              "is_admin": true,
+              "notify_enable": true
+            },
+            "properties": {
+              "unitConfigurable": false,
+              "decimalPlaces": 0
+            },
+            "details": [],
+            "wallet_users": [
+              {
+                "id": 544,
+                "wallet_id": 149,
+                "user_id": 58,
+                "name": "Juni",
+                "is_admin": true,
+                "notify_enable": true
+              },
+              {
+                "id": 545,
+                "wallet_id": 149,
+                "user_id": 1,
+                "name": "Roy",
+                "is_admin": false,
+                "notify_enable": true
+              }
+            ],
+            "total": {
+              "income": 0,
+              "expenses": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "wallet-detail-show-auth",
+      "method": "GET",
+      "path": "/api/wallet/149/detail/1",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": false,
+        "code": 400,
+        "message": "參數有誤",
+        "data": {}
+      },
+      "new_normalized": {
+        "status": false,
+        "code": 400,
+        "message": "參數有誤",
+        "data": {}
+      }
+    },
+    {
+      "name": "wallet-detail-show-post-auth",
+      "method": "POST",
+      "path": "/api/wallet/149/detail/1",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": false,
+        "code": 400,
+        "message": "參數有誤",
+        "data": {}
+      },
+      "new_normalized": {
+        "status": false,
+        "code": 400,
+        "message": "參數有誤",
+        "data": {}
+      }
+    },
+    {
+      "name": "auth-user-third-party-auth",
+      "method": "POST",
+      "path": "/api/auth/user/thirdParty",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": [
+          {
+            "id": 1,
+            "name": "冠融",
+            "email": "cc711612@gmail.com",
+            "social_type": 9,
+            "social_type_value": "Ub097345d0bbd52c41e34f07d26e0520b",
+            "image": "https://profile.line-scdn.net/0hE0DiStO4Gh95EDa-y8xlSEVVFHIOPhxXAXBVLgkXFiYAJVQbEH8GfFtCRCZSdF8ZFiNVcAwXTXxW"
+          },
+          {
+            "id": 17,
+            "name": "冠融",
+            "email": "cc711612@gmail.com",
+            "social_type": 9,
+            "social_type_value": "U1d40789aa8461e74ead62181b1abc442",
+            "image": "https://profile.line-scdn.net/0hE0DiStO4Gh95EDa-y8xlSEVVFHIOPhxXAXBVLgkXFiYAJVQbEH8GfFtCRCZSdF8ZFiNVcAwXTXxW"
+          }
+        ]
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": [
+          {
+            "id": 1,
+            "social_type": 9,
+            "social_type_value": "Ub097345d0bbd52c41e34f07d26e0520b",
+            "name": "冠融",
+            "email": "cc711612@gmail.com",
+            "image": "https://profile.line-scdn.net/0hE0DiStO4Gh95EDa-y8xlSEVVFHIOPhxXAXBVLgkXFiYAJVQbEH8GfFtCRCZSdF8ZFiNVcAwXTXxW"
+          },
+          {
+            "id": 17,
+            "social_type": 9,
+            "social_type_value": "U1d40789aa8461e74ead62181b1abc442",
+            "name": "冠融",
+            "email": "cc711612@gmail.com",
+            "image": "https://profile.line-scdn.net/0hE0DiStO4Gh95EDa-y8xlSEVVFHIOPhxXAXBVLgkXFiYAJVQbEH8GfFtCRCZSdF8ZFiNVcAwXTXxW"
+          }
+        ]
+      }
+    },
+    {
+      "name": "device-index-auth",
+      "method": "GET",
+      "path": "/api/device",
+      "old_status": 200,
+      "new_status": 200,
+      "same_status": true,
+      "same_body": true,
+      "matched": true,
+      "old_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": []
+      },
+      "new_normalized": {
+        "status": true,
+        "code": 200,
+        "message": "",
+        "data": []
+      }
+    }
+  ]
+}
