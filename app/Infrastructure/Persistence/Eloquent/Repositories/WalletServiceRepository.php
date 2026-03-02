@@ -1,0 +1,189 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\Persistence\Eloquent\Repositories;
+
+use App\Domain\Wallet\Entities\WalletDetailEntity;
+use App\Domain\Wallet\Entities\WalletEntity;
+use App\Domain\Wallet\Entities\WalletUserEntity;
+use App\Domain\Wallet\Enums\WalletDetailType;
+use App\Domain\Wallet\Repositories\WalletServiceRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
+
+class WalletServiceRepository implements WalletServiceRepositoryInterface
+{
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
+    public function listWallets(array $filters): array
+    {
+        $perPage = max(1, (int) ($filters['per_page'] ?? $filters['page_count'] ?? 50));
+        $userId = (int) data_get($filters, 'user.id', 0);
+        $status = data_get($filters, 'wallets.status', $filters['status'] ?? null);
+        $isGuest = data_get($filters, 'wallets.is_guest', $filters['is_guest'] ?? null);
+
+        $query = WalletEntity::query()
+            ->with(['user:id,name'])
+            ->select(['id', 'user_id', 'title', 'code', 'unit', 'mode', 'properties', 'status', 'updated_at', 'created_at']);
+
+        if ($userId > 0) {
+            $guestWalletIds = WalletUserEntity::query()
+                ->where('user_id', $userId)
+                ->where('is_admin', 0)
+                ->pluck('wallet_id')
+                ->map(static fn ($value): int => (int) $value)
+                ->all();
+
+            if ($isGuest !== null) {
+                if ((int) $isGuest === 0) {
+                    $query->where('user_id', $userId);
+                } else {
+                    $query->whereIn('id', $guestWalletIds ?: [0]);
+                }
+            } else {
+                $query->where(function (Builder $builder) use ($guestWalletIds, $userId): void {
+                    $builder->whereIn('id', $guestWalletIds ?: [0])
+                        ->orWhere('user_id', $userId);
+                });
+            }
+        }
+
+        if (is_numeric($status)) {
+            $query->where('status', (int) $status);
+        }
+
+        $paginator = $query->orderByDesc('updated_at')->paginate($perPage);
+        $wallets = collect($paginator->items())
+            ->map(static function (WalletEntity $wallet): array {
+                $properties = is_array($wallet->properties) ? $wallet->properties : [];
+                if ($properties === []) {
+                    $properties = ['unitConfigurable' => false, 'decimalPlaces' => 0];
+                }
+
+                return [
+                    'id' => (int) $wallet->id,
+                    'title' => (string) $wallet->title,
+                    'code' => (string) $wallet->code,
+                    'status' => (int) $wallet->status,
+                    'unit' => (string) ($wallet->unit ?? 'TWD'),
+                    'mode' => (string) ($wallet->mode ?? 'multi'),
+                    'properties' => $properties,
+                    'user' => [
+                        'id' => $wallet->user ? (int) $wallet->user->id : null,
+                        'name' => $wallet->user ? (string) $wallet->user->name : null,
+                    ],
+                    'updated_at' => (string) $wallet->updated_at,
+                    'created_at' => (string) $wallet->created_at,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'paginate' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'wallets' => $wallets,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    public function createWallet(array $attributes): array
+    {
+        $wallet = WalletEntity::query()->create($attributes);
+
+        return $wallet->toArray();
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function createWalletOwner(array $attributes): void
+    {
+        WalletUserEntity::query()->create($attributes);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function updateWallet(int $walletId, array $attributes): void
+    {
+        WalletEntity::query()->where('id', $walletId)->update($attributes);
+    }
+
+    public function deleteWallet(int $walletId): int
+    {
+        return WalletEntity::query()->where('id', $walletId)->delete();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findWalletByCode(string $code): ?array
+    {
+        $wallet = WalletEntity::query()->where('code', $code)->first(['id']);
+
+        return $wallet?->toArray();
+    }
+
+    public function touchWalletUserByName(int $walletId, string $name): int
+    {
+        return WalletUserEntity::query()
+            ->where('wallet_id', $walletId)
+            ->where('name', $name)
+            ->update(['updated_at' => now()]);
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    public function walletDetailTotals(int $walletId): array
+    {
+        $details = WalletDetailEntity::query()->where('wallet_id', $walletId)->get(['symbol_operation_type_id', 'value']);
+
+        return [
+            'income' => (float) $details->where('symbol_operation_type_id', 1)->sum('value'),
+            'expenses' => (float) $details->where('symbol_operation_type_id', 2)->sum('value'),
+        ];
+    }
+
+    /**
+     * @return array<string, float>
+     */
+    public function walletPublicDetailTotals(int $walletId): array
+    {
+        $details = WalletDetailEntity::query()
+            ->where('wallet_id', $walletId)
+            ->where('type', WalletDetailType::PUBLIC_EXPENSE->value)
+            ->get(['symbol_operation_type_id', 'value']);
+
+        return [
+            'income' => (float) $details->where('symbol_operation_type_id', 1)->sum('value'),
+            'expenses' => (float) $details->where('symbol_operation_type_id', 2)->sum('value'),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function listWalletUsersByWalletId(int $walletId): array
+    {
+        return WalletUserEntity::query()
+            ->where('wallet_id', $walletId)
+            ->orderBy('id')
+            ->get(['id', 'name'])
+            ->map(static fn (WalletUserEntity $item): array => [
+                'id' => (int) $item->id,
+                'name' => (string) $item->name,
+            ])
+            ->all();
+    }
+}
