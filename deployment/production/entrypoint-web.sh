@@ -3,11 +3,17 @@ set -e
 
 cd /var/www/html
 
+if [ ! -f vendor/autoload.php ]; then
+  echo "[web] vendor/ 不存在，請先在 host 執行: composer install --no-dev --optimize-autoloader"
+  exit 1
+fi
+
 php artisan config:clear
 php artisan config:cache
 php artisan route:cache
+php artisan view:cache
 
-if ! php artisan list | grep -q "octane:start"; then
+if [ ! -f vendor/laravel/octane/src/Commands/StartCommand.php ]; then
   echo "[web] Octane 尚未安裝，請先執行: composer require laravel/octane && php artisan octane:install"
   exit 1
 fi
