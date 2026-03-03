@@ -1,3 +1,5 @@
+name: ${PROJECT_NAME:-wallet-v2}
+
 services:
   web:
     build:
