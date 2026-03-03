@@ -10,9 +10,8 @@ RUN apk add --no-cache \
     unzip \
     libzip-dev \
     oniguruma-dev \
-    icu-dev \
-    linux-headers && \
-    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS && \
+    icu-dev && \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS linux-headers && \
     docker-php-ext-install \
         bcmath \
         intl \
