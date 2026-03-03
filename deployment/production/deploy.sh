@@ -1,9 +1,15 @@
 #!/bin/bash
 set -e
 
-WEB_CONTAINER="wallet-v2-web"
-WORKER_CONTAINER="wallet-v2-worker"
-COMPOSE_FILE="$(dirname "$0")/docker-compose.yml"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/.env"
+
+# 從 .env 讀取 PROJECT_NAME，fallback 到 wallet-v2
+PROJECT_NAME=$(grep -E '^PROJECT_NAME=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo "wallet-v2")
+PROJECT_NAME="${PROJECT_NAME:-wallet-v2}"
+
+WEB_CONTAINER="${PROJECT_NAME}-web"
+COMPOSE_CMD="docker compose --env-file $ENV_FILE -f $SCRIPT_DIR/docker-compose.yml"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -38,15 +44,13 @@ do_octane_reload() {
 
 do_restart_containers() {
     warning "重開所有 container..."
-    docker compose -f "$COMPOSE_FILE" restart
+    $COMPOSE_CMD restart
     info "所有 container 重開完成"
 }
 
 do_rebuild_image() {
     warning "重建 Docker image..."
-    docker compose -f "$COMPOSE_FILE" build
-    warning "重新啟動 container 以套用新 image..."
-    docker compose -f "$COMPOSE_FILE" up -d
+    $COMPOSE_CMD up -d --build
     info "Image 重建完成"
 }
 

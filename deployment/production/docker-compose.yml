@@ -12,6 +12,8 @@ services:
     volumes:
       - ${PROJECT_PATH}:/var/www/html
       - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
+    networks:
+      - internal
     depends_on:
       redis:
         condition: service_healthy
@@ -24,6 +26,9 @@ services:
       start_period: 15s
 
   worker:
+    build:
+      context: ../..
+      dockerfile: deployment/production/Dockerfile
     image: ${PROJECT_NAME:-wallet-v2}:app
     container_name: ${PROJECT_NAME:-wallet-v2}-worker
     restart: always
@@ -33,6 +38,8 @@ services:
     volumes:
       - ${PROJECT_PATH}:/var/www/html
       - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
+    networks:
+      - internal
     depends_on:
       redis:
         condition: service_healthy
@@ -48,6 +55,8 @@ services:
     image: nginx:1.27-alpine
     container_name: ${PROJECT_NAME:-wallet-v2}-nginx
     restart: always
+    networks:
+      - internal
     depends_on:
       web:
         condition: service_started
@@ -62,6 +71,8 @@ services:
     container_name: ${PROJECT_NAME:-wallet-v2}-redis
     restart: always
     command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - internal
     volumes:
       - redis-data:/data
     healthcheck:
@@ -72,3 +83,8 @@ services:
 
 volumes:
   redis-data:
+    name: ${PROJECT_NAME:-wallet-v2}-redis-data
+
+networks:
+  internal:
+    name: ${PROJECT_NAME:-wallet-v2}-network
