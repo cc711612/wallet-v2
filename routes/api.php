@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Apis\Auth\LoginController;
 use App\Http\Controllers\Apis\Auth\LogoutController;
 use App\Http\Controllers\Apis\Auth\RegisterController;
@@ -109,6 +110,8 @@ Route::group(['as' => 'api.'], function (): void {
         });
     });
 });
+
+Route::get('/health', [HealthController::class, 'check']);
 
 Route::prefix('gemini')->group(function (): void {
     Route::post('/generate', [GeminiController::class, 'generateContent']);

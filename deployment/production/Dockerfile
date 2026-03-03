@@ -11,25 +11,22 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     icu-dev \
-    linux-headers \
-    $PHPIZE_DEPS
-
-RUN docker-php-ext-install \
-    bcmath \
-    intl \
-    mbstring \
-    pcntl \
-    pdo_mysql \
-    zip
+    linux-headers && \
+    apk add --no-cache --virtual .build-deps $PHPIZE_DEPS && \
+    docker-php-ext-install \
+        bcmath \
+        intl \
+        mbstring \
+        opcache \
+        pcntl \
+        pdo_mysql \
+        zip && \
+    pecl install redis && \
+    docker-php-ext-enable redis && \
+    apk del .build-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
-
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist && \
-    php artisan package:discover --ansi || true
-
-RUN chmod +x /var/www/html/deployment/production/entrypoint-web.sh && \
-    chmod +x /var/www/html/deployment/production/entrypoint-worker.sh
 
 ENTRYPOINT ["/bin/bash"]
