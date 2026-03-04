@@ -5,6 +5,7 @@ services:
     build:
       context: ../..
       dockerfile: deployment/production/Dockerfile
+      provenance: false
     image: ${PROJECT_NAME:-wallet-v2}:app
     container_name: ${PROJECT_NAME:-wallet-v2}-web
     restart: always
