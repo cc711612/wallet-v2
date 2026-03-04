@@ -18,6 +18,11 @@ if [ ! -f vendor/laravel/octane/src/Commands/StartCommand.php ]; then
   exit 1
 fi
 
+if [ ! -f public/frankenphp-worker.php ]; then
+  echo "[web] 缺少 public/frankenphp-worker.php，嘗試執行 octane:install --server=frankenphp"
+  php artisan octane:install --server=frankenphp --no-interaction || true
+fi
+
 exec php artisan octane:start \
   --server="${OCTANE_SERVER:-frankenphp}" \
   --host=0.0.0.0 \
