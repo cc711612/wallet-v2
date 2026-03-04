@@ -28,9 +28,6 @@ services:
       start_period: 15s
 
   worker:
-    build:
-      context: ../..
-      dockerfile: deployment/production/Dockerfile
     image: ${PROJECT_NAME:-wallet-v2}:app
     container_name: ${PROJECT_NAME:-wallet-v2}-worker
     restart: always
