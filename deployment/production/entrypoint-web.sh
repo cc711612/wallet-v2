@@ -4,8 +4,8 @@ set -e
 cd /var/www/html
 
 if [ ! -f vendor/autoload.php ]; then
-  echo "[web] vendor/ 不存在，請先在 host 執行: composer install --no-dev --optimize-autoloader"
-  exit 1
+  echo "[web] vendor/ 不存在，執行 composer install..."
+  composer install --no-dev --optimize-autoloader --no-interaction
 fi
 
 php artisan config:clear
