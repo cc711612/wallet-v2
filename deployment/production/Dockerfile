@@ -28,4 +28,4 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
 
-ENTRYPOINT ["/bin/bash"]
+CMD ["/bin/bash"]
