@@ -15,18 +15,25 @@ class WalletDetailQueryRepository implements WalletDetailQueryRepositoryInterfac
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function listDetails(int $walletId, bool $isPersonal): array
+    public function listDetails(int $walletId, ?bool $isPersonal, ?int $walletUserId = null): array
     {
         $query = WalletDetailEntity::query()->where('wallet_id', $walletId);
-        if ($isPersonal) {
-            $query->where('is_personal', 1);
+
+        if ($isPersonal !== null) {
+            $query->where('is_personal', $isPersonal ? 1 : 0);
+        }
+
+        if ($isPersonal === true && ($walletUserId ?? 0) > 0) {
+            $query->where('created_by', $walletUserId);
         }
 
         return $query
-            ->with(['users:id'])
+            ->with(['users:id', 'category'])
+            ->orderByDesc('date')
             ->orderByDesc('id')
             ->get([
                 'id',
+                'category_id',
                 'type',
                 'title',
                 'payment_wallet_user_id',
@@ -67,7 +74,16 @@ class WalletDetailQueryRepository implements WalletDetailQueryRepositoryInterfac
                 'exchange_rates' => null,
                 'rates' => $item->rates === null ? null : (float) $item->rates,
                 'splits' => is_array($item->splits) ? $item->splits : [],
-                'category' => [],
+                'category' => $item->category ? [
+                    'id' => (int) $item->category->id,
+                    'parent_id' => $item->category->parent_id === null ? null : (int) $item->category->parent_id,
+                    'wallet_id' => $item->category->wallet_id === null ? null : (int) $item->category->wallet_id,
+                    'name' => (string) $item->category->name,
+                    'icon' => $item->category->icon,
+                    'created_at' => (string) $item->category->created_at,
+                    'updated_at' => (string) $item->category->updated_at,
+                    'deleted_at' => $item->category->deleted_at ? (string) $item->category->deleted_at : null,
+                ] : null,
             ])
             ->all();
     }

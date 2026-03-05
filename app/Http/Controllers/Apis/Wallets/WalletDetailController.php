@@ -50,9 +50,11 @@ class WalletDetailController extends ApiController
     public function index(int $wallet, Request $request): JsonResponse
     {
         try {
-            $isPersonal = $request->boolean('is_personal', false);
+            $isPersonal = $request->has('is_personal') ? $request->boolean('is_personal') : null;
+            $walletUser = (array) $request->input('wallet_user', []);
+            $walletUserId = (int) data_get($walletUser, $wallet . '.id', 0);
 
-            return $this->response()->success($this->walletDetailService->index($wallet, $isPersonal));
+            return $this->response()->success($this->walletDetailService->index($wallet, $isPersonal, $walletUserId));
         } catch (RuntimeException $exception) {
             return $this->response()->errorInternal($exception->getMessage());
         }
