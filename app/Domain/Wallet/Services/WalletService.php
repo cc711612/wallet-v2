@@ -35,24 +35,42 @@ class WalletService
      */
     public function store(array $payload): array
     {
-        $code = strtoupper(Str::random(8));
+        $code = Str::random(8);
         $userId = (int) data_get($payload, 'user.id', 0);
+        if ($userId <= 0) {
+            throw new RuntimeException('系統異常');
+        }
+
+        $ownerName = (string) data_get($payload, 'user.name', data_get($payload, 'owner_name', ''));
+        if ($ownerName === '') {
+            $ownerName = 'owner';
+        }
+
+        $ownerToken = (string) data_get($payload, 'user.token', '');
+        if ($ownerToken === '') {
+            $ownerToken = Str::random(64);
+        }
+
+        $properties = [
+            'unitConfigurable' => (bool) data_get($payload, 'unitConfigurable', false),
+            'decimalPlaces' => (int) data_get($payload, 'decimalPlaces', 0),
+        ];
 
         $wallet = $this->walletServiceRepository->createWallet([
-            'user_id' => $userId ?: null,
+            'user_id' => $userId,
             'code' => $code,
             'title' => (string) ($payload['title'] ?? 'New Wallet'),
             'unit' => (string) ($payload['unit'] ?? 'TWD'),
             'status' => 1,
-            'properties' => $payload['properties'] ?? [],
+            'properties' => $properties,
             'mode' => (string) ($payload['mode'] ?? 'multi'),
         ]);
 
         $this->walletServiceRepository->createWalletOwner([
             'wallet_id' => (int) ($wallet['id'] ?? 0),
-            'user_id' => $userId ?: null,
-            'name' => (string) ($payload['owner_name'] ?? 'owner'),
-            'token' => Str::random(64),
+            'user_id' => $userId,
+            'name' => $ownerName,
+            'token' => $ownerToken,
             'is_admin' => 1,
             'notify_enable' => 1,
         ]);
@@ -78,11 +96,19 @@ class WalletService
      */
     public function update(int $walletId, array $payload): array
     {
+        $userId = (int) data_get($payload, 'user.id', 0);
+        if (! $this->walletServiceRepository->existsWalletOwnedByUser($walletId, $userId)) {
+            throw new RuntimeException('非創建者不得編輯');
+        }
+
         $updatePayload = [
             'title' => (string) ($payload['title'] ?? ''),
-            'mode' => (string) ($payload['mode'] ?? 'multi'),
             'updated_at' => now(),
         ];
+
+        if (array_key_exists('mode', $payload)) {
+            $updatePayload['mode'] = (string) $payload['mode'];
+        }
 
         if (array_key_exists('status', $payload)) {
             $updatePayload['status'] = (int) ((bool) $payload['status']);
@@ -99,8 +125,18 @@ class WalletService
      * @param  int  $walletId
      * @return string
      */
-    public function destroy(int $walletId): string
+    /**
+     * @param  int  $walletId
+     * @param  array<string, mixed>  $payload
+     * @return string
+     */
+    public function destroy(int $walletId, array $payload): string
     {
+        $userId = (int) data_get($payload, 'user.id', 0);
+        if (! $this->walletServiceRepository->existsWalletOwnedByUser($walletId, $userId)) {
+            throw new RuntimeException('您沒有權限刪除此錢包');
+        }
+
         $updated = $this->walletServiceRepository->deleteWallet($walletId);
 
         return $updated > 0 ? '錢包已成功刪除' : '刪除失敗';
