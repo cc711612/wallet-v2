@@ -37,8 +37,6 @@ if [ ! -s public/frankenphp-worker.php ]; then
   exit 1
 fi
 
-php -r '$_SERVER["FRANKENPHP_WORKER"]=1; function frankenphp_handle_request($cb){return false;} require "/var/www/html/public/frankenphp-worker.php";' >/dev/null
-
 exec php artisan octane:start \
   --server="${OCTANE_SERVER:-frankenphp}" \
   --host=0.0.0.0 \
