@@ -12,6 +12,7 @@ services:
     environment:
       TZ: ${TZ:-Asia/Taipei}
       CONTAINER_ROLE: web
+      APP_BASE_PATH: /var/www/html
     volumes:
       - ${PROJECT_PATH}:/var/www/html
       - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
@@ -35,6 +36,7 @@ services:
     environment:
       TZ: ${TZ:-Asia/Taipei}
       CONTAINER_ROLE: worker
+      APP_BASE_PATH: /var/www/html
     volumes:
       - ${PROJECT_PATH}:/var/www/html
       - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
