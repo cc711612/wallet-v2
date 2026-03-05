@@ -2,6 +2,7 @@
 set -e
 
 cd /var/www/html
+export APP_BASE_PATH="${APP_BASE_PATH:-/var/www/html}"
 
 if [ ! -f vendor/autoload.php ]; then
   echo "[web] vendor/ 不存在，執行 composer install..."
@@ -18,25 +19,25 @@ if [ ! -f vendor/laravel/octane/src/Commands/StartCommand.php ]; then
   exit 1
 fi
 
-if [ ! -f public/bootstrap.php ] || [ ! -f public/frankenphp-worker.php ]; then
-  echo "[web] 缺少 Octane worker 檔案，嘗試執行 octane:install --server=frankenphp"
-  php artisan octane:install --server=frankenphp --no-interaction
-fi
-
-if [ ! -f public/bootstrap.php ] && [ -f vendor/laravel/octane/bin/bootstrap.php ]; then
-  echo "[web] 從 vendor 複製 public/bootstrap.php"
+if [ -f vendor/laravel/octane/bin/bootstrap.php ]; then
   cp vendor/laravel/octane/bin/bootstrap.php public/bootstrap.php
 fi
 
-if [ ! -f public/frankenphp-worker.php ] && [ -f vendor/laravel/octane/bin/frankenphp-worker.php ]; then
-  echo "[web] 從 vendor 複製 public/frankenphp-worker.php"
+if [ -f vendor/laravel/octane/bin/frankenphp-worker.php ]; then
   cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
+fi
+
+if [ ! -f public/bootstrap.php ] || [ ! -f public/frankenphp-worker.php ]; then
+  echo "[web] 缺少 Octane worker 檔案，嘗試執行 octane:install --server=frankenphp"
+  php artisan octane:install --server=frankenphp --no-interaction
 fi
 
 if [ ! -s public/frankenphp-worker.php ]; then
   echo "[web] public/frankenphp-worker.php 不存在或為空檔"
   exit 1
 fi
+
+php -r '$_SERVER["FRANKENPHP_WORKER"]=1; function frankenphp_handle_request($cb){return false;} require "/var/www/html/public/frankenphp-worker.php";' >/dev/null
 
 exec php artisan octane:start \
   --server="${OCTANE_SERVER:-frankenphp}" \
