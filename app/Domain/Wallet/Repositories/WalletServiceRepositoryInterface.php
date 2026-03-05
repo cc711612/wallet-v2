@@ -82,6 +82,8 @@ interface WalletServiceRepositoryInterface
      */
     public function bindWalletUser(int $walletUserId, int $userId): bool;
 
+    public function existsWalletOwnedByUser(int $walletId, int $userId): bool;
+
     /**
      * 更新帳本成員時間戳。
      *

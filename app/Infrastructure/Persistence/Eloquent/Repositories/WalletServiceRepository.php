@@ -208,6 +208,19 @@ class WalletServiceRepository implements WalletServiceRepositoryInterface
     }
 
     /**
+     * @param  int  $walletId
+     * @param  int  $userId
+     * @return bool
+     */
+    public function existsWalletOwnedByUser(int $walletId, int $userId): bool
+    {
+        return WalletEntity::query()
+            ->where('id', $walletId)
+            ->where('user_id', $userId)
+            ->exists();
+    }
+
+    /**
      * 更新帳本成員時間戳。
      *
      * @param  int  $walletId

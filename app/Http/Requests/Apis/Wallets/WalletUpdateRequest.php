@@ -8,6 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class WalletUpdateRequest extends FormRequest
 {
+    /**
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
@@ -22,6 +25,20 @@ class WalletUpdateRequest extends FormRequest
             'title' => ['required', 'string'],
             'mode' => ['sometimes', 'in:single,multi,couple'],
             'status' => ['sometimes', 'boolean'],
+            'user' => ['required', 'array'],
+            'user.id' => ['required', 'integer', 'exists:users,id'],
         ];
+    }
+
+    /**
+     * @return void
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->user) {
+            $this->merge([
+                'user' => $this->user,
+            ]);
+        }
     }
 }

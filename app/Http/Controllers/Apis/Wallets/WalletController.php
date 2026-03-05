@@ -19,25 +19,29 @@ use RuntimeException;
 class WalletController extends ApiController
 {
     /**
+     * @param  WalletService  $walletService
+     * @return void
+     */
+    public function __construct(private WalletService $walletService) {}
+
+    /**
      * 帳本列表。
      *
      * @param  Request  $request
-     * @param  WalletService  $walletService
      * @return JsonResponse
      */
-    public function index(Request $request, WalletService $walletService): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return $this->response()->success(new WalletIndexResource($walletService->index($request->all())));
+        return $this->response()->success(new WalletIndexResource($this->walletService->index($request->all())));
     }
 
     /**
      * 綁定訪客帳本。
      *
      * @param  WalletBindRequest  $request
-     * @param  WalletService  $walletService
      * @return JsonResponse
      */
-    public function bind(WalletBindRequest $request, WalletService $walletService): JsonResponse
+    public function bind(WalletBindRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
@@ -45,7 +49,7 @@ class WalletController extends ApiController
                 'user' => (array) $request->input('user', []),
             ]);
 
-            $message = $walletService->bind($payload);
+            $message = $this->walletService->bind($payload);
 
             return $this->response()->success(null, $message);
         } catch (RuntimeException $exception) {
@@ -57,14 +61,16 @@ class WalletController extends ApiController
      * 建立帳本。
      *
      * @param  WalletStoreRequest  $request
-     * @param  WalletService  $walletService
      * @return JsonResponse
      */
-    public function store(WalletStoreRequest $request, WalletService $walletService): JsonResponse
+    public function store(WalletStoreRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $payload = array_merge($validated, [
+            'user' => (array) $request->input('user', []),
+        ]);
 
-        return $this->response()->success(new WalletStoreResource($walletService->store($validated)));
+        return $this->response()->success(new WalletStoreResource($this->walletService->store($payload)));
     }
 
     /**
@@ -72,14 +78,16 @@ class WalletController extends ApiController
      *
      * @param  WalletUpdateRequest  $request
      * @param  int  $wallet
-     * @param  WalletService  $walletService
      * @return JsonResponse
      */
-    public function update(WalletUpdateRequest $request, int $wallet, WalletService $walletService): JsonResponse
+    public function update(WalletUpdateRequest $request, int $wallet): JsonResponse
     {
         $validated = $request->validated();
+        $payload = array_merge($validated, [
+            'user' => (array) $request->input('user', []),
+        ]);
 
-        $walletService->update($wallet, $validated);
+        $this->walletService->update($wallet, $payload);
 
         return $this->response()->success();
     }
@@ -87,13 +95,14 @@ class WalletController extends ApiController
     /**
      * 刪除帳本。
      *
+     * @param  Request  $request
      * @param  int  $wallet
-     * @param  WalletService  $walletService
      * @return JsonResponse
      */
-    public function destroy(int $wallet, WalletService $walletService): JsonResponse
+    public function destroy(Request $request, int $wallet): JsonResponse
     {
-        $message = $walletService->destroy($wallet);
+        $payload = ['user' => (array) $request->input('user', [])];
+        $message = $this->walletService->destroy($wallet, $payload);
 
         return $this->response()->success(null, $message);
     }
@@ -102,11 +111,10 @@ class WalletController extends ApiController
      * 帳本計算結果。
      *
      * @param  int  $wallet
-     * @param  WalletService  $walletService
      * @return JsonResponse
      */
-    public function calculation(int $wallet, WalletService $walletService): JsonResponse
+    public function calculation(int $wallet): JsonResponse
     {
-        return $this->response()->success(new WalletCalculationResource($walletService->calculation($wallet)));
+        return $this->response()->success(new WalletCalculationResource($this->walletService->calculation($wallet)));
     }
 }

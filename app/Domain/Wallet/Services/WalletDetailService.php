@@ -15,6 +15,8 @@ use RuntimeException;
 class WalletDetailService
 {
     /**
+     * @param  WalletDetailRepositoryInterface  $walletDetailRepository
+     * @param  WalletDetailQueryRepositoryInterface  $walletDetailQueryRepository
      * @return void
      */
     public function __construct(
@@ -23,6 +25,9 @@ class WalletDetailService
     ) {}
 
     /**
+     * 建立帳本明細。
+     *
+     * @param  WalletDetail  $walletDetail
      * @return array<string, mixed>
      */
     public function create(WalletDetail $walletDetail): array
@@ -34,6 +39,11 @@ class WalletDetailService
     }
 
     /**
+     * 取得帳本明細列表。
+     *
+     * @param  int  $walletId
+     * @param  bool|null  $isPersonal
+     * @param  int|null  $walletUserId
      * @return array<string, mixed>
      */
     public function index(int $walletId, ?bool $isPersonal = null, ?int $walletUserId = null): array
@@ -108,6 +118,10 @@ class WalletDetailService
     }
 
     /**
+     * 取得單筆帳本明細。
+     *
+     * @param  int  $walletId
+     * @param  int  $detailId
      * @return array<string, mixed>
      */
     public function show(int $walletId, int $detailId): array
@@ -125,6 +139,13 @@ class WalletDetailService
         ];
     }
 
+    /**
+     * 更新帳本明細。
+     *
+     * @param  WalletDetail  $walletDetail
+     * @param  int  $detailId
+     * @return void
+     */
     public function update(WalletDetail $walletDetail, int $detailId): void
     {
         $this->guardPublicExpenseNotNegative($walletDetail);
@@ -149,28 +170,65 @@ class WalletDetailService
         ]);
     }
 
-    public function destroy(int $walletId, int $detailId): void
+    /**
+     * 刪除帳本明細（建立者或 admin 才可刪除）。
+     *
+     * @param  int  $walletId
+     * @param  int  $detailId
+     * @param  int  $walletUserId
+     * @param  bool  $isAdmin
+     * @return void
+     */
+    public function destroy(int $walletId, int $detailId, int $walletUserId, bool $isAdmin): void
     {
+        $detail = $this->walletDetailQueryRepository->findDetail($walletId, $detailId);
+        if ($detail === null) {
+            throw new RuntimeException('參數有誤');
+        }
+
+        if (! $isAdmin && (int) ($detail['created_by'] ?? 0) !== $walletUserId) {
+            throw new RuntimeException('非admin');
+        }
+
         $this->walletDetailQueryRepository->deleteDetail($walletId, $detailId);
     }
 
     /**
+     * 結帳帳本明細。
+     *
+     * @param  int  $walletId
      * @param  array<int, int>  $detailIds
+     * @param  int  $walletUserId
+     * @return void
      */
-    public function checkout(int $walletId, array $detailIds): void
+    public function checkout(int $walletId, array $detailIds, int $walletUserId): void
     {
         if ($detailIds === []) {
             return;
         }
 
-        $this->walletDetailQueryRepository->checkout($walletId, $detailIds);
+        $this->walletDetailQueryRepository->checkout($walletId, $detailIds, $walletUserId);
     }
 
-    public function uncheckout(int $walletId, string $checkoutAt): void
+    /**
+     * 取消結帳帳本明細。
+     *
+     * @param  int  $walletId
+     * @param  string  $checkoutAt
+     * @param  int  $walletUserId
+     * @return void
+     */
+    public function uncheckout(int $walletId, string $checkoutAt, int $walletUserId): void
     {
-        $this->walletDetailQueryRepository->uncheckout($walletId, $checkoutAt);
+        $this->walletDetailQueryRepository->uncheckout($walletId, $checkoutAt, $walletUserId);
     }
 
+    /**
+     * 檢查公費扣款後不可為負數。
+     *
+     * @param  WalletDetail  $walletDetail
+     * @return void
+     */
     private function guardPublicExpenseNotNegative(WalletDetail $walletDetail): void
     {
         if (
@@ -187,6 +245,12 @@ class WalletDetailService
         }
     }
 
+    /**
+     * 檢查分攤成員皆屬於帳本成員。
+     *
+     * @param  WalletDetail  $walletDetail
+     * @return void
+     */
     private function guardWalletUsersValid(WalletDetail $walletDetail): void
     {
         if ($walletDetail->type() === WalletDetailType::PUBLIC_EXPENSE->value || $walletDetail->selectAll()) {
