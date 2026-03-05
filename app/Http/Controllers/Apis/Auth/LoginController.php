@@ -19,7 +19,16 @@ class LoginController extends ApiController
         try {
             $validated = $request->validated();
 
-            return $this->response()->success(new AuthLoginResource($authService->login($validated)));
+            $payload = array_merge($validated, [
+                'type' => $request->input('type'),
+                'jwt_token' => (string) ($request->bearerToken() ?? ''),
+                'users' => [
+                    'ip' => (string) $request->ip(),
+                    'agent' => (string) ($request->userAgent() ?? ''),
+                ],
+            ]);
+
+            return $this->response()->success(new AuthLoginResource($authService->login($payload)));
         } catch (Throwable $exception) {
             report($exception);
 
