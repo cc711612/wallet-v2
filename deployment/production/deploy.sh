@@ -21,9 +21,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-info()    { echo -e "${GREEN}[deploy]${NC} $*"; }
-warning() { echo -e "${YELLOW}[deploy]${NC} $*"; }
-error()   { echo -e "${RED}[deploy]${NC} $*"; exit 1; }
+info()    { printf "%b\n" "${GREEN}[deploy]${NC} $*"; }
+warning() { printf "%b\n" "${YELLOW}[deploy]${NC} $*"; }
+error()   { printf "%b\n" "${RED}[deploy]${NC} $*"; exit 1; }
 
 confirm() {
     local prompt="$1"
@@ -155,5 +155,8 @@ case "${1:-}" in
     rebuild)  do_rebuild_image ;;
     clean)    do_full_redeploy ;;
     "")       run_menu ;;
-    *)        error "未知指令: $1\n用法: $0 [deploy|cache|reload|migrate|restart|rebuild|clean]" ;;
+    *)
+        warning "用法: $0 [deploy|cache|reload|migrate|restart|rebuild|clean]"
+        error "未知指令: $1"
+        ;;
 esac

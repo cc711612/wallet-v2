@@ -18,9 +18,24 @@ if [ ! -f vendor/laravel/octane/src/Commands/StartCommand.php ]; then
   exit 1
 fi
 
-if [ ! -f public/frankenphp-worker.php ]; then
-  echo "[web] 缺少 public/frankenphp-worker.php，嘗試執行 octane:install --server=frankenphp"
-  php artisan octane:install --server=frankenphp --no-interaction || true
+if [ ! -f public/bootstrap.php ] || [ ! -f public/frankenphp-worker.php ]; then
+  echo "[web] 缺少 Octane worker 檔案，嘗試執行 octane:install --server=frankenphp"
+  php artisan octane:install --server=frankenphp --no-interaction
+fi
+
+if [ ! -f public/bootstrap.php ] && [ -f vendor/laravel/octane/bin/bootstrap.php ]; then
+  echo "[web] 從 vendor 複製 public/bootstrap.php"
+  cp vendor/laravel/octane/bin/bootstrap.php public/bootstrap.php
+fi
+
+if [ ! -f public/frankenphp-worker.php ] && [ -f vendor/laravel/octane/bin/frankenphp-worker.php ]; then
+  echo "[web] 從 vendor 複製 public/frankenphp-worker.php"
+  cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
+fi
+
+if ! grep -q "frankenphp_handle_request" public/frankenphp-worker.php; then
+  echo "[web] public/frankenphp-worker.php 異常（缺少 frankenphp_handle_request）"
+  exit 1
 fi
 
 exec php artisan octane:start \
