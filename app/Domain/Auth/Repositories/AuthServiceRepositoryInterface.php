@@ -42,6 +42,30 @@ interface AuthServiceRepositoryInterface
     public function findWalletById(int $walletId): ?array;
 
     /**
+     * @param  int  $userId
+     * @return array<string, mixed>|null
+     */
+    public function findLatestOwnedWalletByUserId(int $userId): ?array;
+
+    /**
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function listWalletUsersByUserId(int $userId): array;
+
+    /**
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function listActiveDevicesByUserId(int $userId): array;
+
+    /**
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function listNotifiesByUserId(int $userId): array;
+
+    /**
      * @param  string  $account
      * @return bool
      * Check whether account already exists.

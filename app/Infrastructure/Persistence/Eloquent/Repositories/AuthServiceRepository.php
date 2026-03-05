@@ -6,6 +6,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Repositories;
 
 use App\Domain\Auth\Entities\UserEntity;
 use App\Domain\Auth\Repositories\AuthServiceRepositoryInterface;
+use App\Domain\Device\Entities\DeviceEntity;
 use App\Domain\Wallet\Entities\WalletEntity;
 use App\Domain\Wallet\Entities\WalletUserEntity;
 
@@ -86,6 +87,119 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
         $wallet = WalletEntity::query()->where('id', $walletId)->first(['id', 'code']);
 
         return $wallet?->toArray();
+    }
+
+    /**
+     * @param  int  $userId
+     * @return array<string, mixed>|null
+     */
+    public function findLatestOwnedWalletByUserId(int $userId): ?array
+    {
+        $wallet = WalletEntity::query()
+            ->where('user_id', $userId)
+            ->orderByDesc('updated_at')
+            ->first(['id', 'code']);
+
+        return $wallet?->toArray();
+    }
+
+    /**
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function listWalletUsersByUserId(int $userId): array
+    {
+        return WalletUserEntity::query()
+            ->where('user_id', $userId)
+            ->orderBy('id')
+            ->get([
+                'id',
+                'wallet_id',
+                'user_id',
+                'name',
+                'token',
+                'is_admin',
+                'notify_enable',
+                'agent',
+                'ip',
+                'created_at',
+                'updated_at',
+            ])
+            ->map(static fn (WalletUserEntity $item): array => [
+                'id' => (int) $item->id,
+                'wallet_id' => (int) $item->wallet_id,
+                'user_id' => $item->user_id === null ? null : (int) $item->user_id,
+                'name' => (string) $item->name,
+                'token' => (string) ($item->token ?? ''),
+                'is_admin' => (int) ($item->is_admin ?? 0),
+                'notify_enable' => (int) ($item->notify_enable ?? 0),
+                'agent' => (string) ($item->agent ?? ''),
+                'ip' => (string) ($item->ip ?? ''),
+                'created_at' => (string) $item->created_at,
+                'updated_at' => (string) $item->updated_at,
+            ])
+            ->all();
+    }
+
+    /**
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function listActiveDevicesByUserId(int $userId): array
+    {
+        return DeviceEntity::query()
+            ->where('user_id', $userId)
+            ->where('expired_at', '>', now())
+            ->orderByDesc('updated_at')
+            ->get([
+                'id',
+                'user_id',
+                'wallet_user_id',
+                'platform',
+                'device_name',
+                'device_type',
+                'fcm_token',
+                'expired_at',
+                'created_at',
+                'updated_at',
+            ])
+            ->map(static fn (DeviceEntity $item): array => [
+                'id' => (int) $item->id,
+                'user_id' => $item->user_id === null ? null : (int) $item->user_id,
+                'wallet_user_id' => $item->wallet_user_id === null ? null : (int) $item->wallet_user_id,
+                'platform' => (string) ($item->platform ?? ''),
+                'device_name' => (string) ($item->device_name ?? ''),
+                'device_type' => (string) ($item->device_type ?? ''),
+                'fcm_token' => (string) ($item->fcm_token ?? ''),
+                'expired_at' => (string) ($item->expired_at ?? ''),
+                'created_at' => (string) $item->created_at,
+                'updated_at' => (string) $item->updated_at,
+            ])
+            ->all();
+    }
+
+    /**
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function listNotifiesByUserId(int $userId): array
+    {
+        return WalletUserEntity::query()
+            ->with(['wallet:id,code'])
+            ->where('user_id', $userId)
+            ->orderBy('id')
+            ->get(['id', 'name', 'wallet_id', 'notify_enable'])
+            ->map(static fn (WalletUserEntity $item): array => [
+                'id' => (int) $item->id,
+                'name' => (string) $item->name,
+                'wallet_id' => (int) $item->wallet_id,
+                'notify_enable' => (int) ($item->notify_enable ?? 0),
+                'wallets' => [
+                    'id' => $item->wallet ? (int) $item->wallet->id : null,
+                    'code' => $item->wallet ? (string) $item->wallet->code : null,
+                ],
+            ])
+            ->all();
     }
 
     /**
