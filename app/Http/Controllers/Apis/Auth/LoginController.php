@@ -14,6 +14,13 @@ use Throwable;
 
 class LoginController extends ApiController
 {
+    /**
+     * 一般帳密登入。
+     *
+     * @param  LoginRequest  $request
+     * @param  AuthService  $authService
+     * @return JsonResponse
+     */
     public function login(LoginRequest $request, AuthService $authService): JsonResponse
     {
         try {
@@ -36,6 +43,12 @@ class LoginController extends ApiController
         }
     }
 
+    /**
+     * 保活快取檢查。
+     *
+     * @param  AuthService  $authService
+     * @return JsonResponse
+     */
     public function cache(AuthService $authService): JsonResponse
     {
         return response()->json([
@@ -46,12 +59,19 @@ class LoginController extends ApiController
         ]);
     }
 
+    /**
+     * 第三方登入。
+     *
+     * @param  ThirdPartyLoginRequest  $request
+     * @param  AuthService  $authService
+     * @return JsonResponse
+     */
     public function thirdPartyLogin(ThirdPartyLoginRequest $request, AuthService $authService): JsonResponse
     {
         try {
             $validated = $request->validated();
 
-            return $this->response()->success(new AuthLoginResource($authService->login($validated)));
+            return $this->response()->success(new AuthLoginResource($authService->thirdPartyLogin($validated)));
         } catch (Throwable $exception) {
             report($exception);
 

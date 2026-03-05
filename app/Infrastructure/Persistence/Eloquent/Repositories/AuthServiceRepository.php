@@ -13,25 +13,16 @@ use App\Domain\Wallet\Entities\WalletUserEntity;
 class AuthServiceRepository implements AuthServiceRepositoryInterface
 {
     /**
-     * @param  string  $account
+     * 統一查詢使用者並補出 hidden 欄位。
+     *
+     * @param  array<int, string>  $columns
+     * @param  string  $field
+     * @param  int|string  $value
      * @return array<string, mixed>|null
      */
-    public function findUserByAccount(string $account): ?array
+    private function findUser(array $columns, string $field, int|string $value): ?array
     {
-        $user = UserEntity::query()
-            ->where('account', $account)
-            ->first([
-                'id',
-                'name',
-                'account',
-                'password',
-                'token',
-                'agent',
-                'ip',
-                'created_at',
-                'updated_at',
-            ]);
-
+        $user = UserEntity::query()->where($field, $value)->first($columns);
         if ($user === null) {
             return null;
         }
@@ -42,10 +33,53 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 依帳號取得使用者資料。
+     *
+     * @param  string  $account
+     * @return array<string, mixed>|null
+     */
+    public function findUserByAccount(string $account): ?array
+    {
+        return $this->findUser([
+            'id',
+            'name',
+            'account',
+            'password',
+            'token',
+            'agent',
+            'ip',
+            'created_at',
+            'updated_at',
+        ], 'account', $account);
+    }
+
+    /**
+     * 依使用者 ID 取得使用者資料。
+     *
+     * @param  int  $userId
+     * @return array<string, mixed>|null
+     */
+    public function findUserById(int $userId): ?array
+    {
+        return $this->findUser([
+            'id',
+            'name',
+            'account',
+            'password',
+            'token',
+            'agent',
+            'ip',
+            'created_at',
+            'updated_at',
+        ], 'id', $userId);
+    }
+
+    /**
+     * 更新登入 token（member_token）。
+     *
      * @param  int  $userId
      * @param  string  $token
      * @return void
-     * Rotate member token after login/logout.
      */
     public function updateUserToken(int $userId, string $token): void
     {
@@ -53,11 +87,12 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 更新使用者登入裝置資訊。
+     *
      * @param  int  $userId
      * @param  string  $agent
      * @param  string  $ip
      * @return void
-     * Update login client metadata from auth request.
      */
     public function updateUserAgentIp(int $userId, string $agent, string $ip): void
     {
@@ -68,6 +103,8 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 取得使用者最新一筆帳本成員資料。
+     *
      * @param  int  $userId
      * @return array<string, mixed>|null
      */
@@ -79,6 +116,8 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 取得指定帳本摘要資料。
+     *
      * @param  int  $walletId
      * @return array<string, mixed>|null
      */
@@ -90,6 +129,8 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 取得使用者擁有的最新帳本。
+     *
      * @param  int  $userId
      * @return array<string, mixed>|null
      */
@@ -104,6 +145,8 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 取得使用者可見的帳本成員清單。
+     *
      * @param  int  $userId
      * @return array<int, array<string, mixed>>
      */
@@ -124,6 +167,7 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
                 'ip',
                 'created_at',
                 'updated_at',
+                'deleted_at',
             ])
             ->map(static fn (WalletUserEntity $item): array => [
                 'id' => (int) $item->id,
@@ -131,17 +175,20 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
                 'user_id' => $item->user_id === null ? null : (int) $item->user_id,
                 'name' => (string) $item->name,
                 'token' => (string) ($item->token ?? ''),
-                'is_admin' => (int) ($item->is_admin ?? 0),
-                'notify_enable' => (int) ($item->notify_enable ?? 0),
+                'is_admin' => (bool) ($item->is_admin ?? false),
+                'notify_enable' => (bool) ($item->notify_enable ?? false),
                 'agent' => (string) ($item->agent ?? ''),
                 'ip' => (string) ($item->ip ?? ''),
                 'created_at' => (string) $item->created_at,
                 'updated_at' => (string) $item->updated_at,
+                'deleted_at' => $item->deleted_at ? (string) $item->deleted_at : null,
             ])
             ->all();
     }
 
     /**
+     * 取得使用者有效裝置清單。
+     *
      * @param  int  $userId
      * @return array<int, array<string, mixed>>
      */
@@ -162,6 +209,7 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
                 'expired_at',
                 'created_at',
                 'updated_at',
+                'deleted_at',
             ])
             ->map(static fn (DeviceEntity $item): array => [
                 'id' => (int) $item->id,
@@ -174,11 +222,14 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
                 'expired_at' => (string) ($item->expired_at ?? ''),
                 'created_at' => (string) $item->created_at,
                 'updated_at' => (string) $item->updated_at,
+                'deleted_at' => $item->deleted_at ? (string) $item->deleted_at : null,
             ])
             ->all();
     }
 
     /**
+     * 取得使用者通知設定清單。
+     *
      * @param  int  $userId
      * @return array<int, array<string, mixed>>
      */
@@ -193,7 +244,7 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
                 'id' => (int) $item->id,
                 'name' => (string) $item->name,
                 'wallet_id' => (int) $item->wallet_id,
-                'notify_enable' => (int) ($item->notify_enable ?? 0),
+                'notify_enable' => (bool) ($item->notify_enable ?? false),
                 'wallets' => [
                     'id' => $item->wallet ? (int) $item->wallet->id : null,
                     'code' => $item->wallet ? (string) $item->wallet->code : null,
@@ -203,9 +254,10 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 檢查帳號是否已存在。
+     *
      * @param  string  $account
      * @return bool
-     * Check whether account already exists.
      */
     public function accountExists(string $account): bool
     {
@@ -213,6 +265,8 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 建立使用者資料。
+     *
      * @param  array<string, mixed>  $attributes
      * @return int
      */
@@ -224,6 +278,8 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 依帳本成員 ID 取得資料。
+     *
      * @param  int  $walletUserId
      * @return array<string, mixed>|null
      */
@@ -235,10 +291,11 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 檢查使用者是否已綁定到指定帳本。
+     *
      * @param  int  $walletId
      * @param  int  $userId
      * @return bool
-     * Determine whether user already has a wallet member row.
      */
     public function walletUserExistsByWalletAndUser(int $walletId, int $userId): bool
     {
@@ -249,12 +306,13 @@ class AuthServiceRepository implements AuthServiceRepositoryInterface
     }
 
     /**
+     * 將邀請中的帳本成員綁定到正式使用者。
+     *
      * @param  int  $walletUserId
      * @param  int  $userId
      * @param  string  $agent
      * @param  string  $ip
      * @return bool
-     * Bind invited wallet member row to current user.
      */
     public function bindWalletUser(int $walletUserId, int $userId, string $agent, string $ip): bool
     {

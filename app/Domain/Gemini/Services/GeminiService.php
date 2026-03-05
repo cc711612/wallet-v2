@@ -6,7 +6,7 @@ namespace App\Domain\Gemini\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Throwable;
+use RuntimeException;
 
 class GeminiService
 {
@@ -18,6 +18,11 @@ class GeminiService
 
     private string $defaultModel;
 
+    /**
+     * 初始化 Gemini API 設定。
+     *
+     * @return void
+     */
     public function __construct()
     {
         $this->apiKey = (string) config('services.gemini.api_key', '');
@@ -27,104 +32,80 @@ class GeminiService
     }
 
     /**
+     * 文字生成。
+     *
+     * @param  string  $prompt
+     * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
     public function generate(string $prompt, array $options = []): array
     {
-        try {
-            $model = (string) ($options['model'] ?? $this->defaultModel);
-            $payload = [
-                'contents' => [[
-                    'role' => 'user',
-                    'parts' => [['text' => $prompt]],
-                ]],
-            ];
+        $model = (string) ($options['model'] ?? $this->defaultModel);
+        $payload = [
+            'contents' => [[
+                'role' => 'user',
+                'parts' => [['text' => $prompt]],
+            ]],
+        ];
 
-            if (isset($options['generationConfig']) && is_array($options['generationConfig'])) {
-                $payload['generationConfig'] = $options['generationConfig'];
-            }
-
-            $response = $this->requestGemini('POST', "/{$this->apiVersion}/models/{$model}:generateContent", $payload);
-            $text = (string) data_get($response, 'candidates.0.content.parts.0.text', '');
-
-            return [
-                'success' => true,
-                'text' => $text,
-                'raw_response' => $response,
-            ];
-        } catch (Throwable $exception) {
-            return [
-                'success' => false,
-                'text' => '',
-                'raw_response' => ['error' => $exception->getMessage()],
-            ];
+        if (isset($options['generationConfig']) && is_array($options['generationConfig'])) {
+            $payload['generationConfig'] = $options['generationConfig'];
         }
+
+        return $this->requestGemini('POST', "/{$this->apiVersion}/models/{$model}:generateContent", $payload);
     }
 
     /**
+     * 多輪對話生成。
+     *
      * @param  array<int, array<string, string>>  $messages
+     * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
     public function chat(array $messages, array $options = []): array
     {
-        try {
-            $model = (string) ($options['model'] ?? $this->defaultModel);
+        $model = (string) ($options['model'] ?? $this->defaultModel);
 
-            $contents = array_map(static fn (array $message): array => [
-                'role' => (string) ($message['role'] ?? 'user'),
-                'parts' => [['text' => (string) ($message['content'] ?? '')]],
-            ], $messages);
+        $contents = array_map(static fn (array $message): array => [
+            'role' => (string) ($message['role'] ?? 'user'),
+            'parts' => [['text' => (string) ($message['content'] ?? '')]],
+        ], $messages);
 
-            $payload = [
-                'contents' => $contents,
-            ];
+        $payload = [
+            'contents' => $contents,
+        ];
 
-            if (isset($options['generationConfig']) && is_array($options['generationConfig'])) {
-                $payload['generationConfig'] = $options['generationConfig'];
-            }
-
-            $response = $this->requestGemini('POST', "/{$this->apiVersion}/models/{$model}:generateContent", $payload);
-            $text = (string) data_get($response, 'candidates.0.content.parts.0.text', '');
-
-            return [
-                'success' => true,
-                'text' => $text,
-                'raw_response' => $response,
-            ];
-        } catch (Throwable $exception) {
-            return [
-                'success' => false,
-                'text' => '',
-                'raw_response' => ['error' => $exception->getMessage()],
-            ];
+        if (isset($options['generationConfig']) && is_array($options['generationConfig'])) {
+            $payload['generationConfig'] = $options['generationConfig'];
         }
+
+        return $this->requestGemini('POST', "/{$this->apiVersion}/models/{$model}:generateContent", $payload);
     }
 
     /**
-     * @return array<int, array<string, string>>
+     * 取得可用模型列表（含快取）。
+     *
+     * @return array<string, mixed>
      */
-    public function models(): array
+    public function listModels(): array
     {
-        if ($this->apiKey === '') {
-            return [];
-        }
-
-        return Cache::remember('gemini_models', now()->addMinutes(30), function (): array {
-            $response = $this->requestGemini('GET', "/{$this->apiVersion}/models");
-            $models = data_get($response, 'models', []);
-
-            return is_array($models) ? $models : [];
+        return Cache::remember('gemini_models_response', now()->addMinutes(30), function (): array {
+            return $this->requestGemini('GET', "/{$this->apiVersion}/models");
         });
     }
 
     /**
+     * 統一 Gemini HTTP 呼叫。
+     *
+     * @param  string  $method
+     * @param  string  $path
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function requestGemini(string $method, string $path, array $payload = []): array
     {
         if ($this->apiKey === '') {
-            return [];
+            throw new RuntimeException('Gemini API key is not configured');
         }
 
         $url = $this->baseUrl.$path;
@@ -134,11 +115,17 @@ class GeminiService
             : $request->post($url.'?key='.$this->apiKey, $payload);
 
         if (! $response->successful()) {
-            return [];
+            $message = (string) data_get($response->json(), 'error.message', 'Gemini API request failed');
+
+            throw new RuntimeException($message);
         }
 
         $json = $response->json();
 
-        return is_array($json) ? $json : [];
+        if (! is_array($json)) {
+            throw new RuntimeException('Gemini API returned invalid response');
+        }
+
+        return $json;
     }
 }

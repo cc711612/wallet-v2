@@ -6,15 +6,19 @@ namespace App\Domain\Wallet\Services;
 
 use App\Domain\Wallet\Repositories\WalletServiceRepositoryInterface;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class WalletService
 {
     /**
+     * @param  WalletServiceRepositoryInterface  $walletServiceRepository
      * @return void
      */
     public function __construct(private WalletServiceRepositoryInterface $walletServiceRepository) {}
 
     /**
+     * 帳本列表。
+     *
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
@@ -24,6 +28,8 @@ class WalletService
     }
 
     /**
+     * 建立帳本與擁有者。
+     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
@@ -64,6 +70,9 @@ class WalletService
     }
 
     /**
+     * 更新帳本資料。
+     *
+     * @param  int  $walletId
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
@@ -84,6 +93,12 @@ class WalletService
         return ['wallet_id' => $walletId, 'updated' => true, 'title' => (string) ($payload['title'] ?? '')];
     }
 
+    /**
+     * 刪除帳本。
+     *
+     * @param  int  $walletId
+     * @return string
+     */
     public function destroy(int $walletId): string
     {
         $updated = $this->walletServiceRepository->deleteWallet($walletId);
@@ -92,24 +107,47 @@ class WalletService
     }
 
     /**
+     * 綁定訪客帳本成員到目前使用者。
+     *
      * @param  array<string, mixed>  $payload
+     * @return string
      */
     public function bind(array $payload): string
     {
         $code = (string) ($payload['code'] ?? '');
         $name = (string) ($payload['name'] ?? '');
+        $userId = (int) data_get($payload, 'user.id', 0);
 
         $wallet = $this->walletServiceRepository->findWalletByCode($code);
         if ($wallet === null) {
-            return '綁定失敗';
+            throw new RuntimeException('此帳簿不存在');
         }
 
-        $updated = $this->walletServiceRepository->touchWalletUserByName((int) $wallet['id'], $name);
+        $walletId = (int) ($wallet['id'] ?? 0);
+        $walletUser = $this->walletServiceRepository->findWalletUserByName($walletId, $name);
+        if ($walletUser === null || $userId <= 0) {
+            throw new RuntimeException('系統錯誤');
+        }
 
-        return $updated > 0 ? '綁定成功' : '綁定失敗';
+        if (
+            (int) ($walletUser['user_id'] ?? 0) > 0
+            || $this->walletServiceRepository->walletUserExistsByWalletAndUser($walletId, $userId)
+        ) {
+            throw new RuntimeException('已被綁定或是有重複的帳本使用者');
+        }
+
+        $bound = $this->walletServiceRepository->bindWalletUser((int) ($walletUser['id'] ?? 0), $userId);
+        if (! $bound) {
+            throw new RuntimeException('已被綁定或是有重複的帳本使用者');
+        }
+
+        return '綁定成功';
     }
 
     /**
+     * 計算帳本統計資料。
+     *
+     * @param  int  $walletId
      * @return array<string, mixed>
      */
     public function calculation(int $walletId): array

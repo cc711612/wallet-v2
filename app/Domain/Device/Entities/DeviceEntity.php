@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Device\Entities;
 
+use App\Domain\Auth\Entities\UserEntity;
+use App\Domain\Wallet\Entities\WalletUserEntity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeviceEntity extends Model
@@ -24,4 +27,24 @@ class DeviceEntity extends Model
         'fcm_token',
         'expired_at',
     ];
+
+    /**
+     * 所屬使用者。
+     *
+     * @return BelongsTo<UserEntity, DeviceEntity>
+     */
+    public function users(): BelongsTo
+    {
+        return $this->belongsTo(UserEntity::class);
+    }
+
+    /**
+     * 所屬帳本成員。
+     *
+     * @return BelongsTo<WalletUserEntity, DeviceEntity>
+     */
+    public function walletUsers(): BelongsTo
+    {
+        return $this->belongsTo(WalletUserEntity::class, 'wallet_user_id');
+    }
 }
