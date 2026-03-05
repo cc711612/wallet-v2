@@ -36,14 +36,14 @@ class WalletDetailService
     /**
      * @return array<string, mixed>
      */
-    public function index(int $walletId, bool $isPersonal = false): array
+    public function index(int $walletId, ?bool $isPersonal = null, ?int $walletUserId = null): array
     {
         $wallet = $this->walletDetailQueryRepository->findWallet($walletId);
         if ($wallet === null) {
             throw new RuntimeException('系統錯誤，請重新整理');
         }
 
-        $details = $this->walletDetailQueryRepository->listDetails($walletId, $isPersonal);
+        $details = $this->walletDetailQueryRepository->listDetails($walletId, $isPersonal, $walletUserId);
         $walletUsers = $this->walletDetailQueryRepository->listWalletUsers($walletId);
         $walletUserIds = array_values(array_map(static fn (array $walletUser): int => (int) ($walletUser['id'] ?? 0), $walletUsers));
 

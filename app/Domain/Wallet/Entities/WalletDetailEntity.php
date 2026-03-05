@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Wallet\Entities;
 
+use App\Domain\Option\Entities\CategoryEntity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -60,6 +61,14 @@ class WalletDetailEntity extends Model
     public function wallet(): BelongsTo
     {
         return $this->belongsTo(WalletEntity::class, 'wallet_id');
+    }
+
+    /**
+     * @return BelongsTo<CategoryEntity, WalletDetailEntity>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(CategoryEntity::class, 'category_id');
     }
 
     public function splitRows(): HasMany

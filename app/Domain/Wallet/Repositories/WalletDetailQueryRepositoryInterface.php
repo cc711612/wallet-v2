@@ -9,7 +9,7 @@ interface WalletDetailQueryRepositoryInterface
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function listDetails(int $walletId, bool $isPersonal): array;
+    public function listDetails(int $walletId, ?bool $isPersonal, ?int $walletUserId = null): array;
 
     /**
      * @return array<int, array<string, mixed>>
