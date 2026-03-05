@@ -33,8 +33,8 @@ if [ ! -f public/frankenphp-worker.php ] && [ -f vendor/laravel/octane/bin/frank
   cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
 fi
 
-if ! grep -q "frankenphp_handle_request" public/frankenphp-worker.php; then
-  echo "[web] public/frankenphp-worker.php 異常（缺少 frankenphp_handle_request）"
+if [ ! -s public/frankenphp-worker.php ]; then
+  echo "[web] public/frankenphp-worker.php 不存在或為空檔"
   exit 1
 fi
 

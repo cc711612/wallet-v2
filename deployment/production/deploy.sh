@@ -127,6 +127,7 @@ run_menu() {
     while true; do
         show_menu
         read -r choice
+        choice="${choice//[[:space:]]/}"
         case "$choice" in
             1) do_deploy ;;
             2) do_cache ;;
