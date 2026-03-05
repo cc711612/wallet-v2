@@ -4,7 +4,10 @@ ini_set('display_errors', 'stderr');
 
 $_ENV['APP_RUNNING_IN_CONSOLE'] = false;
 
-$basePath = $_SERVER['APP_BASE_PATH'] ?? $_ENV['APP_BASE_PATH'] ?? $serverState['octaneConfig']['base_path'] ?? null;
+$basePath = $_SERVER['APP_BASE_PATH']
+    ?? $_ENV['APP_BASE_PATH']
+    ?? $serverState['octaneConfig']['base_path']
+    ?? '/var/www/html';
 
 if (! is_string($basePath)) {
     echo 'Cannot find application base path.';

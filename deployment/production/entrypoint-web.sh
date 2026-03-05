@@ -19,11 +19,11 @@ if [ ! -f vendor/laravel/octane/src/Commands/StartCommand.php ]; then
   exit 1
 fi
 
-if [ -f vendor/laravel/octane/bin/bootstrap.php ]; then
+if [ ! -f public/bootstrap.php ] && [ -f vendor/laravel/octane/bin/bootstrap.php ]; then
   cp vendor/laravel/octane/bin/bootstrap.php public/bootstrap.php
 fi
 
-if [ -f vendor/laravel/octane/bin/frankenphp-worker.php ]; then
+if [ ! -f public/frankenphp-worker.php ] && [ -f vendor/laravel/octane/bin/frankenphp-worker.php ]; then
   cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
 fi
 
