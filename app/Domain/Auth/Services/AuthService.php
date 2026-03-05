@@ -7,6 +7,7 @@ namespace App\Domain\Auth\Services;
 use App\Domain\Auth\Repositories\AuthServiceRepositoryInterface;
 use App\Support\JwtTokenService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -15,6 +16,8 @@ use RuntimeException;
 class AuthService
 {
     /**
+     * @param  AuthServiceRepositoryInterface  $authServiceRepository
+     * @param  JwtTokenService  $jwtTokenService
      * @return void
      */
     public function __construct(
@@ -23,6 +26,8 @@ class AuthService
     ) {}
 
     /**
+     * 帳密登入。
+     *
      * @param  array<string, mixed>  $credentials
      * @return array<string, mixed>
      */
@@ -50,27 +55,45 @@ class AuthService
             );
         }
 
-        $wallet = $this->authServiceRepository->findLatestOwnedWalletByUserId((int) $user['id']);
-        $walletUsers = $this->authServiceRepository->listWalletUsersByUserId((int) $user['id']);
-        $devices = $this->authServiceRepository->listActiveDevicesByUserId((int) $user['id']);
-        $notifies = $this->authServiceRepository->listNotifiesByUserId((int) $user['id']);
-
-        return [
-            'id' => (int) $user['id'],
-            'name' => (string) $user['name'],
-            'member_token' => $token,
-            'jwt' => $this->jwtTokenService->makeUserJwt($user),
-            'wallet' => [
-                'id' => $wallet ? (int) ($wallet['id'] ?? 0) : null,
-                'code' => $wallet ? (string) ($wallet['code'] ?? '') : null,
-            ],
-            'walletUsers' => $walletUsers,
-            'devices' => $devices,
-            'notifies' => $notifies,
-        ];
+        return $this->buildLoginResponse($user, $token);
     }
 
     /**
+     * 第三方登入。
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public function thirdPartyLogin(array $payload): array
+    {
+        $provider = (string) ($payload['provider'] ?? '');
+        $token = (string) ($payload['token'] ?? '');
+        $cacheKey = sprintf('auth.thirdParty.%s.%s', $provider, $token);
+        $socialEntity = Cache::get($cacheKey);
+
+        $userId = $this->resolveThirdPartyUserId($socialEntity);
+        if ($userId <= 0) {
+            throw new RuntimeException('登入失敗');
+        }
+
+        $user = $this->authServiceRepository->findUserById($userId);
+        if ($user === null) {
+            throw new RuntimeException('登入失敗');
+        }
+
+        $memberToken = Str::random(64);
+        $this->authServiceRepository->updateUserToken($userId, $memberToken);
+
+        $agent = (string) data_get($payload, 'users.agent', '');
+        $ip = (string) data_get($payload, 'users.ip', '');
+        $this->authServiceRepository->updateUserAgentIp($userId, $agent, $ip);
+
+        return $this->buildLoginResponse($user, $memberToken);
+    }
+
+    /**
+     * 綁定邀請中的帳本成員。
+     *
      * @param  int  $userId
      * @param  string  $jwtToken
      * @param  string  $agent
@@ -113,6 +136,8 @@ class AuthService
     }
 
     /**
+     * 解析 JWT payload。
+     *
      * @param  string  $jwt
      * @return array<string, mixed>
      */
@@ -141,6 +166,56 @@ class AuthService
     }
 
     /**
+     * 從第三方登入快取資料中解析使用者 ID。
+     *
+     * @param  mixed  $socialEntity
+     * @return int
+     */
+    private function resolveThirdPartyUserId(mixed $socialEntity): int
+    {
+        if (is_object($socialEntity) && method_exists($socialEntity, 'users')) {
+            $user = $socialEntity->users()->first();
+
+            return $user ? (int) ($user->id ?? 0) : 0;
+        }
+
+        if (is_array($socialEntity)) {
+            return (int) data_get($socialEntity, 'user.id', data_get($socialEntity, 'user_id', 0));
+        }
+
+        return 0;
+    }
+
+    /**
+     * 建立登入回應資料。
+     *
+     * @param  array<string, mixed>  $user
+     * @param  string  $memberToken
+     * @return array<string, mixed>
+     */
+    private function buildLoginResponse(array $user, string $memberToken): array
+    {
+        $userId = (int) ($user['id'] ?? 0);
+        $wallet = $this->authServiceRepository->findLatestOwnedWalletByUserId($userId);
+
+        return [
+            'id' => $userId,
+            'name' => (string) ($user['name'] ?? ''),
+            'member_token' => $memberToken,
+            'jwt' => $this->jwtTokenService->makeUserJwt($user),
+            'wallet' => [
+                'id' => $wallet ? (int) ($wallet['id'] ?? 0) : null,
+                'code' => $wallet ? (string) ($wallet['code'] ?? '') : null,
+            ],
+            'walletUsers' => $this->authServiceRepository->listWalletUsersByUserId($userId),
+            'devices' => $this->authServiceRepository->listActiveDevicesByUserId($userId),
+            'notifies' => $this->authServiceRepository->listNotifiesByUserId($userId),
+        ];
+    }
+
+    /**
+     * 註冊。
+     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
@@ -184,6 +259,8 @@ class AuthService
     }
 
     /**
+     * auth/cache API 回傳資料。
+     *
      * @return array<int, mixed>
      */
     public function cache(): array
@@ -192,6 +269,8 @@ class AuthService
     }
 
     /**
+     * 登出。
+     *
      * @param  Request  $request
      * @return array<string, mixed>
      */

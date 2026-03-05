@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Wallet\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WalletDetailSplitEntity extends Model
@@ -21,4 +22,24 @@ class WalletDetailSplitEntity extends Model
         'unit',
         'value',
     ];
+
+    /**
+     * 關聯帳本成員。
+     *
+     * @return BelongsTo<WalletUserEntity, WalletDetailSplitEntity>
+     */
+    public function wallet_users(): BelongsTo
+    {
+        return $this->belongsTo(WalletUserEntity::class, 'wallet_user_id', 'id');
+    }
+
+    /**
+     * 關聯帳本明細。
+     *
+     * @return BelongsTo<WalletDetailEntity, WalletDetailSplitEntity>
+     */
+    public function wallet_details(): BelongsTo
+    {
+        return $this->belongsTo(WalletDetailEntity::class, 'wallet_detail_id', 'id');
+    }
 }
