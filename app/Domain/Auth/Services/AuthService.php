@@ -50,10 +50,10 @@ class AuthService
             );
         }
 
-        $walletUser = $this->authServiceRepository->findLatestWalletUserByUserId((int) $user['id']);
-
-        $walletId = $walletUser ? (int) ($walletUser['wallet_id'] ?? 0) : 0;
-        $wallet = $walletId > 0 ? $this->authServiceRepository->findWalletById($walletId) : null;
+        $wallet = $this->authServiceRepository->findLatestOwnedWalletByUserId((int) $user['id']);
+        $walletUsers = $this->authServiceRepository->listWalletUsersByUserId((int) $user['id']);
+        $devices = $this->authServiceRepository->listActiveDevicesByUserId((int) $user['id']);
+        $notifies = $this->authServiceRepository->listNotifiesByUserId((int) $user['id']);
 
         return [
             'id' => (int) $user['id'],
@@ -64,9 +64,9 @@ class AuthService
                 'id' => $wallet ? (int) ($wallet['id'] ?? 0) : null,
                 'code' => $wallet ? (string) ($wallet['code'] ?? '') : null,
             ],
-            'walletUsers' => $walletUser ? [$walletUser] : [],
-            'devices' => [],
-            'notifies' => [],
+            'walletUsers' => $walletUsers,
+            'devices' => $devices,
+            'notifies' => $notifies,
         ];
     }
 

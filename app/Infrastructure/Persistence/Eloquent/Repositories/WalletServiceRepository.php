@@ -58,8 +58,12 @@ class WalletServiceRepository implements WalletServiceRepositoryInterface
         $wallets = collect($paginator->items())
             ->map(static function (WalletEntity $wallet): array {
                 $properties = is_array($wallet->properties) ? $wallet->properties : [];
-                if ($properties === []) {
-                    $properties = ['unitConfigurable' => false, 'decimalPlaces' => 0];
+                if (! array_key_exists('unitConfigurable', $properties)) {
+                    $properties['unitConfigurable'] = false;
+                }
+
+                if (! array_key_exists('decimalPlaces', $properties)) {
+                    $properties['decimalPlaces'] = 0;
                 }
 
                 return [
@@ -74,8 +78,8 @@ class WalletServiceRepository implements WalletServiceRepositoryInterface
                         'id' => $wallet->user ? (int) $wallet->user->id : null,
                         'name' => $wallet->user ? (string) $wallet->user->name : null,
                     ],
-                    'updated_at' => (string) $wallet->updated_at,
-                    'created_at' => (string) $wallet->created_at,
+                    'updated_at' => $wallet->updated_at?->format('Y-m-d H:i:s') ?? '',
+                    'created_at' => $wallet->created_at?->format('Y-m-d H:i:s') ?? '',
                 ];
             })
             ->values()

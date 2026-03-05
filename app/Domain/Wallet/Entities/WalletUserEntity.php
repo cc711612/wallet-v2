@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Wallet\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WalletUserEntity extends Model
@@ -31,4 +32,12 @@ class WalletUserEntity extends Model
         'is_admin' => 'integer',
         'notify_enable' => 'integer',
     ];
+
+    /**
+     * @return BelongsTo<WalletEntity, WalletUserEntity>
+     */
+    public function wallet(): BelongsTo
+    {
+        return $this->belongsTo(WalletEntity::class, 'wallet_id');
+    }
 }
