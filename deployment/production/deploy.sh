@@ -14,6 +14,7 @@ PROJECT_NAME=$(grep -E '^PROJECT_NAME=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | 
 PROJECT_NAME="${PROJECT_NAME:-wallet-v2}"
 
 WEB_CONTAINER="${PROJECT_NAME}-web"
+WORKER_CONTAINER="${PROJECT_NAME}-worker"
 COMPOSE_CMD="docker compose --env-file $ENV_FILE -f $SCRIPT_DIR/docker-compose.yml"
 
 GREEN='\033[0;32m'
@@ -41,6 +42,12 @@ ensure_container_running() {
     fi
 }
 
+ensure_worker_running() {
+    if ! docker ps --format '{{.Names}}' | grep -q "^${WORKER_CONTAINER}$"; then
+        error "容器 ${WORKER_CONTAINER} 未啟動，請先執行 rebuild 或 restart"
+    fi
+}
+
 # ─── 動作定義 ────────────────────────────────────────────────
 
 do_cache() {
@@ -64,6 +71,15 @@ do_octane_reload() {
     info "Reload Octane workers (graceful)..."
     docker exec "$WEB_CONTAINER" php artisan octane:reload
     info "Octane reload 完成"
+}
+
+do_worker_supervisor_reload() {
+    ensure_worker_running
+    info "Reload worker supervisor programs..."
+    docker exec "$WORKER_CONTAINER" supervisorctl reread
+    docker exec "$WORKER_CONTAINER" supervisorctl update
+    docker exec "$WORKER_CONTAINER" supervisorctl restart all
+    info "Worker supervisor reload 完成"
 }
 
 do_restart_containers() {
@@ -98,9 +114,10 @@ do_full_redeploy() {
 }
 
 do_deploy() {
-    info "執行標準部署流程 (cache + octane reload)..."
+    info "執行標準部署流程 (cache + octane reload + worker supervisor reload)..."
     do_cache
     do_octane_reload
+    do_worker_supervisor_reload
     info "部署完成"
 }
 
@@ -111,7 +128,7 @@ show_menu() {
     echo "=============================="
     echo "  wallet-v2 部署工具"
     echo "=============================="
-    echo "  1) 標準部署        (cache + octane reload)"
+    echo "  1) 標準部署        (cache + octane reload + worker reload)"
     echo "  2) 重新 cache      (config / route / view)"
     echo "  3) Octane reload   (graceful，不中斷服務)"
     echo "  4) 執行 migrate"
