@@ -14,7 +14,12 @@ use Illuminate\Support\Facades\Http;
 
 class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 {
-
+    /**
+     * 啟動 LINE loading 動畫。
+     *
+     * @param  string  $lineUserId
+     * @return void
+     */
     public function startLoading(string $lineUserId): void
     {
         $token = (string) config('bot.line.access_token', '');
@@ -30,6 +35,13 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ]);
     }
 
+    /**
+     * 回覆純文字訊息。
+     *
+     * @param  string  $replyToken
+     * @param  string  $message
+     * @return void
+     */
     public function replyText(string $replyToken, string $message): void
     {
         $token = (string) config('bot.line.access_token', '');
@@ -48,6 +60,66 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ]);
     }
 
+    /**
+     * 回覆 Confirm Template 訊息。
+     *
+     * @param  string  $replyToken
+     * @param  string  $altText
+     * @param  string  $promptText
+     * @param  string  $confirmLabel
+     * @param  string  $confirmText
+     * @param  string  $rejectLabel
+     * @param  string  $rejectText
+     * @return void
+     */
+    public function replyConfirmTemplate(
+        string $replyToken,
+        string $altText,
+        string $promptText,
+        string $confirmLabel,
+        string $confirmText,
+        string $rejectLabel,
+        string $rejectText
+    ): void {
+        $token = (string) config('bot.line.access_token', '');
+        if ($token === '' || $replyToken === '') {
+            return;
+        }
+
+        Http::timeout(10)
+            ->withToken($token)
+            ->post('https://api.line.me/v2/bot/message/reply', [
+                'replyToken' => $replyToken,
+                'messages' => [[
+                    'type' => 'template',
+                    'altText' => $altText,
+                    'template' => [
+                        'type' => 'confirm',
+                        'text' => $promptText,
+                        'actions' => [
+                            [
+                                'type' => 'message',
+                                'label' => $confirmLabel,
+                                'text' => $confirmText,
+                            ],
+                            [
+                                'type' => 'message',
+                                'label' => $rejectLabel,
+                                'text' => $rejectText,
+                            ],
+                        ],
+                    ],
+                ]],
+            ]);
+    }
+
+    /**
+     * 主動推播純文字訊息。
+     *
+     * @param  string  $lineUserId
+     * @param  string  $message
+     * @return void
+     */
     public function pushText(string $lineUserId, string $message): void
     {
         $token = (string) config('bot.line.access_token', '');
@@ -66,6 +138,12 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ]);
     }
 
+    /**
+     * 依 LINE userId 查詢系統 userId。
+     *
+     * @param  string  $lineUserId
+     * @return int|null
+     */
     public function findUserIdByLineUserId(string $lineUserId): ?int
     {
         $social = SocialEntity::query()
@@ -83,6 +161,12 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
         return $social->users->first()->id;
     }
 
+    /**
+     * 取得使用者可存取帳本清單。
+     *
+     * @param  int  $userId
+     * @return array<int, array<string, mixed>>
+     */
     public function listWalletsByUserId(int $userId): array
     {
         $guestWalletIds = WalletUserEntity::query()
@@ -103,6 +187,13 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ->all();
     }
 
+    /**
+     * 以帳本代碼查詢使用者可選擇帳本。
+     *
+     * @param  int  $userId
+     * @param  string  $code
+     * @return array<string, mixed>|null
+     */
     public function findWalletByCodeForUser(int $userId, string $code): ?array
     {
         $wallet = WalletEntity::query()->where('code', $code)->first(['id', 'title', 'code', 'user_id']);
@@ -116,6 +207,13 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
         return $belongsToUser ? $wallet->toArray() : null;
     }
 
+    /**
+     * 更新 LINE social 綁定的帳本 ID。
+     *
+     * @param  string  $lineUserId
+     * @param  int  $walletId
+     * @return void
+     */
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void
     {
         SocialEntity::query()
@@ -124,6 +222,12 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ->update(['wallet_id' => $walletId]);
     }
 
+    /**
+     * 查詢 LINE social 綁定帳本 ID。
+     *
+     * @param  string  $lineUserId
+     * @return int|null
+     */
     public function findSocialWalletIdByLineUserId(string $lineUserId): ?int
     {
         $walletId = SocialEntity::query()
@@ -134,6 +238,12 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
         return $walletId === null ? null : (int) $walletId;
     }
 
+    /**
+     * 依 userIds 查詢已綁定 LINE userIds。
+     *
+     * @param  array<int, int>  $userIds
+     * @return array<int, string>
+     */
     public function listLineUserIdsByUserIds(array $userIds): array
     {
         if ($userIds === []) {
@@ -155,6 +265,11 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ->all();
     }
 
+    /**
+     * 取得第一筆分類 ID。
+     *
+     * @return int|null
+     */
     public function firstCategoryId(): ?int
     {
         $id = CategoryEntity::query()->orderBy('id')->value('id');
