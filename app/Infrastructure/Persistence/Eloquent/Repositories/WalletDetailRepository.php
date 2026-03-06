@@ -79,6 +79,15 @@ class WalletDetailRepository implements WalletDetailRepositoryInterface
             /** @var array<int, int> $users */
             $users = array_values(array_unique(array_map('intval', $attributes['users'] ?? [])));
 
+            if ((bool) ($attributes['select_all'] ?? false) === true) {
+                $users = WalletUserEntity::query()
+                    ->where('wallet_id', (int) $attributes['wallet_id'])
+                    ->pluck('id')
+                    ->map(static fn ($id): int => (int) $id)
+                    ->values()
+                    ->all();
+            }
+
             /** @var array<int, array{user_id:int, value:float|int}> $splits */
             $splits = is_array($attributes['splits'] ?? null) ? $attributes['splits'] : [];
 
@@ -107,9 +116,7 @@ class WalletDetailRepository implements WalletDetailRepositoryInterface
             $entity = WalletDetailEntity::query()->create($insertPayload);
             $id = (int) $entity->id;
 
-            if ($users !== []) {
-                $entity->users()->sync($users);
-            }
+            $entity->users()->sync($users);
 
             if ($splits !== []) {
                 $splitRows = array_map(

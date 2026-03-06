@@ -218,6 +218,31 @@ class WalletDetailQueryRepository implements WalletDetailQueryRepositoryInterfac
     }
 
     /**
+     * 先清空再同步明細分攤成員。
+     *
+     * @param  int  $walletId
+     * @param  int  $detailId
+     * @param  array<int, int>  $userIds
+     * @return void
+     */
+    public function replaceDetailUsers(int $walletId, int $detailId, array $userIds): void
+    {
+        $detail = WalletDetailEntity::query()
+            ->where('wallet_id', $walletId)
+            ->where('id', $detailId)
+            ->first(['id']);
+
+        if ($detail === null) {
+            return;
+        }
+
+        $normalized = array_values(array_unique(array_map('intval', $userIds)));
+
+        $detail->users()->detach();
+        $detail->users()->sync($normalized);
+    }
+
+    /**
      * 刪除帳本明細。
      *
      * @param  int  $walletId

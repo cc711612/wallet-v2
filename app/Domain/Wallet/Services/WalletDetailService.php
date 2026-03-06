@@ -168,6 +168,17 @@ class WalletDetailService
             'category_id' => $attributes['category_id'],
             'updated_by' => $attributes['updated_by'],
         ]);
+
+        /** @var array<int, int> $users */
+        $users = array_values(array_unique(array_map('intval', (array) ($attributes['users'] ?? []))));
+        if ((bool) ($attributes['select_all'] ?? false) === true) {
+            $users = array_values(array_map(
+                static fn (array $walletUser): int => (int) ($walletUser['id'] ?? 0),
+                $this->walletDetailQueryRepository->listWalletUsers($walletDetail->walletId())
+            ));
+        }
+
+        $this->walletDetailQueryRepository->replaceDetailUsers($walletDetail->walletId(), $detailId, $users);
     }
 
     /**
