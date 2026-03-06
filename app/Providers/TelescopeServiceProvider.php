@@ -20,22 +20,17 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 
         Telescope::filter(function (IncomingEntry $entry) {
             $blockUri = [
-                '/api/auth/cache'
+                '/api/auth/cache',
+                '/up'
             ];
-            $blockHttpStatus = [404, 405, 301, 302];
             $host = request()->getHost();
             
             // 檢查主機是否為 IP 地址
             if (filter_var($host, FILTER_VALIDATE_IP)) {
                 return false;
             }
-
-            if ($entry->type === 'request' && in_array($entry->content['response_status'], $blockHttpStatus)) {
-                return false;
-            }
             
-            return config('telescope.record.enabled')
-                && !in_array(request()->getRequestUri(), $blockUri)
+            return !in_array(request()->getRequestUri(), $blockUri)
                 && request()->method() != 'OPTIONS';
         });
     }
@@ -62,7 +57,6 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewTelescope', function () {
-            dd(1);
             return true;
         });
     }
