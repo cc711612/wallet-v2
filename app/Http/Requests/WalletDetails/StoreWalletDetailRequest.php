@@ -6,8 +6,10 @@ namespace App\Http\Requests\WalletDetails;
 
 use App\Domain\Wallet\Enums\SymbolOperationType;
 use App\Domain\Wallet\Enums\WalletDetailType;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class StoreWalletDetailRequest extends FormRequest
 {
@@ -60,12 +62,19 @@ class StoreWalletDetailRequest extends FormRequest
         /** @var array<string, mixed> $walletUser */
         $walletUser = (array) data_get($this->input('wallet_user', []), (string) $walletId, []);
 
+        $normalizedDate = (string) ($this->input('date') ?: now()->toDateString());
+        try {
+            $normalizedDate = Carbon::parse($normalizedDate)->toDateString();
+        } catch (Throwable) {
+            $normalizedDate = now()->toDateString();
+        }
+
         $this->merge([
             'wallet' => $walletId,
             'wallet_user_id' => (int) ($this->input('wallet_user_id') ?: data_get($walletUser, 'id', 0)),
             'is_personal' => (bool) $this->input('is_personal', false),
             'select_all' => (bool) $this->input('select_all', false),
-            'date' => (string) ($this->input('date') ?: now()->toDateString()),
+            'date' => $normalizedDate,
             'unit' => (string) $this->input('unit', 'TWD'),
             'splits' => (array) $this->input('splits', []),
             'users' => (array) $this->input('users', []),
