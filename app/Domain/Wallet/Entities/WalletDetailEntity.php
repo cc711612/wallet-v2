@@ -46,9 +46,9 @@ class WalletDetailEntity extends Model
 
     /** @var array<int, string> */
     protected $casts = [
-        'splits' => 'array',
-        'select_all' => 'integer',
-        'is_personal' => 'integer',
+        'splits' => 'json',
+        'select_all' => 'boolean',
+        'is_personal' => 'boolean',
     ];
 
     public function users(): BelongsToMany
