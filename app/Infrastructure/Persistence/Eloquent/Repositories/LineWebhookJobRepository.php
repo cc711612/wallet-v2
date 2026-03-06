@@ -6,15 +6,14 @@ namespace App\Infrastructure\Persistence\Eloquent\Repositories;
 
 use App\Domain\Option\Entities\CategoryEntity;
 use App\Domain\Social\Entities\SocialEntity;
+use App\Domain\Social\Enums\SocialTypeEnum;
 use App\Domain\Wallet\Entities\WalletEntity;
 use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 {
-    private const LINE_SOCIAL_TYPE = 1;
 
     public function startLoading(string $lineUserId): void
     {
@@ -70,18 +69,18 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     public function findUserIdByLineUserId(string $lineUserId): ?int
     {
         $social = SocialEntity::query()
-            ->where('social_type', self::LINE_SOCIAL_TYPE)
+            ->where('social_type', SocialTypeEnum::SOCIAL_TYPE_LINE->value)
             ->where('social_type_value', $lineUserId)
+            ->with(['users' => function ($query) {
+                $query->select('users.id');
+            }])
             ->first(['id']);
-        if ($social === null) {
+
+        if ($social === null || $social->users->isEmpty()) {
             return null;
         }
 
-        $userId = DB::table('user_social')
-            ->where('social_id', $social->id)
-            ->value('user_id');
-
-        return $userId === null ? null : (int) $userId;
+        return $social->users->first()->id;
     }
 
     public function listWalletsByUserId(int $userId): array
@@ -120,7 +119,7 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void
     {
         SocialEntity::query()
-            ->where('social_type', self::LINE_SOCIAL_TYPE)
+            ->where('social_type', SocialTypeEnum::SOCIAL_TYPE_LINE->value)
             ->where('social_type_value', $lineUserId)
             ->update(['wallet_id' => $walletId]);
     }
@@ -128,7 +127,7 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     public function findSocialWalletIdByLineUserId(string $lineUserId): ?int
     {
         $walletId = SocialEntity::query()
-            ->where('social_type', self::LINE_SOCIAL_TYPE)
+            ->where('social_type', SocialTypeEnum::SOCIAL_TYPE_LINE->value)
             ->where('social_type_value', $lineUserId)
             ->value('wallet_id');
 
@@ -141,12 +140,16 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             return [];
         }
 
-        return DB::table('socials')
-            ->join('user_social', 'user_social.social_id', '=', 'socials.id')
-            ->whereIn('user_social.user_id', $userIds)
-            ->where('socials.social_type', self::LINE_SOCIAL_TYPE)
-            ->pluck('socials.social_type_value')
-            ->map(static fn ($id): string => (string) $id)
+        return SocialEntity::query()
+            ->where('social_type', SocialTypeEnum::SOCIAL_TYPE_LINE->value)
+            ->whereHas('users', function ($query) use ($userIds) {
+                $query->whereIn('users.id', $userIds);
+            })
+            ->with(['users' => function ($query) use ($userIds) {
+                $query->whereIn('users.id', $userIds)->select('users.id');
+            }])
+            ->get(['social_type_value'])
+            ->map(static fn (SocialEntity $social): string => $social->social_type_value)
             ->filter(static fn (string $id): bool => $id !== '')
             ->values()
             ->all();
