@@ -67,9 +67,11 @@ return [
 
         'daily' => [
             'driver' => 'daily',
+            'tap' => [App\Models\Logging\CustomDailyLogger::class],
+            'formatter' => App\Models\Logging\Formatter\CustomFormatter::class,
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'days' => 14,
             'replace_placeholders' => true,
         ],
 
@@ -127,6 +129,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+    ],
+
+    'extend' => [
+        'prefix' => env('LOG_PREFIX', 'UNKNOWN'),
+        'device_uuid' => null,
+        'request_uuid' => null,
     ],
 
 ];
