@@ -114,6 +114,17 @@ class WalletService
             $updatePayload['status'] = (int) ((bool) $payload['status']);
         }
 
+        if (array_key_exists('unit', $payload)) {
+            $updatePayload['unit'] = (string) $payload['unit'];
+        }
+
+        if (array_key_exists('unitConfigurable', $payload) || array_key_exists('decimalPlaces', $payload)) {
+            $updatePayload['properties'] = [
+                'unitConfigurable' => (bool) data_get($payload, 'unitConfigurable', false),
+                'decimalPlaces' => (int) data_get($payload, 'decimalPlaces', 0),
+            ];
+        }
+
         $this->walletServiceRepository->updateWallet($walletId, $updatePayload);
 
         return ['wallet_id' => $walletId, 'updated' => true, 'title' => (string) ($payload['title'] ?? '')];
