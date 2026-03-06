@@ -46,6 +46,15 @@ interface LineWebhookJobRepositoryInterface
     ): void;
 
     /**
+     * 回覆帳本選擇的 Carousel Template。
+     *
+     * @param  string  $replyToken
+     * @param  array<int, array<string, mixed>>  $wallets
+     * @return void
+     */
+    public function replyWalletSelectionTemplate(string $replyToken, array $wallets): void;
+
+    /**
      * 主動推播純文字訊息。
      *
      * @param  string  $lineUserId
@@ -101,4 +110,19 @@ interface LineWebhookJobRepositoryInterface
      * @return int|null
      */
     public function firstCategoryId(): ?int;
+
+    /**
+     * 取得分類清單（供 AI 提示詞使用）。
+     *
+     * @return array<int, array{id:int,name:string}>
+     */
+    public function listCategories(): array;
+
+    /**
+     * 取得帳本結算摘要（供 LINE 結算訊息使用）。
+     *
+     * @param  int  $walletId
+     * @return array<string, mixed>|null
+     */
+    public function getWalletCalculateSummary(int $walletId): ?array;
 }

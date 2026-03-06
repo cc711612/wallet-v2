@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Webhook\Services;
 
-use App\Domain\Wallet\Services\WalletService;
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
+use App\Domain\Gemini\Services\GeminiService;
 use App\Jobs\CreateWalletDetailJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use RuntimeException;
+use Throwable;
 
 class LineWebhookJobService
 {
@@ -21,7 +23,7 @@ class LineWebhookJobService
      */
     public function __construct(
         private LineWebhookJobRepositoryInterface $lineWebhookJobRepository,
-        private WalletService $walletService,
+        private GeminiService $geminiService,
     ) {}
 
     /**
@@ -135,7 +137,7 @@ class LineWebhookJobService
     {
         $lower = Str::lower($message);
 
-        return Str::startsWith($lower, '/wallets') || (Str::contains($message, '帳本') && Str::contains($message, '列表'));
+        return Str::startsWith($lower, '/wallets') || Str::contains($message, ['帳本', '列表']);
     }
 
     /**
@@ -213,8 +215,7 @@ class LineWebhookJobService
             return;
         }
 
-        $rows = array_map(static fn (array $wallet): string => sprintf('%s (%s)', (string) ($wallet['title'] ?? ''), (string) ($wallet['code'] ?? '')), $wallets);
-        $this->lineWebhookJobRepository->replyText($replyToken, "帳本列表:\n".implode("\n", $rows)."\n\n使用 /selected <代碼> 來選擇帳本");
+        $this->lineWebhookJobRepository->replyWalletSelectionTemplate($replyToken, $wallets);
     }
 
     /**
@@ -268,17 +269,25 @@ class LineWebhookJobService
             return;
         }
 
-        preg_match('/(\d+(?:\.\d+)?)/', $raw, $matches);
-        $amount = isset($matches[1]) ? (int) round((float) $matches[1]) : 0;
-        $title = trim(str_replace((string) ($matches[1] ?? ''), '', $raw));
-        if ($title === '') {
-            $title = $raw;
-        }
-        if ($amount <= 0) {
-            $amount = 1;
+        $categories = $this->lineWebhookJobRepository->listCategories();
+        if ($categories === []) {
+            $this->lineWebhookJobRepository->replyText($replyToken, '目前尚未設定分類，請先建立分類。');
+
+            return;
         }
 
-        $categoryId = $this->lineWebhookJobRepository->firstCategoryId();
+        try {
+            $normalized = $this->normalizeAddCommandByAi($raw, $categories);
+        } catch (RuntimeException $exception) {
+            $this->lineWebhookJobRepository->replyText($replyToken, $exception->getMessage());
+
+            return;
+        }
+
+        $categoryId = (int) data_get($normalized, 'categoryId', 0);
+        $amount = (int) data_get($normalized, 'amount', 0);
+        $title = (string) data_get($normalized, 'title', '');
+        $categoryName = (string) data_get($normalized, 'categoryName', '未知分類');
 
         $pending = [
             'title' => $title,
@@ -297,12 +306,98 @@ class LineWebhookJobService
         $this->lineWebhookJobRepository->replyConfirmTemplate(
             $replyToken,
             '請確認記帳資料',
-            sprintf("已分析記帳資料\n分類ID：%s\n金額：%d\n名稱：%s\n請確認是否正確？", (string) ($categoryId ?? '-'), $amount, $title),
+            sprintf("已分析記帳資料\n分類：%s\n金額：%d\n名稱：%s\n請確認是否正確？", $categoryName, $amount, $title),
             '完全正確',
             '完全正確',
             '錯誤資訊',
             '錯誤資訊'
         );
+    }
+
+    /**
+     * 使用 AI 將使用者輸入正規化為可入庫資料。
+     *
+     * @param  string  $raw
+     * @param  array<int, array{id:int,name:string}>  $categories
+     * @return array{categoryId:int,categoryName:string,amount:int,title:string}
+     */
+    private function normalizeAddCommandByAi(string $raw, array $categories): array
+    {
+        $categoryList = collect($categories)
+            ->map(static fn (array $category): string => sprintf('id=%d,name=%s', $category['id'], $category['name']))
+            ->implode('; ');
+
+        $messages = [[
+            'role' => 'user',
+            'content' => implode("\n", [
+                '你是一個記帳分析助手，請嚴格依照格式回傳，不要有任何多餘說明。',
+                '現在時間：'.now()->format('Y-m-d H:i:s'),
+                '可用分類（請從中選擇最接近的一項）：'.$categoryList,
+                '請分析以下內容，回傳純 JSON（不要 markdown code block）：',
+                '{"categoryId":<數字>,"amount":<整數>,"title":"<名稱>"}',
+                '使用者輸入：'.$raw,
+            ]),
+        ]];
+
+        try {
+            $response = $this->geminiService->chat($messages);
+            $text = $this->extractGeminiText($response);
+        } catch (Throwable) {
+            throw new RuntimeException('AI 服務暫時無法使用，請稍後再試');
+        }
+
+        if ($text === '') {
+            throw new RuntimeException('AI 無回應，請稍後再試');
+        }
+
+        $normalized = trim((string) preg_replace('/```(?:json)?|```/i', '', $text));
+        $parsed = json_decode($normalized, true);
+
+        if (! is_array($parsed)) {
+            throw new RuntimeException('無法解析 AI 回應，請嘗試更明確的描述，例如「午餐 120」。');
+        }
+
+        $categoryId = (int) data_get($parsed, 'categoryId', 0);
+        $amount = (int) round((float) data_get($parsed, 'amount', 0));
+        $title = trim((string) data_get($parsed, 'title', ''));
+
+        if ($categoryId <= 0 || $amount <= 0 || $title === '') {
+            throw new RuntimeException('解析結果不完整，請重新輸入。');
+        }
+
+        $matchedCategory = collect($categories)
+            ->first(static fn (array $category): bool => $category['id'] === $categoryId);
+        $categoryName = is_array($matchedCategory) ? (string) ($matchedCategory['name'] ?? '未知分類') : '未知分類';
+
+        return [
+            'categoryId' => $categoryId,
+            'categoryName' => (string) $categoryName,
+            'amount' => $amount,
+            'title' => $title,
+        ];
+    }
+
+    /**
+     * 從 Gemini 回應取出主要文字內容。
+     *
+     * @param  array<string, mixed>  $response
+     * @return string
+     */
+    private function extractGeminiText(array $response): string
+    {
+        $parts = data_get($response, 'candidates.0.content.parts', []);
+        if (! is_array($parts)) {
+            return '';
+        }
+
+        $text = '';
+        foreach ($parts as $part) {
+            if (is_array($part)) {
+                $text .= (string) ($part['text'] ?? '');
+            }
+        }
+
+        return trim($text);
     }
 
     /**
@@ -370,16 +465,28 @@ class LineWebhookJobService
             return;
         }
 
-        $wallet = $this->walletService->calculation($walletId);
-        $income = (float) data_get($wallet, 'wallet.total.income', 0);
-        $expenses = (float) data_get($wallet, 'wallet.total.expenses', 0);
-        $publicIncome = (float) data_get($wallet, 'wallet.total.public.income', 0);
-        $publicExpenses = (float) data_get($wallet, 'wallet.total.public.expenses', 0);
+        $summary = $this->lineWebhookJobRepository->getWalletCalculateSummary($walletId);
+        if ($summary === null) {
+            $this->lineWebhookJobRepository->replyText($replyToken, '查無此帳本，請重新選擇');
 
-        $this->lineWebhookJobRepository->replyText(
-            $replyToken,
-            "帳本結算:\n收入: {$income}\n支出: {$expenses}\n公費收入: {$publicIncome}\n公費支出: {$publicExpenses}",
-        );
+            return;
+        }
+
+        $messages = [];
+        $messages[] = '帳本名稱: '.(string) data_get($summary, 'title', '');
+        $messages[] = '公費總支出金額: '.(float) data_get($summary, 'public_expense_total', 0);
+
+        /** @var array<int, array<string, mixed>> $members */
+        $members = (array) data_get($summary, 'members', []);
+        foreach ($members as $member) {
+            $messages[] = '帳本成員: '.(string) data_get($member, 'name', '');
+            $messages[] = '帳本成員總代墊金額: '.(float) data_get($member, 'payment_total', 0);
+        }
+
+        $messages[] = '總支出金額: '.(float) data_get($summary, 'total', 0);
+        $messages[] = '結算時間: '.now()->format('Y-m-d H:i:s');
+
+        $this->lineWebhookJobRepository->replyText($replyToken, implode("\r\n", $messages));
     }
 
     /**
