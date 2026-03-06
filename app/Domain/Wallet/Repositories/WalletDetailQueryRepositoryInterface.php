@@ -52,6 +52,16 @@ interface WalletDetailQueryRepositoryInterface
     public function updateDetail(int $walletId, int $detailId, array $attributes): void;
 
     /**
+     * 先清空再同步明細分攤成員。
+     *
+     * @param  int  $walletId
+     * @param  int  $detailId
+     * @param  array<int, int>  $userIds
+     * @return void
+     */
+    public function replaceDetailUsers(int $walletId, int $detailId, array $userIds): void;
+
+    /**
      * 刪除帳本明細。
      *
      * @param  int  $walletId
