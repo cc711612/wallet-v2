@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\Webhook\Services;
 
-use App\Domain\Wallet\Services\WalletService;
+use App\Domain\Gemini\Services\GeminiService;
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
 use App\Domain\Webhook\Services\LineWebhookJobService;
 use App\Jobs\CreateWalletDetailJob;
@@ -32,14 +32,14 @@ class LineWebhookJobServiceTest extends TestCase
             ['id' => 64, 'title' => 'Trip', 'code' => 'TRIP01'],
         ];
 
-        $walletService = Mockery::mock(WalletService::class);
-        $service = new LineWebhookJobService($repo, $walletService);
+        $geminiService = Mockery::mock(GeminiService::class);
+        $service = new LineWebhookJobService($repo, $geminiService);
 
         $service->relayWebhook($this->eventPayload('/wallets', 'U1', 'r1'));
 
-        $this->assertCount(1, $repo->replies);
-        $this->assertStringContainsString('帳本列表', $repo->replies[0]['message']);
-        $this->assertStringContainsString('ABC123', $repo->replies[0]['message']);
+        $this->assertCount(1, $repo->walletSelectionReplies);
+        $this->assertSame('r1', $repo->walletSelectionReplies[0]['replyToken']);
+        $this->assertSame('ABC123', $repo->walletSelectionReplies[0]['wallets'][0]['code']);
     }
 
     public function test_selected_command_updates_connected_wallet(): void
@@ -49,8 +49,8 @@ class LineWebhookJobServiceTest extends TestCase
         $repo->lineUserToUserId['U2'] = 2;
         $repo->walletByCodeAndUser['2:ABC123'] = ['id' => 63, 'title' => '2026.03', 'code' => 'ABC123'];
 
-        $walletService = Mockery::mock(WalletService::class);
-        $service = new LineWebhookJobService($repo, $walletService);
+        $geminiService = Mockery::mock(GeminiService::class);
+        $service = new LineWebhookJobService($repo, $geminiService);
 
         $service->relayWebhook($this->eventPayload('/selected ABC123', 'U2', 'r2'));
 
@@ -67,15 +67,85 @@ class LineWebhookJobServiceTest extends TestCase
         $repo = new FakeLineWebhookJobRepository;
         $repo->lineUserToUserId['U3'] = 3;
         $repo->socialWalletIdByLineUser['U3'] = 63;
-        $repo->firstCategoryId = 9;
+        $repo->categories = [
+            ['id' => 9, 'name' => '餐飲'],
+        ];
 
-        $walletService = Mockery::mock(WalletService::class);
-        $service = new LineWebhookJobService($repo, $walletService);
+        $geminiService = Mockery::mock(GeminiService::class);
+        $geminiService
+            ->shouldReceive('chat')
+            ->once()
+            ->andReturn([
+                'candidates' => [[
+                    'content' => [
+                        'parts' => [['text' => '{"categoryId":9,"amount":120,"title":"午餐"}']],
+                    ],
+                ]],
+            ]);
+
+        $service = new LineWebhookJobService($repo, $geminiService);
 
         $service->relayWebhook($this->eventPayload('add 午餐 120', 'U3', 'r3'));
 
+        Bus::assertNotDispatched(CreateWalletDetailJob::class);
+        $this->assertCount(1, $repo->confirmTemplateReplies);
+        $this->assertTrue(Cache::has('line_add_pending_U3'));
+    }
+
+    public function test_confirm_add_command_dispatches_wallet_detail_job(): void
+    {
+        Bus::fake();
+        Cache::flush();
+
+        $repo = new FakeLineWebhookJobRepository;
+        $repo->lineUserToUserId['U5'] = 5;
+
+        Cache::put('line_add_pending_U5', [
+            'userId' => 5,
+            'walletId' => 63,
+            'payload' => [
+                'title' => '午餐',
+                'amount' => 120,
+                'categoryId' => 9,
+                'unit' => 'TWD',
+                'date' => '2026-03-08',
+            ],
+        ], now()->addMinutes(5));
+
+        $geminiService = Mockery::mock(GeminiService::class);
+        $service = new LineWebhookJobService($repo, $geminiService);
+
+        $service->relayWebhook($this->eventPayload('完全正確 :午餐', 'U5', 'r5'));
+
         Bus::assertDispatched(CreateWalletDetailJob::class);
+        $this->assertCount(1, $repo->replies);
         $this->assertStringContainsString('已新增記帳', $repo->replies[0]['message']);
+        $this->assertFalse(Cache::has('line_add_pending_U5'));
+    }
+
+    public function test_reject_add_command_clears_pending_cache_without_dispatch(): void
+    {
+        Bus::fake();
+        Cache::flush();
+
+        $repo = new FakeLineWebhookJobRepository;
+        $repo->lineUserToUserId['U6'] = 6;
+
+        Cache::put('line_add_pending_U6', [
+            'userId' => 6,
+            'walletId' => 63,
+            'payload' => ['title' => '晚餐', 'amount' => 150],
+        ], now()->addMinutes(5));
+
+        $geminiService = Mockery::mock(GeminiService::class);
+        $service = new LineWebhookJobService($repo, $geminiService);
+
+        $service->relayWebhook($this->eventPayload('錯誤資訊 :晚餐', 'U6', 'r6'));
+
+        Bus::assertNotDispatched(CreateWalletDetailJob::class);
+        $this->assertCount(1, $repo->replies);
+        $this->assertStringContainsString('已取消本次新增', $repo->replies[0]['message']);
+        $this->assertFalse(Cache::has('line_add_pending_U6'));
     }
 
     public function test_calculate_command_replies_wallet_totals(): void
@@ -85,29 +155,39 @@ class LineWebhookJobServiceTest extends TestCase
 
         $repo = new FakeLineWebhookJobRepository;
         $repo->lineUserToUserId['U4'] = 4;
-
-        $walletService = Mockery::mock(WalletService::class);
-        $walletService
-            ->shouldReceive('calculation')
-            ->once()
-            ->with(63)
-            ->andReturn([
-                'wallet' => [
-                    'total' => [
-                        'income' => 1000,
-                        'expenses' => 700,
-                        'public' => ['income' => 500, 'expenses' => 300],
-                    ],
+        $repo->walletCalculateSummaryByWalletId[63] = [
+            'title' => '2026.03',
+            'public_expense_total' => 300,
+            'members' => [
+                ['name' => 'Roy', 'payment_total' => 120],
+            ],
+            'total' => 700,
+            'analysis' => [
+                'expense_count' => 8,
+                'average_expense' => 87.5,
+                'recent_30_days_total' => 680,
+                'top_payer_name' => 'Roy',
+                'top_payer_total' => 320,
+                'top_category_name' => '餐飲',
+                'top_category_total' => 420,
+                'max_expense' => [
+                    'title' => '聚餐',
+                    'value' => 280,
+                    'date' => '2026-03-07',
                 ],
-            ]);
+            ],
+        ];
 
-        $service = new LineWebhookJobService($repo, $walletService);
+        $geminiService = Mockery::mock(GeminiService::class);
+        $service = new LineWebhookJobService($repo, $geminiService);
         $service->relayWebhook($this->eventPayload('/calculate', 'U4', 'r4'));
 
         $this->assertCount(1, $repo->replies);
-        $this->assertStringContainsString('帳本結算', $repo->replies[0]['message']);
-        $this->assertStringContainsString('收入: 1000', $repo->replies[0]['message']);
-        $this->assertStringContainsString('支出: 700', $repo->replies[0]['message']);
+        $this->assertStringContainsString('帳本名稱: 2026.03', $repo->replies[0]['message']);
+        $this->assertStringContainsString('公費總支出金額: 300', $repo->replies[0]['message']);
+        $this->assertStringContainsString('總支出金額: 700', $repo->replies[0]['message']);
+        $this->assertStringContainsString('支出筆數: 8', $repo->replies[0]['message']);
+        $this->assertStringContainsString('最高支出分類: 餐飲 / 420', $repo->replies[0]['message']);
     }
 
     /**
@@ -142,13 +222,23 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /** @var array<string, int> */
     public array $socialWalletIdByLineUser = [];
 
-    public ?int $firstCategoryId = 1;
+    /** @var array<int, array{id:int,name:string}> */
+    public array $categories = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $walletCalculateSummaryByWalletId = [];
 
     /** @var array<int, array<string, string>> */
     public array $replies = [];
 
     /** @var array<int, array<string, string>> */
     public array $pushes = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $confirmTemplateReplies = [];
+
+    /** @var array<int, array<string, mixed>> */
+    public array $walletSelectionReplies = [];
 
     public function startLoading(string $lineUserId): void {}
 
@@ -160,6 +250,34 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     public function pushText(string $lineUserId, string $message): void
     {
         $this->pushes[] = ['lineUserId' => $lineUserId, 'message' => $message];
+    }
+
+    public function replyConfirmTemplate(
+        string $replyToken,
+        string $altText,
+        string $promptText,
+        string $confirmLabel,
+        string $confirmText,
+        string $rejectLabel,
+        string $rejectText
+    ): void {
+        $this->confirmTemplateReplies[] = [
+            'replyToken' => $replyToken,
+            'altText' => $altText,
+            'promptText' => $promptText,
+            'confirmLabel' => $confirmLabel,
+            'confirmText' => $confirmText,
+            'rejectLabel' => $rejectLabel,
+            'rejectText' => $rejectText,
+        ];
+    }
+
+    public function replyWalletSelectionTemplate(string $replyToken, array $wallets): void
+    {
+        $this->walletSelectionReplies[] = [
+            'replyToken' => $replyToken,
+            'wallets' => $wallets,
+        ];
     }
 
     public function findUserIdByLineUserId(string $lineUserId): ?int
@@ -195,6 +313,16 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     public function firstCategoryId(): ?int
     {
-        return $this->firstCategoryId;
+        return $this->categories[0]['id'] ?? null;
+    }
+
+    public function listCategories(): array
+    {
+        return $this->categories;
+    }
+
+    public function getWalletCalculateSummary(int $walletId): ?array
+    {
+        return $this->walletCalculateSummaryByWalletId[$walletId] ?? null;
     }
 }
