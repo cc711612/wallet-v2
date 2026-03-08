@@ -484,6 +484,33 @@ class LineWebhookJobService
         }
 
         $messages[] = '總支出金額: '.(float) data_get($summary, 'total', 0);
+
+        /** @var array<string, mixed> $analysis */
+        $analysis = (array) data_get($summary, 'analysis', []);
+        if ($analysis !== []) {
+            $messages[] = '--- 帳本明細分析 ---';
+            $messages[] = '支出筆數: '.(int) data_get($analysis, 'expense_count', 0);
+            $messages[] = '平均每筆支出: '.(float) data_get($analysis, 'average_expense', 0);
+            $messages[] = '近 30 天支出: '.(float) data_get($analysis, 'recent_30_days_total', 0);
+
+            $topCategoryName = (string) data_get($analysis, 'top_category_name', '');
+            if ($topCategoryName !== '') {
+                $messages[] = '最高支出分類: '.$topCategoryName.' / '.(float) data_get($analysis, 'top_category_total', 0);
+            }
+
+            $topPayerName = (string) data_get($analysis, 'top_payer_name', '');
+            if ($topPayerName !== '') {
+                $messages[] = '最高代墊成員: '.$topPayerName.' / '.(float) data_get($analysis, 'top_payer_total', 0);
+            }
+
+            $maxExpense = (array) data_get($analysis, 'max_expense', []);
+            if ($maxExpense !== []) {
+                $messages[] = '最大單筆: '.(string) data_get($maxExpense, 'title', '')
+                    .' / '.(float) data_get($maxExpense, 'value', 0)
+                    .' / '.(string) data_get($maxExpense, 'date', '');
+            }
+        }
+
         $messages[] = '結算時間: '.now()->format('Y-m-d H:i:s');
 
         $this->lineWebhookJobRepository->replyText($replyToken, implode("\r\n", $messages));

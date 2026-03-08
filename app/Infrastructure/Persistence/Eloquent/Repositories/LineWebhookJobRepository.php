@@ -12,6 +12,7 @@ use App\Domain\Wallet\Enums\SymbolOperationType;
 use App\Domain\Wallet\Enums\WalletDetailType;
 use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
 class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
@@ -359,7 +360,8 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     {
         $wallet = WalletEntity::query()
             ->with([
-                'wallet_details:id,wallet_id,type,payment_wallet_user_id,symbol_operation_type_id,value',
+                'wallet_details:id,wallet_id,category_id,type,payment_wallet_user_id,title,symbol_operation_type_id,value,date',
+                'wallet_details.category:id,name',
                 'wallet_users:id,wallet_id,name',
             ])
             ->where('id', $walletId)
@@ -371,6 +373,7 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
         $walletDetails = $wallet->wallet_details;
         $walletUsers = $wallet->wallet_users;
+        $expenseDetails = $walletDetails->where('symbol_operation_type_id', SymbolOperationType::DECREMENT->value)->values();
 
         $publicExpense = (float) $walletDetails
             ->where('type', WalletDetailType::PUBLIC_EXPENSE->value)
@@ -397,11 +400,62 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
             ];
         }
 
+        $expenseCount = $expenseDetails->count();
+        $averageExpense = $expenseCount > 0 ? round($expenseDetails->sum('value') / $expenseCount, 2) : 0.0;
+        $topPayer = collect($memberRows)
+            ->sortByDesc('payment_total')
+            ->first();
+
+        $topCategory = $expenseDetails
+            ->groupBy('category_id')
+            ->map(function ($details): array {
+                $first = $details->first();
+
+                return [
+                    'name' => (string) data_get($first, 'category.name', '未分類'),
+                    'total' => (float) $details->sum('value'),
+                ];
+            })
+            ->sortByDesc('total')
+            ->first();
+
+        $maxExpenseDetail = $expenseDetails->sortByDesc('value')->first();
+        $maxExpense = [
+            'title' => (string) data_get($maxExpenseDetail, 'title', ''),
+            'value' => (float) data_get($maxExpenseDetail, 'value', 0),
+            'date' => (string) data_get($maxExpenseDetail, 'date', ''),
+        ];
+
+        $recent30DaysTotal = (float) $expenseDetails
+            ->filter(static function ($detail): bool {
+                $date = data_get($detail, 'date');
+                if (! is_string($date) || $date === '') {
+                    return false;
+                }
+
+                try {
+                    return Carbon::parse($date)->greaterThanOrEqualTo(now()->subDays(30)->startOfDay());
+                } catch (\Throwable) {
+                    return false;
+                }
+            })
+            ->sum('value');
+
         return [
             'title' => (string) $wallet->title,
             'public_expense_total' => $publicExpense,
             'members' => $memberRows,
             'total' => $total,
+            'analysis' => [
+                'expense_count' => $expenseCount,
+                'average_expense' => $averageExpense,
+                'recent_30_days_total' => $recent30DaysTotal,
+                'top_payer_name' => (string) data_get($topPayer, 'name', ''),
+                'top_payer_total' => (float) data_get($topPayer, 'payment_total', 0),
+                'top_category_name' => (string) data_get($topCategory, 'name', ''),
+                'top_category_total' => (float) data_get($topCategory, 'total', 0),
+                'max_expense' => $maxExpense,
+            ],
         ];
     }
 }
