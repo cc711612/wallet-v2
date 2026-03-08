@@ -41,6 +41,6 @@ exec php artisan octane:start \
   --server="${OCTANE_SERVER:-frankenphp}" \
   --host=0.0.0.0 \
   --port="${OCTANE_PORT:-8000}" \
-  --workers="${OCTANE_WORKERS:-4}" \
-  --task-workers="${OCTANE_TASK_WORKERS:-2}" \
-  --max-requests="${OCTANE_MAX_REQUESTS:-500}"
+  --workers="${OCTANE_WORKERS:-2}" \
+  --task-workers="${OCTANE_TASK_WORKERS:-0}" \
+  --max-requests="${OCTANE_MAX_REQUESTS:-300}"
