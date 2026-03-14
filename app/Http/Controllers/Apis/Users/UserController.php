@@ -11,6 +11,13 @@ use Illuminate\Http\Request;
 
 class UserController extends ApiController
 {
+    /**
+     * 取得使用者社群連結資料。
+     *
+     * @param  Request  $request
+     * @param  SocialService  $socialService
+     * @return JsonResponse
+     */
     public function socials(Request $request, SocialService $socialService): JsonResponse
     {
         $userId = (int) data_get($request->input('user', []), 'id', 0);

@@ -13,15 +13,31 @@ use Illuminate\Http\JsonResponse;
 
 class RegisterController extends ApiController
 {
+    /**
+     * 註冊新使用者。
+     *
+     * @param  RegisterRequest  $request
+     * @param  AuthService  $authService
+     * @return JsonResponse
+     */
     public function register(RegisterRequest $request, AuthService $authService): JsonResponse
     {
+        /** @var array<string, mixed> $validated */
         $validated = $request->validated();
 
         return $this->response()->success(new AuthLoginResource($authService->register($validated)));
     }
 
+    /**
+     * 透過 token 註冊使用者。
+     *
+     * @param  RegisterByTokenRequest  $request
+     * @param  AuthService  $authService
+     * @return JsonResponse
+     */
     public function registerByToken(RegisterByTokenRequest $request, AuthService $authService): JsonResponse
     {
+        /** @var array<string, mixed> $validated */
         $validated = $request->validated();
 
         return $this->response()->success(new AuthLoginResource($authService->register($validated)));

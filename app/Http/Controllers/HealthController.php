@@ -10,6 +10,11 @@ use Throwable;
 
 class HealthController extends ApiController
 {
+    /**
+     * 執行系統健康檢查。
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function check(): \Illuminate\Http\JsonResponse
     {
         $db = $this->checkDb();

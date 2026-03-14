@@ -13,15 +13,31 @@ use Illuminate\Http\JsonResponse;
 
 class WalletRegisterController extends ApiController
 {
+    /**
+     * 註冊單一帳本成員。
+     *
+     * @param  WalletRegisterRequest  $request
+     * @param  WalletAuthService  $walletAuthService
+     * @return JsonResponse
+     */
     public function register(WalletRegisterRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {
+        /** @var array<string, mixed> $validated */
         $validated = $request->validated();
 
         return $this->response()->success(new AuthLoginResource($walletAuthService->register($validated)));
     }
 
+    /**
+     * 批次註冊帳本成員。
+     *
+     * @param  WalletRegisterBatchRequest  $request
+     * @param  WalletAuthService  $walletAuthService
+     * @return JsonResponse
+     */
     public function registerBatch(WalletRegisterBatchRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {
+        /** @var array<string, mixed> $validated */
         $validated = $request->validated();
 
         $walletAuthService->registerBatch($validated);

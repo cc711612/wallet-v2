@@ -22,7 +22,11 @@ interface WalletJobRepositoryInterface
     public function listSelectAllDetailIds(int $walletId): array;
 
     /**
+     * 同步明細與成員關聯（不移除既有關聯）。
+     *
+     * @param  int  $detailId
      * @param  array<int, int>  $walletUserIds
+     * @return void
      */
     public function syncDetailUsersWithoutDetaching(int $detailId, array $walletUserIds): void;
 
@@ -37,12 +41,19 @@ interface WalletJobRepositoryInterface
     public function findAdminWalletUserByWalletId(int $walletId): ?array;
 
     /**
+     * 建立帳本明細資料。
+     *
      * @param  array<string, mixed>  $attributes
+     * @return int
      */
     public function createWalletDetail(array $attributes): int;
 
     /**
+     * 覆蓋同步明細與成員關聯。
+     *
+     * @param  int  $detailId
      * @param  array<int, int>  $walletUserIds
+     * @return void
      */
     public function syncDetailUsers(int $detailId, array $walletUserIds): void;
 }
