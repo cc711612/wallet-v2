@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Domain\Gemini\Services\GeminiService;
 use App\Http\Requests\Apis\Gemini\GeminiChatRequest;
 use App\Http\Requests\Apis\Gemini\GeminiGenerateRequest;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -16,6 +17,8 @@ class GeminiController extends ApiController
     /**
      * Gemini 文字生成。
      */
+    #[Response(200, '生成成功', type: 'array{success: true, text: string, raw_response: array<string,mixed>}')]
+    #[Response(500, '生成失敗', type: 'array{success: false, error: string}')]
     public function generateContent(GeminiGenerateRequest $request, GeminiService $geminiService): JsonResponse
     {
         $validated = $request->validated();
@@ -61,6 +64,8 @@ class GeminiController extends ApiController
     /**
      * Gemini 多輪對話。
      */
+    #[Response(200, '對話成功', type: 'array{success: true, text: string, raw_response: array<string,mixed>}')]
+    #[Response(500, '對話失敗', type: 'array{success: false, error: string}')]
     public function chat(GeminiChatRequest $request, GeminiService $geminiService): JsonResponse
     {
         $validated = $request->validated();
@@ -87,6 +92,8 @@ class GeminiController extends ApiController
     /**
      * 取得可用模型列表。
      */
+    #[Response(200, '取得模型成功', type: 'array{success: true, models: array<int, array<string,mixed>>}')]
+    #[Response(500, '取得模型失敗', type: 'array{success: false, error: string}')]
     public function listModels(GeminiService $geminiService): JsonResponse
     {
         try {
