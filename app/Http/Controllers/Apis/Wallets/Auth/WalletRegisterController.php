@@ -15,10 +15,6 @@ class WalletRegisterController extends ApiController
 {
     /**
      * 註冊單一帳本成員。
-     *
-     * @param  WalletRegisterRequest  $request
-     * @param  WalletAuthService  $walletAuthService
-     * @return JsonResponse
      */
     public function register(WalletRegisterRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {
@@ -30,10 +26,6 @@ class WalletRegisterController extends ApiController
 
     /**
      * 批次註冊帳本成員。
-     *
-     * @param  WalletRegisterBatchRequest  $request
-     * @param  WalletAuthService  $walletAuthService
-     * @return JsonResponse
      */
     public function registerBatch(WalletRegisterBatchRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {

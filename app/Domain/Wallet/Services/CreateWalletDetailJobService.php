@@ -25,10 +25,7 @@ class CreateWalletDetailJobService
     /**
      * 建立公費支出明細。
      *
-     * @param  int  $userId
-     * @param  int  $walletId
      * @param  array<string, mixed>  $params
-     * @return void
      */
     public function createGeneralExpenseDetail(int $userId, int $walletId, array $params): void
     {
@@ -80,11 +77,8 @@ class CreateWalletDetailJobService
     /**
      * 直接寫入資料庫建立帳本明細。
      *
-     * @param  int  $userId
-     * @param  int  $walletId
      * @param  array<string, mixed>  $walletUser
      * @param  array<string, mixed>  $params
-     * @return void
      */
     private function createDirect(int $userId, int $walletId, array $walletUser, array $params): void
     {

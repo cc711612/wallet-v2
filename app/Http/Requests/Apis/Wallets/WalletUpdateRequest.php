@@ -8,9 +8,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class WalletUpdateRequest extends FormRequest
 {
-    /**
-     * @return bool
-     */
     public function authorize(): bool
     {
         return true;
@@ -33,9 +30,6 @@ class WalletUpdateRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return void
-     */
     protected function prepareForValidation(): void
     {
         $payload = [];

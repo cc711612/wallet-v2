@@ -8,9 +8,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class WalletBindRequest extends FormRequest
 {
-    /**
-     * @return bool
-     */
     public function authorize(): bool
     {
         return true;
@@ -29,9 +26,6 @@ class WalletBindRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return void
-     */
     protected function prepareForValidation(): void
     {
         if ($this->user) {

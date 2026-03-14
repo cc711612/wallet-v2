@@ -14,8 +14,6 @@ class DeviceController extends ApiController
 {
     /**
      * 保留方法，不支援建立頁面。
-     *
-     * @return JsonResponse
      */
     public function create(): JsonResponse
     {
@@ -24,10 +22,6 @@ class DeviceController extends ApiController
 
     /**
      * 取得目前帳本成員的裝置清單。
-     *
-     * @param  Request  $request
-     * @param  DeviceService  $deviceService
-     * @return JsonResponse
      */
     public function index(Request $request, DeviceService $deviceService): JsonResponse
     {
@@ -38,10 +32,6 @@ class DeviceController extends ApiController
 
     /**
      * 建立或更新裝置 token。
-     *
-     * @param  DeviceStoreRequest  $request
-     * @param  DeviceService  $deviceService
-     * @return JsonResponse
      */
     public function store(DeviceStoreRequest $request, DeviceService $deviceService): JsonResponse
     {
@@ -55,9 +45,6 @@ class DeviceController extends ApiController
 
     /**
      * 取得單一裝置資訊。
-     *
-     * @param  int  $device
-     * @return JsonResponse
      */
     public function show(int $device): JsonResponse
     {
@@ -66,9 +53,6 @@ class DeviceController extends ApiController
 
     /**
      * 保留方法，不支援編輯頁面。
-     *
-     * @param  int  $device
-     * @return JsonResponse
      */
     public function edit(int $device): JsonResponse
     {
@@ -77,11 +61,6 @@ class DeviceController extends ApiController
 
     /**
      * 更新裝置資料。
-     *
-     * @param  int  $device
-     * @param  Request  $request
-     * @param  DeviceService  $deviceService
-     * @return JsonResponse
      */
     public function update(int $device, Request $request, DeviceService $deviceService): JsonResponse
     {
@@ -92,10 +71,6 @@ class DeviceController extends ApiController
 
     /**
      * 刪除裝置資料。
-     *
-     * @param  int  $device
-     * @param  DeviceService  $deviceService
-     * @return JsonResponse
      */
     public function destroy(int $device, DeviceService $deviceService): JsonResponse
     {

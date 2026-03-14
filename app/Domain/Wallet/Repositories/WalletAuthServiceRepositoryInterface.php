@@ -28,10 +28,6 @@ interface WalletAuthServiceRepositoryInterface
 
     /**
      * 檢查帳本內是否已有相同名稱成員。
-     *
-     * @param  int  $walletId
-     * @param  string  $name
-     * @return bool
      */
     public function walletUserNameExists(int $walletId, string $name): bool;
 
@@ -39,7 +35,6 @@ interface WalletAuthServiceRepositoryInterface
      * 建立單一帳本成員。
      *
      * @param  array<string, mixed>  $attributes
-     * @return int
      */
     public function createWalletUser(array $attributes): int;
 
@@ -47,7 +42,6 @@ interface WalletAuthServiceRepositoryInterface
      * 批次建立帳本成員。
      *
      * @param  array<int, array<string, mixed>>  $rows
-     * @return void
      */
     public function batchCreateWalletUsers(array $rows): void;
 

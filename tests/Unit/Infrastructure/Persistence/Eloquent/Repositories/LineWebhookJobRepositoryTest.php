@@ -7,7 +7,6 @@ namespace Tests\Unit\Infrastructure\Persistence\Eloquent\Repositories;
 use App\Domain\Social\Enums\SocialTypeEnum;
 use App\Infrastructure\Persistence\Eloquent\Repositories\LineWebhookJobRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class LineWebhookJobRepositoryTest extends TestCase
@@ -19,7 +18,7 @@ class LineWebhookJobRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new LineWebhookJobRepository();
+        $this->repository = new LineWebhookJobRepository;
     }
 
     public function test_find_user_id_by_line_user_id_uses_correct_social_type_enum(): void

@@ -20,16 +20,12 @@ use Throwable;
 class WalletDetailController extends ApiController
 {
     /**
-     * @param  WalletDetailService  $walletDetailService
      * @return void
      */
     public function __construct(private WalletDetailService $walletDetailService) {}
 
     /**
      * 建立帳本明細。
-     *
-     * @param  StoreWalletDetailRequest  $request
-     * @return JsonResponse
      */
     public function store(StoreWalletDetailRequest $request): JsonResponse
     {
@@ -52,17 +48,13 @@ class WalletDetailController extends ApiController
 
     /**
      * 取得帳本明細列表。
-     *
-     * @param  int  $wallet
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(int $wallet, Request $request): JsonResponse
     {
         try {
             $isPersonal = $request->has('is_personal') ? $request->boolean('is_personal') : null;
             $walletUser = (array) $request->input('wallet_user', []);
-            $walletUserId = (int) data_get($walletUser, $wallet . '.id', 0);
+            $walletUserId = (int) data_get($walletUser, $wallet.'.id', 0);
 
             return $this->response()->success($this->walletDetailService->index($wallet, $isPersonal, $walletUserId));
         } catch (RuntimeException $exception) {
@@ -72,10 +64,6 @@ class WalletDetailController extends ApiController
 
     /**
      * 取得單筆帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  int  $detail
-     * @return JsonResponse
      */
     public function show(int $wallet, int $detail): JsonResponse
     {
@@ -88,11 +76,6 @@ class WalletDetailController extends ApiController
 
     /**
      * 更新帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  int  $detail
-     * @param  UpdateWalletDetailRequest  $request
-     * @return JsonResponse
      */
     public function update(int $wallet, int $detail, UpdateWalletDetailRequest $request): JsonResponse
     {
@@ -116,11 +99,6 @@ class WalletDetailController extends ApiController
 
     /**
      * 刪除帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  int  $detail
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function destroy(int $wallet, int $detail, Request $request): JsonResponse
     {
@@ -142,10 +120,6 @@ class WalletDetailController extends ApiController
 
     /**
      * 結帳帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  CheckoutWalletDetailRequest  $request
-     * @return JsonResponse
      */
     public function checkout(int $wallet, CheckoutWalletDetailRequest $request): JsonResponse
     {
@@ -170,10 +144,6 @@ class WalletDetailController extends ApiController
 
     /**
      * 取消結帳帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  UncheckoutWalletDetailRequest  $request
-     * @return JsonResponse
      */
     public function uncheckout(int $wallet, UncheckoutWalletDetailRequest $request): JsonResponse
     {

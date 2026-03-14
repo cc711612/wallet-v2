@@ -17,9 +17,6 @@ class WalletUserRegisterJobService
 
     /**
      * 同步全選明細的成員關聯資料。
-     *
-     * @param  int  $walletId
-     * @return void
      */
     public function syncSelectedDetailsForWalletUsers(int $walletId): void
     {

@@ -6,8 +6,8 @@ namespace App\Http\Requests\WalletDetails;
 
 use App\Domain\Wallet\Enums\SymbolOperationType;
 use App\Domain\Wallet\Enums\WalletDetailType;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Throwable;
 

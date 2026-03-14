@@ -13,10 +13,6 @@ class FrontLogController extends ApiController
 {
     /**
      * 記錄前端一般等級日誌。
-     *
-     * @param  Request  $request
-     * @param  FrontLogService  $frontLogService
-     * @return JsonResponse
      */
     public function normal(Request $request, FrontLogService $frontLogService): JsonResponse
     {
@@ -27,10 +23,6 @@ class FrontLogController extends ApiController
 
     /**
      * 記錄前端嚴重等級日誌。
-     *
-     * @param  Request  $request
-     * @param  FrontLogService  $frontLogService
-     * @return JsonResponse
      */
     public function serious(Request $request, FrontLogService $frontLogService): JsonResponse
     {

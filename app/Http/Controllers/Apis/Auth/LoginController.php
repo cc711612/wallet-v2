@@ -16,10 +16,6 @@ class LoginController extends ApiController
 {
     /**
      * 一般帳密登入。
-     *
-     * @param  LoginRequest  $request
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
     public function login(LoginRequest $request, AuthService $authService): JsonResponse
     {
@@ -45,9 +41,6 @@ class LoginController extends ApiController
 
     /**
      * 保活快取檢查。
-     *
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
     public function cache(AuthService $authService): JsonResponse
     {
@@ -61,10 +54,6 @@ class LoginController extends ApiController
 
     /**
      * 第三方登入。
-     *
-     * @param  ThirdPartyLoginRequest  $request
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
     public function thirdPartyLogin(ThirdPartyLoginRequest $request, AuthService $authService): JsonResponse
     {

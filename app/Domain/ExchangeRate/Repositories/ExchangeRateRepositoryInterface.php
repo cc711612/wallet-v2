@@ -11,16 +11,11 @@ interface ExchangeRateRepositoryInterface
      *
      * @param  array<string, mixed>  $keys
      * @param  array<string, mixed>  $values
-     * @return void
      */
     public function upsertByDateAndCurrency(array $keys, array $values): void;
 
     /**
      * 檢查指定幣別與日期的匯率是否存在。
-     *
-     * @param  string  $fromCurrency
-     * @param  string  $date
-     * @return bool
      */
     public function existsByCurrencyAndDate(string $fromCurrency, string $date): bool;
 }

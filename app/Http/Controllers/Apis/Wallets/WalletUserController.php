@@ -16,10 +16,6 @@ class WalletUserController extends ApiController
 {
     /**
      * 依帳本驗證碼取得成員列表。
-     *
-     * @param  WalletUserIndexRequest  $request
-     * @param  WalletUserService  $walletUserService
-     * @return JsonResponse
      */
     public function index(WalletUserIndexRequest $request, WalletUserService $walletUserService): JsonResponse
     {
@@ -37,11 +33,6 @@ class WalletUserController extends ApiController
 
     /**
      * 更新帳本成員資料。
-     *
-     * @param  int  $wallet_users_id
-     * @param  WalletUserUpdateRequest  $request
-     * @param  WalletUserService  $walletUserService
-     * @return JsonResponse
      */
     public function update(int $wallet_users_id, WalletUserUpdateRequest $request, WalletUserService $walletUserService): JsonResponse
     {
@@ -55,11 +46,6 @@ class WalletUserController extends ApiController
 
     /**
      * 刪除帳本成員。
-     *
-     * @param  int  $wallet
-     * @param  int  $wallet_user_id
-     * @param  WalletUserService  $walletUserService
-     * @return JsonResponse
      */
     public function destroy(int $wallet, int $wallet_user_id, WalletUserService $walletUserService): JsonResponse
     {

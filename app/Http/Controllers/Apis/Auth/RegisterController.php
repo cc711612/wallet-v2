@@ -15,10 +15,6 @@ class RegisterController extends ApiController
 {
     /**
      * 註冊新使用者。
-     *
-     * @param  RegisterRequest  $request
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
     public function register(RegisterRequest $request, AuthService $authService): JsonResponse
     {
@@ -30,10 +26,6 @@ class RegisterController extends ApiController
 
     /**
      * 透過 token 註冊使用者。
-     *
-     * @param  RegisterByTokenRequest  $request
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
     public function registerByToken(RegisterByTokenRequest $request, AuthService $authService): JsonResponse
     {
