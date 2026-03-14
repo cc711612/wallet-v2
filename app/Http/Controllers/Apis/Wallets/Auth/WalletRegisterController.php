@@ -9,6 +9,7 @@ use App\Http\Controllers\ApiController;
 use App\Http\Requests\Apis\Wallets\Auth\WalletRegisterBatchRequest;
 use App\Http\Requests\Apis\Wallets\Auth\WalletRegisterRequest;
 use App\Http\Resources\Auth\AuthLoginResource;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 
 class WalletRegisterController extends ApiController
@@ -16,6 +17,7 @@ class WalletRegisterController extends ApiController
     /**
      * 註冊單一帳本成員。
      */
+    #[Response(200, '註冊帳本成員成功', type: 'array{status: bool, code: int, message: string, data: array{user: array<string,mixed>, token: string}}')]
     public function register(WalletRegisterRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {
         /** @var array<string, mixed> $validated */
@@ -27,6 +29,7 @@ class WalletRegisterController extends ApiController
     /**
      * 批次註冊帳本成員。
      */
+    #[Response(200, '批次註冊成功', type: 'array{status: true, code: 200, message: string, data: array<string,mixed>|object}')]
     public function registerBatch(WalletRegisterBatchRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {
         /** @var array<string, mixed> $validated */
