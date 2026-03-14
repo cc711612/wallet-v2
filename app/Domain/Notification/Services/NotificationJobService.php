@@ -9,8 +9,21 @@ use Illuminate\Support\Facades\Log;
 
 class NotificationJobService
 {
+    /**
+     * 建立通知工作服務。
+     *
+     * @return void
+     */
     public function __construct(private NotificationJobRepositoryInterface $notificationJobRepository) {}
 
+    /**
+     * 送出 FCM 批次通知。
+     *
+     * @param  int  $walletDetailId
+     * @param  int  $walletUserId
+     * @param  string  $message
+     * @return void
+     */
     public function sendFcm(int $walletDetailId, int $walletUserId, string $message): void
     {
         $walletUser = $this->notificationJobRepository->findWalletUser($walletUserId);

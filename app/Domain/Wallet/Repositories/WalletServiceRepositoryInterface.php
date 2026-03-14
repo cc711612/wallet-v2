@@ -82,6 +82,13 @@ interface WalletServiceRepositoryInterface
      */
     public function bindWalletUser(int $walletUserId, int $userId): bool;
 
+    /**
+     * 檢查帳本是否由指定使用者擁有。
+     *
+     * @param  int  $walletId
+     * @param  int  $userId
+     * @return bool
+     */
     public function existsWalletOwnedByUser(int $walletId, int $userId): bool;
 
     /**

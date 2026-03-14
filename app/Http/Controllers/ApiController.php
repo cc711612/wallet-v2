@@ -8,6 +8,11 @@ use App\Support\Response;
 
 abstract class ApiController extends Controller
 {
+    /**
+     * 取得共用回應物件。
+     *
+     * @return Response
+     */
     protected function response(): Response
     {
         return app(Response::class);

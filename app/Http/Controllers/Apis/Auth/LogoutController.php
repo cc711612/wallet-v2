@@ -11,6 +11,13 @@ use Illuminate\Http\Request;
 
 class LogoutController extends ApiController
 {
+    /**
+     * 登出目前使用者。
+     *
+     * @param  Request  $request
+     * @param  AuthService  $authService
+     * @return JsonResponse
+     */
     public function logout(Request $request, AuthService $authService): JsonResponse
     {
         $authService->logout($request);

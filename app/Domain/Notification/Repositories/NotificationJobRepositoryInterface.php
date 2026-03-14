@@ -17,7 +17,10 @@ interface NotificationJobRepositoryInterface
     public function listActiveDevicesByOwner(?int $userId, int $walletUserId): array;
 
     /**
+     * 發送 FCM 批次通知。
+     *
      * @param  array<string, mixed>  $requestBody
+     * @return bool
      */
     public function sendFcmBatch(array $requestBody): bool;
 }

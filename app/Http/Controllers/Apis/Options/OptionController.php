@@ -13,6 +13,13 @@ use RuntimeException;
 
 class OptionController extends ApiController
 {
+    /**
+     * 取得指定幣別匯率資訊。
+     *
+     * @param  Request  $request
+     * @param  OptionService  $optionService
+     * @return JsonResponse
+     */
     public function exchangeRate(Request $request, OptionService $optionService): JsonResponse
     {
         $unit = (string) $request->query('unit', 'TWD');
@@ -24,6 +31,12 @@ class OptionController extends ApiController
         }
     }
 
+    /**
+     * 取得分類選項清單。
+     *
+     * @param  OptionService  $optionService
+     * @return JsonResponse
+     */
     public function category(OptionService $optionService): JsonResponse
     {
         return $this->response()->success($optionService->categories());

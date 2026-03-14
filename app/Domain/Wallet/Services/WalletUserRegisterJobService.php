@@ -8,8 +8,19 @@ use App\Domain\Wallet\Repositories\WalletJobRepositoryInterface;
 
 class WalletUserRegisterJobService
 {
+    /**
+     * 建立帳本成員註冊工作服務。
+     *
+     * @return void
+     */
     public function __construct(private WalletJobRepositoryInterface $walletJobRepository) {}
 
+    /**
+     * 同步全選明細的成員關聯資料。
+     *
+     * @param  int  $walletId
+     * @return void
+     */
     public function syncSelectedDetailsForWalletUsers(int $walletId): void
     {
         if ($walletId <= 0) {

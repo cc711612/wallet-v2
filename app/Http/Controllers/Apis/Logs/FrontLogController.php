@@ -11,6 +11,13 @@ use Illuminate\Http\Request;
 
 class FrontLogController extends ApiController
 {
+    /**
+     * 記錄前端一般等級日誌。
+     *
+     * @param  Request  $request
+     * @param  FrontLogService  $frontLogService
+     * @return JsonResponse
+     */
     public function normal(Request $request, FrontLogService $frontLogService): JsonResponse
     {
         $frontLogService->normal((string) $request->input('message', ''));
@@ -18,6 +25,13 @@ class FrontLogController extends ApiController
         return $this->response()->success();
     }
 
+    /**
+     * 記錄前端嚴重等級日誌。
+     *
+     * @param  Request  $request
+     * @param  FrontLogService  $frontLogService
+     * @return JsonResponse
+     */
     public function serious(Request $request, FrontLogService $frontLogService): JsonResponse
     {
         $frontLogService->serious((string) $request->input('message', ''));
