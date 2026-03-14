@@ -15,10 +15,6 @@ class GeminiController extends ApiController
 {
     /**
      * Gemini 文字生成。
-     *
-     * @param  GeminiGenerateRequest  $request
-     * @param  GeminiService  $geminiService
-     * @return JsonResponse
      */
     public function generateContent(GeminiGenerateRequest $request, GeminiService $geminiService): JsonResponse
     {
@@ -42,10 +38,6 @@ class GeminiController extends ApiController
 
     /**
      * Gemini 串流輸出。
-     *
-     * @param  GeminiGenerateRequest  $request
-     * @param  GeminiService  $geminiService
-     * @return StreamedResponse
      */
     public function streamContent(GeminiGenerateRequest $request, GeminiService $geminiService): StreamedResponse
     {
@@ -68,10 +60,6 @@ class GeminiController extends ApiController
 
     /**
      * Gemini 多輪對話。
-     *
-     * @param  GeminiChatRequest  $request
-     * @param  GeminiService  $geminiService
-     * @return JsonResponse
      */
     public function chat(GeminiChatRequest $request, GeminiService $geminiService): JsonResponse
     {
@@ -98,9 +86,6 @@ class GeminiController extends ApiController
 
     /**
      * 取得可用模型列表。
-     *
-     * @param  GeminiService  $geminiService
-     * @return JsonResponse
      */
     public function listModels(GeminiService $geminiService): JsonResponse
     {
@@ -145,7 +130,6 @@ class GeminiController extends ApiController
      * 從 Gemini 回應中抽取文字內容。
      *
      * @param  array<string, mixed>  $response
-     * @return string
      */
     private function extractTextFromResponse(array $response): string
     {

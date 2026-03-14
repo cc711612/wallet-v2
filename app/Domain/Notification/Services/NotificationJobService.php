@@ -18,11 +18,6 @@ class NotificationJobService
 
     /**
      * 送出 FCM 批次通知。
-     *
-     * @param  int  $walletDetailId
-     * @param  int  $walletUserId
-     * @param  string  $message
-     * @return void
      */
     public function sendFcm(int $walletDetailId, int $walletUserId, string $message): void
     {

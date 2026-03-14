@@ -19,11 +19,6 @@ class SocialController extends ApiController
 {
     /**
      * 檢查第三方帳號綁定狀態。
-     *
-     * @param  SocialCheckBindRequest  $request
-     * @param  SocialService  $socialService
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
     public function checkBind(SocialCheckBindRequest $request, SocialService $socialService, AuthService $authService): JsonResponse
     {
@@ -56,10 +51,6 @@ class SocialController extends ApiController
 
     /**
      * 綁定第三方帳號。
-     *
-     * @param  SocialBindRequest  $request
-     * @param  SocialService  $socialService
-     * @return JsonResponse
      */
     public function bind(SocialBindRequest $request, SocialService $socialService): JsonResponse
     {
@@ -79,10 +70,6 @@ class SocialController extends ApiController
 
     /**
      * 解除第三方帳號綁定。
-     *
-     * @param  SocialUnBindRequest  $request
-     * @param  SocialService  $socialService
-     * @return JsonResponse
      */
     public function unBind(SocialUnBindRequest $request, SocialService $socialService): JsonResponse
     {

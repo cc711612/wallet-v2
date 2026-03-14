@@ -16,10 +16,6 @@ class WalletLoginController extends ApiController
 {
     /**
      * 以帳本代碼與名稱登入帳本。
-     *
-     * @param  WalletLoginRequest  $request
-     * @param  WalletAuthService  $walletAuthService
-     * @return JsonResponse
      */
     public function login(WalletLoginRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {
@@ -54,10 +50,6 @@ class WalletLoginController extends ApiController
 
     /**
      * 以成員 token 登入帳本。
-     *
-     * @param  WalletTokenLoginRequest  $request
-     * @param  WalletAuthService  $walletAuthService
-     * @return JsonResponse
      */
     public function token(WalletTokenLoginRequest $request, WalletAuthService $walletAuthService): JsonResponse
     {

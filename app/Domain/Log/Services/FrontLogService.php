@@ -10,9 +10,6 @@ class FrontLogService
 {
     /**
      * 記錄一般等級前端訊息。
-     *
-     * @param  string  $message
-     * @return void
      */
     public function normal(string $message): void
     {
@@ -21,9 +18,6 @@ class FrontLogService
 
     /**
      * 記錄嚴重等級前端訊息。
-     *
-     * @param  string  $message
-     * @return void
      */
     public function serious(string $message): void
     {

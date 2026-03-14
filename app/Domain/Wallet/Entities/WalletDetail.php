@@ -74,8 +74,6 @@ final class WalletDetail
 
     /**
      * 取得帳本 ID。
-     *
-     * @return int
      */
     public function walletId(): int
     {
@@ -84,8 +82,6 @@ final class WalletDetail
 
     /**
      * 取得建立者帳本成員 ID。
-     *
-     * @return int
      */
     public function walletUserId(): int
     {
@@ -94,8 +90,6 @@ final class WalletDetail
 
     /**
      * 取得明細類型。
-     *
-     * @return int
      */
     public function type(): int
     {
@@ -104,8 +98,6 @@ final class WalletDetail
 
     /**
      * 取得運算符號類型。
-     *
-     * @return int
      */
     public function symbolOperationTypeId(): int
     {
@@ -114,8 +106,6 @@ final class WalletDetail
 
     /**
      * 取得明細金額。
-     *
-     * @return float
      */
     public function value(): float
     {
@@ -124,8 +114,6 @@ final class WalletDetail
 
     /**
      * 取得是否全員分攤。
-     *
-     * @return bool
      */
     public function selectAll(): bool
     {

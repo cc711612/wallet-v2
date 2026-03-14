@@ -8,9 +8,9 @@ use App\Domain\Device\Entities\DeviceEntity;
 use App\Domain\Social\Entities\SocialEntity;
 use App\Domain\Wallet\Entities\WalletEntity;
 use App\Domain\Wallet\Entities\WalletUserEntity;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserEntity extends Model

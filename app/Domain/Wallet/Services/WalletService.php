@@ -11,7 +11,6 @@ use RuntimeException;
 class WalletService
 {
     /**
-     * @param  WalletServiceRepositoryInterface  $walletServiceRepository
      * @return void
      */
     public function __construct(private WalletServiceRepositoryInterface $walletServiceRepository) {}
@@ -90,7 +89,6 @@ class WalletService
     /**
      * 更新帳本資料。
      *
-     * @param  int  $walletId
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
@@ -132,14 +130,9 @@ class WalletService
 
     /**
      * 刪除帳本。
-     *
-     * @param  int  $walletId
-     * @return string
      */
     /**
-     * @param  int  $walletId
      * @param  array<string, mixed>  $payload
-     * @return string
      */
     public function destroy(int $walletId, array $payload): string
     {
@@ -157,7 +150,6 @@ class WalletService
      * 綁定訪客帳本成員到目前使用者。
      *
      * @param  array<string, mixed>  $payload
-     * @return string
      */
     public function bind(array $payload): string
     {
@@ -194,7 +186,6 @@ class WalletService
     /**
      * 計算帳本統計資料。
      *
-     * @param  int  $walletId
      * @return array<string, mixed>
      */
     public function calculation(int $walletId): array

@@ -19,16 +19,12 @@ use RuntimeException;
 class WalletController extends ApiController
 {
     /**
-     * @param  WalletService  $walletService
      * @return void
      */
     public function __construct(private WalletService $walletService) {}
 
     /**
      * 帳本列表。
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -37,9 +33,6 @@ class WalletController extends ApiController
 
     /**
      * 綁定訪客帳本。
-     *
-     * @param  WalletBindRequest  $request
-     * @return JsonResponse
      */
     public function bind(WalletBindRequest $request): JsonResponse
     {
@@ -59,9 +52,6 @@ class WalletController extends ApiController
 
     /**
      * 建立帳本。
-     *
-     * @param  WalletStoreRequest  $request
-     * @return JsonResponse
      */
     public function store(WalletStoreRequest $request): JsonResponse
     {
@@ -75,10 +65,6 @@ class WalletController extends ApiController
 
     /**
      * 更新帳本。
-     *
-     * @param  WalletUpdateRequest  $request
-     * @param  int  $wallet
-     * @return JsonResponse
      */
     public function update(WalletUpdateRequest $request, int $wallet): JsonResponse
     {
@@ -94,10 +80,6 @@ class WalletController extends ApiController
 
     /**
      * 刪除帳本。
-     *
-     * @param  Request  $request
-     * @param  int  $wallet
-     * @return JsonResponse
      */
     public function destroy(Request $request, int $wallet): JsonResponse
     {
@@ -109,9 +91,6 @@ class WalletController extends ApiController
 
     /**
      * 帳本計算結果。
-     *
-     * @param  int  $wallet
-     * @return JsonResponse
      */
     public function calculation(int $wallet): JsonResponse
     {
