@@ -20,6 +20,16 @@ class NotificationJobRepository implements NotificationJobRepositoryInterface
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function findWalletUserWithWallet(int $walletUserId): ?array
+    {
+        return WalletUserEntity::query()
+            ->with('wallet')
+            ->find($walletUserId)?->toArray();
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function listActiveDevicesByOwner(?int $userId, int $walletUserId): array

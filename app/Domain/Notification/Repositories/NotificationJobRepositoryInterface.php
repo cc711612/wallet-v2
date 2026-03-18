@@ -12,6 +12,11 @@ interface NotificationJobRepositoryInterface
     public function findWalletUser(int $walletUserId): ?array;
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function findWalletUserWithWallet(int $walletUserId): ?array;
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function listActiveDevicesByOwner(?int $userId, int $walletUserId): array;
