@@ -12,7 +12,6 @@ use RuntimeException;
 class SocialService
 {
     /**
-     * @param  SocialServiceRepositoryInterface  $socialRepository
      * @return void
      */
     public function __construct(private SocialServiceRepositoryInterface $socialRepository) {}
@@ -92,7 +91,6 @@ class SocialService
     /**
      * 取得使用者第三方綁定列表。
      *
-     * @param  int  $userId
      * @return array<int, array<string, mixed>>
      */
     public function listForUser(int $userId): array

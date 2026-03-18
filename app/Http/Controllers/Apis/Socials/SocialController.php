@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Apis\Socials;
 
+use App\Docs\OpenApiSchemas;
 use App\Domain\Auth\Services\AuthService;
 use App\Domain\Social\Services\SocialService;
 use App\Http\Controllers\ApiController;
@@ -11,6 +12,7 @@ use App\Http\Requests\Apis\Socials\SocialBindRequest;
 use App\Http\Requests\Apis\Socials\SocialCheckBindRequest;
 use App\Http\Requests\Apis\Socials\SocialUnBindRequest;
 use App\Http\Resources\Socials\SocialCheckBindResource;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 use Throwable;
@@ -19,12 +21,9 @@ class SocialController extends ApiController
 {
     /**
      * 檢查第三方帳號綁定狀態。
-     *
-     * @param  SocialCheckBindRequest  $request
-     * @param  SocialService  $socialService
-     * @param  AuthService  $authService
-     * @return JsonResponse
      */
+    #[Response(200, '檢查綁定成功', type: 'array{status: bool, code: int, message: string, data: '.OpenApiSchemas::SOCIAL_CHECK_BIND.'}')]
+    #[Response(400, '檢查綁定失敗', type: 'array{status: false, code: 400, message: string, data: array<string,mixed>|object}')]
     public function checkBind(SocialCheckBindRequest $request, SocialService $socialService, AuthService $authService): JsonResponse
     {
         try {
@@ -56,11 +55,9 @@ class SocialController extends ApiController
 
     /**
      * 綁定第三方帳號。
-     *
-     * @param  SocialBindRequest  $request
-     * @param  SocialService  $socialService
-     * @return JsonResponse
      */
+    #[Response(200, '綁定成功', type: 'array{status: true, code: 200, message: string, data: array<string,mixed>|object}')]
+    #[Response(400, '綁定失敗', type: 'array{status: false, code: 400, message: string, data: array<string,mixed>|object}')]
     public function bind(SocialBindRequest $request, SocialService $socialService): JsonResponse
     {
         try {
@@ -79,11 +76,8 @@ class SocialController extends ApiController
 
     /**
      * 解除第三方帳號綁定。
-     *
-     * @param  SocialUnBindRequest  $request
-     * @param  SocialService  $socialService
-     * @return JsonResponse
      */
+    #[Response(200, '解除綁定成功', type: 'array{status: true, code: 200, message: string, data: array<string,mixed>|object}')]
     public function unBind(SocialUnBindRequest $request, SocialService $socialService): JsonResponse
     {
         $validated = $request->validated();

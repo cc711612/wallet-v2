@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class HealthController extends ApiController
 {
+    /**
+     * 執行系統健康檢查。
+     */
+    #[Response(200, '健康檢查成功', type: 'array{status: bool, code: int, message: string, data: array{db: array{ok: bool, message: string}, cache: array{ok: bool, message: string}, runtime: array{sapi: string, frankenphp: bool}}}')]
+    #[Response(503, '健康檢查異常', type: 'array{status: false, code: 503, message: string, data: array{db: array{ok: bool, message: string}, cache: array{ok: bool, message: string}, runtime: array{sapi: string, frankenphp: bool}}}')]
     public function check(): \Illuminate\Http\JsonResponse
     {
         $db = $this->checkDb();

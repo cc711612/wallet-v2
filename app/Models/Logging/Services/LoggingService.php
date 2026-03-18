@@ -10,11 +10,6 @@ class LoggingService
 {
     /**
      * 設定 log 擴充欄位。
-     *
-     * @param  string|null  $prefix
-     * @param  string|null  $deviceUuid
-     * @param  string|null  $requestUuid
-     * @return void
      */
     public static function setLoggingConfig(?string $prefix = null, ?string $deviceUuid = null, ?string $requestUuid = null): void
     {
@@ -23,28 +18,16 @@ class LoggingService
         self::setRequestUuid($requestUuid);
     }
 
-    /**
-     * @param  string|null  $prefix
-     * @return void
-     */
     public static function setPrefix(?string $prefix = null): void
     {
         Config::set('logging.extend.prefix', $prefix);
     }
 
-    /**
-     * @param  string|null  $uuid
-     * @return void
-     */
     public static function setDeviceUuid(?string $uuid = null): void
     {
         Config::set('logging.extend.device_uuid', $uuid);
     }
 
-    /**
-     * @param  string|null  $uuid
-     * @return void
-     */
     public static function setRequestUuid(?string $uuid = null): void
     {
         Config::set('logging.extend.request_uuid', $uuid);

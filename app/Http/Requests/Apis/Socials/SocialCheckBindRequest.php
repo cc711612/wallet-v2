@@ -28,9 +28,6 @@ class SocialCheckBindRequest extends FormRequest
         ];
     }
 
-    /**
-     * @return void
-     */
     protected function prepareForValidation(): void
     {
         if ($this->has('socialType')) {

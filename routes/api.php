@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Apis\Auth\LoginController;
 use App\Http\Controllers\Apis\Auth\LogoutController;
 use App\Http\Controllers\Apis\Auth\RegisterController;
@@ -18,6 +17,7 @@ use App\Http\Controllers\Apis\Wallets\WalletController;
 use App\Http\Controllers\Apis\Wallets\WalletDetailController;
 use App\Http\Controllers\Apis\Wallets\WalletUserController;
 use App\Http\Controllers\GeminiController;
+use App\Http\Controllers\HealthController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['as' => 'api.'], function (): void {

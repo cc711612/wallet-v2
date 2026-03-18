@@ -10,8 +10,6 @@ class LoginRequest extends FormRequest
 {
     /**
      * 允許所有請求者進行登入驗證。
-     *
-     * @return bool
      */
     public function authorize(): bool
     {

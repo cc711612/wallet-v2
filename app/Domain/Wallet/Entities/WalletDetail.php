@@ -72,31 +72,49 @@ final class WalletDetail
         return new self($payload);
     }
 
+    /**
+     * 取得帳本 ID。
+     */
     public function walletId(): int
     {
         return $this->walletId;
     }
 
+    /**
+     * 取得建立者帳本成員 ID。
+     */
     public function walletUserId(): int
     {
         return $this->walletUserId;
     }
 
+    /**
+     * 取得明細類型。
+     */
     public function type(): int
     {
         return $this->type;
     }
 
+    /**
+     * 取得運算符號類型。
+     */
     public function symbolOperationTypeId(): int
     {
         return $this->symbolOperationTypeId;
     }
 
+    /**
+     * 取得明細金額。
+     */
     public function value(): float
     {
         return $this->value;
     }
 
+    /**
+     * 取得是否全員分攤。
+     */
     public function selectAll(): bool
     {
         return $this->selectAll;

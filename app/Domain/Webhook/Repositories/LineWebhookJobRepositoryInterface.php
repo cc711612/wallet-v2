@@ -8,32 +8,16 @@ interface LineWebhookJobRepositoryInterface
 {
     /**
      * 啟動 LINE loading 動畫。
-     *
-     * @param  string  $lineUserId
-     * @return void
      */
     public function startLoading(string $lineUserId): void;
 
     /**
      * 回覆純文字訊息。
-     *
-     * @param  string  $replyToken
-     * @param  string  $message
-     * @return void
      */
     public function replyText(string $replyToken, string $message): void;
 
     /**
      * 回覆確認模板訊息。
-     *
-     * @param  string  $replyToken
-     * @param  string  $altText
-     * @param  string  $promptText
-     * @param  string  $confirmLabel
-     * @param  string  $confirmText
-     * @param  string  $rejectLabel
-     * @param  string  $rejectText
-     * @return void
      */
     public function replyConfirmTemplate(
         string $replyToken,
@@ -48,26 +32,17 @@ interface LineWebhookJobRepositoryInterface
     /**
      * 回覆帳本選擇的 Carousel Template。
      *
-     * @param  string  $replyToken
      * @param  array<int, array<string, mixed>>  $wallets
-     * @return void
      */
     public function replyWalletSelectionTemplate(string $replyToken, array $wallets): void;
 
     /**
      * 主動推播純文字訊息。
-     *
-     * @param  string  $lineUserId
-     * @param  string  $message
-     * @return void
      */
     public function pushText(string $lineUserId, string $message): void;
 
     /**
      * 依 LINE userId 查詢系統 userId。
-     *
-     * @param  string  $lineUserId
-     * @return int|null
      */
     public function findUserIdByLineUserId(string $lineUserId): ?int;
 
@@ -83,18 +58,11 @@ interface LineWebhookJobRepositoryInterface
 
     /**
      * 更新 LINE social 綁定的預設帳本。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $walletId
-     * @return void
      */
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void;
 
     /**
      * 查詢 LINE social 綁定的預設帳本。
-     *
-     * @param  string  $lineUserId
-     * @return int|null
      */
     public function findSocialWalletIdByLineUserId(string $lineUserId): ?int;
 
@@ -106,8 +74,6 @@ interface LineWebhookJobRepositoryInterface
 
     /**
      * 取得第一筆可用分類 ID。
-     *
-     * @return int|null
      */
     public function firstCategoryId(): ?int;
 
@@ -121,7 +87,6 @@ interface LineWebhookJobRepositoryInterface
     /**
      * 取得帳本結算摘要（供 LINE 結算訊息使用）。
      *
-     * @param  int  $walletId
      * @return array<string, mixed>|null
      */
     public function getWalletCalculateSummary(int $walletId): ?array;

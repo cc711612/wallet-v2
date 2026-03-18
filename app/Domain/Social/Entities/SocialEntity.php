@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Social\Entities;
 
 use App\Domain\Auth\Entities\UserEntity;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SocialEntity extends Model

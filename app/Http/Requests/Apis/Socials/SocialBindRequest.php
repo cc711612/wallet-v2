@@ -10,8 +10,6 @@ class SocialBindRequest extends FormRequest
 {
     /**
      * 允許已通過 middleware 的請求。
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -33,8 +31,6 @@ class SocialBindRequest extends FormRequest
 
     /**
      * 將 middleware 注入的 user 合併至驗證資料。
-     *
-     * @return void
      */
     protected function prepareForValidation(): void
     {

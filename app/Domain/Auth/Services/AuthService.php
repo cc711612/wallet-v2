@@ -16,8 +16,6 @@ use RuntimeException;
 class AuthService
 {
     /**
-     * @param  AuthServiceRepositoryInterface  $authServiceRepository
-     * @param  JwtTokenService  $jwtTokenService
      * @return void
      */
     public function __construct(
@@ -93,12 +91,6 @@ class AuthService
 
     /**
      * 綁定邀請中的帳本成員。
-     *
-     * @param  int  $userId
-     * @param  string  $jwtToken
-     * @param  string  $agent
-     * @param  string  $ip
-     * @return void
      */
     private function bindWalletUserByJwt(int $userId, string $jwtToken, string $agent, string $ip): void
     {
@@ -138,7 +130,6 @@ class AuthService
     /**
      * 解析 JWT payload。
      *
-     * @param  string  $jwt
      * @return array<string, mixed>
      */
     private function decodeJwtPayload(string $jwt): array
@@ -167,9 +158,6 @@ class AuthService
 
     /**
      * 從第三方登入快取資料中解析使用者 ID。
-     *
-     * @param  mixed  $socialEntity
-     * @return int
      */
     private function resolveThirdPartyUserId(mixed $socialEntity): int
     {
@@ -190,7 +178,6 @@ class AuthService
      * 建立登入回應資料。
      *
      * @param  array<string, mixed>  $user
-     * @param  string  $memberToken
      * @return array<string, mixed>
      */
     private function buildLoginResponse(array $user, string $memberToken): array
@@ -271,7 +258,6 @@ class AuthService
     /**
      * 登出。
      *
-     * @param  Request  $request
      * @return array<string, mixed>
      */
     public function logout(Request $request): array

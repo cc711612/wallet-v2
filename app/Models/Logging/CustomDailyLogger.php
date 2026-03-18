@@ -11,9 +11,6 @@ class CustomDailyLogger
 {
     /**
      * 套用每日檔案 logger 的自訂格式與檔名策略。
-     *
-     * @param  Logger  $logger
-     * @return void
      */
     public function __invoke(Logger $logger): void
     {
@@ -35,7 +32,7 @@ class CustomDailyLogger
                     $handler->setFilenameFormat("{filename}-{$currentUserId}-{$currentUser}-{$sapi}-{date}", 'Y-m-d');
                 }
 
-                $handler->setFormatter(new CustomFormatter());
+                $handler->setFormatter(new CustomFormatter);
             } catch (\Throwable $exception) {
                 error_log('CustomDailyLogger error: '.$exception->getMessage());
             }

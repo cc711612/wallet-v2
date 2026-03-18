@@ -34,7 +34,6 @@ class GeminiService
     /**
      * 文字生成。
      *
-     * @param  string  $prompt
      * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
@@ -97,8 +96,6 @@ class GeminiService
     /**
      * 統一 Gemini HTTP 呼叫。
      *
-     * @param  string  $method
-     * @param  string  $path
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
