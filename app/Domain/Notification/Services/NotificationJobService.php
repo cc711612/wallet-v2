@@ -13,7 +13,7 @@ class NotificationJobService
 
     public function sendFcm(int $walletDetailId, int $walletUserId, string $message): void
     {
-        $walletUser = $this->notificationJobRepository->findWalletUser($walletUserId);
+        $walletUser = $this->notificationJobRepository->findWalletUserWithWallet($walletUserId);
         if ($walletUser === null) {
             return;
         }
@@ -25,6 +25,9 @@ class NotificationJobService
         if ($devices === []) {
             return;
         }
+
+        $walletId = (string) ($walletUser['wallet_id'] ?? '');
+        $ledgerCode = (string) ($walletUser['wallet']['code'] ?? '');
 
         $firebaseKeyPath = storage_path('easysplit-firebase-key.json');
         $firebaseParams = [];
@@ -39,7 +42,7 @@ class NotificationJobService
             'platformBotId' => 'Easysplit-App',
             'platformParameters' => $firebaseParams,
             'webhookUrl' => url('/api/auth/cache'),
-            'users' => array_map(static function (array $device) use ($walletUser, $message): array {
+            'users' => array_map(static function (array $device) use ($walletUser, $message, $walletId, $ledgerCode): array {
                 $targetId = (int) ($device['wallet_user_id'] ?? 0) ?: (int) ($device['user_id'] ?? 0);
 
                 return [
@@ -51,6 +54,13 @@ class NotificationJobService
                         'content' => $message,
                         'icon' => 'https://easysplit.usongrat.tw/images/logo.png',
                         'click_action' => 'https://easysplit.usongrat.tw/',
+                        'data' => [
+                            "wallet_id" => $walletId,
+                            "ledger_code" => $ledgerCode,
+                            "type" => "wallet_record_created",
+                            "link" => "https://easysplit-local.usongrat.tw/ledger/{$ledgerCode}/detail",
+                            "icon" => "https://easysplit.usongrat.tw/assets/images/Frame.svg",
+                        ],
                     ],
                 ];
             }, $devices),
