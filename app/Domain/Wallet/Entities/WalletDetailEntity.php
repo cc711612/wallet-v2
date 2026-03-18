@@ -51,6 +51,11 @@ class WalletDetailEntity extends Model
         'is_personal' => 'boolean',
     ];
 
+    /**
+     * 取得分攤成員關聯。
+     *
+     * @return BelongsToMany<WalletUserEntity, WalletDetailEntity>
+     */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(WalletUserEntity::class, 'wallet_detail_wallet_user', 'wallet_detail_id', 'wallet_user_id');
@@ -107,6 +112,11 @@ class WalletDetailEntity extends Model
         return $this->belongsTo(WalletUserEntity::class, 'created_by', 'id');
     }
 
+    /**
+     * 取得明細拆分資料。
+     *
+     * @return HasMany<WalletDetailSplitEntity, WalletDetailEntity>
+     */
     public function splitRows(): HasMany
     {
         return $this->hasMany(WalletDetailSplitEntity::class, 'wallet_detail_id', 'id');

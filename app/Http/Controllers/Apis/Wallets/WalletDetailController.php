@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Apis\Wallets;
 
+use App\Docs\OpenApiSchemas;
 use App\Domain\Wallet\Entities\WalletDetail;
 use App\Domain\Wallet\Exceptions\WalletDetailBusinessException;
 use App\Domain\Wallet\Services\WalletDetailService;
@@ -12,6 +13,7 @@ use App\Http\Requests\WalletDetails\CheckoutWalletDetailRequest;
 use App\Http\Requests\WalletDetails\StoreWalletDetailRequest;
 use App\Http\Requests\WalletDetails\UncheckoutWalletDetailRequest;
 use App\Http\Requests\WalletDetails\UpdateWalletDetailRequest;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -20,17 +22,15 @@ use Throwable;
 class WalletDetailController extends ApiController
 {
     /**
-     * @param  WalletDetailService  $walletDetailService
      * @return void
      */
     public function __construct(private WalletDetailService $walletDetailService) {}
 
     /**
      * 建立帳本明細。
-     *
-     * @param  StoreWalletDetailRequest  $request
-     * @return JsonResponse
      */
+    #[Response(200, '建立明細成功', type: 'array{status:true, code:200, message:string, data:array<string,mixed>|object}')]
+    #[Response(400, '建立明細失敗', type: 'array{status:false, code:int, message:string, data:array<string,mixed>|object}')]
     public function store(StoreWalletDetailRequest $request): JsonResponse
     {
         try {
@@ -52,17 +52,15 @@ class WalletDetailController extends ApiController
 
     /**
      * 取得帳本明細列表。
-     *
-     * @param  int  $wallet
-     * @param  Request  $request
-     * @return JsonResponse
      */
+    #[Response(200, '取得明細列表成功', type: OpenApiSchemas::WALLET_DETAIL_INDEX_RESPONSE)]
+    #[Response(500, '取得明細列表失敗', type: 'array{status:false, code:500, message:string, data:array<string,mixed>|object}')]
     public function index(int $wallet, Request $request): JsonResponse
     {
         try {
             $isPersonal = $request->has('is_personal') ? $request->boolean('is_personal') : null;
             $walletUser = (array) $request->input('wallet_user', []);
-            $walletUserId = (int) data_get($walletUser, $wallet . '.id', 0);
+            $walletUserId = (int) data_get($walletUser, $wallet.'.id', 0);
 
             return $this->response()->success($this->walletDetailService->index($wallet, $isPersonal, $walletUserId));
         } catch (RuntimeException $exception) {
@@ -72,11 +70,9 @@ class WalletDetailController extends ApiController
 
     /**
      * 取得單筆帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  int  $detail
-     * @return JsonResponse
      */
+    #[Response(200, '取得明細成功', type: 'array{status:true, code:200, message:string, data:array{wallet: array{id:int, wallet_detail: array<string,mixed>}}}')]
+    #[Response(400, '取得明細失敗', type: 'array{status:false, code:400, message:string, data:array<string,mixed>|object}')]
     public function show(int $wallet, int $detail): JsonResponse
     {
         try {
@@ -88,12 +84,9 @@ class WalletDetailController extends ApiController
 
     /**
      * 更新帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  int  $detail
-     * @param  UpdateWalletDetailRequest  $request
-     * @return JsonResponse
      */
+    #[Response(200, '更新明細成功', type: 'array{status:true, code:200, message:string, data:array<string,mixed>|object}')]
+    #[Response(400, '更新明細失敗', type: 'array{status:false, code:int, message:string, data:array<string,mixed>|object}')]
     public function update(int $wallet, int $detail, UpdateWalletDetailRequest $request): JsonResponse
     {
         try {
@@ -116,12 +109,9 @@ class WalletDetailController extends ApiController
 
     /**
      * 刪除帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  int  $detail
-     * @param  Request  $request
-     * @return JsonResponse
      */
+    #[Response(200, '刪除明細成功', type: 'array{status:true, code:200, message:string, data:array<string,mixed>|object}')]
+    #[Response(400, '刪除明細失敗', type: 'array{status:false, code:int, message:string, data:array<string,mixed>|object}')]
     public function destroy(int $wallet, int $detail, Request $request): JsonResponse
     {
         try {
@@ -142,11 +132,9 @@ class WalletDetailController extends ApiController
 
     /**
      * 結帳帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  CheckoutWalletDetailRequest  $request
-     * @return JsonResponse
      */
+    #[Response(200, '結帳成功', type: 'array{status:true, code:200, message:string, data:array<string,mixed>|object}')]
+    #[Response(400, '結帳失敗', type: 'array{status:false, code:int, message:string, data:array<string,mixed>|object}')]
     public function checkout(int $wallet, CheckoutWalletDetailRequest $request): JsonResponse
     {
         try {
@@ -170,11 +158,9 @@ class WalletDetailController extends ApiController
 
     /**
      * 取消結帳帳本明細。
-     *
-     * @param  int  $wallet
-     * @param  UncheckoutWalletDetailRequest  $request
-     * @return JsonResponse
      */
+    #[Response(200, '取消結帳成功', type: 'array{status:true, code:200, message:string, data:array<string,mixed>|object}')]
+    #[Response(400, '取消結帳失敗', type: 'array{status:false, code:int, message:string, data:array<string,mixed>|object}')]
     public function uncheckout(int $wallet, UncheckoutWalletDetailRequest $request): JsonResponse
     {
         try {

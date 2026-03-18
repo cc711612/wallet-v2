@@ -8,9 +8,9 @@ use App\Domain\Option\Entities\CategoryEntity;
 use App\Domain\Social\Entities\SocialEntity;
 use App\Domain\Social\Enums\SocialTypeEnum;
 use App\Domain\Wallet\Entities\WalletEntity;
+use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Wallet\Enums\SymbolOperationType;
 use App\Domain\Wallet\Enums\WalletDetailType;
-use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -19,9 +19,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 {
     /**
      * 啟動 LINE loading 動畫。
-     *
-     * @param  string  $lineUserId
-     * @return void
      */
     public function startLoading(string $lineUserId): void
     {
@@ -40,10 +37,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 回覆純文字訊息。
-     *
-     * @param  string  $replyToken
-     * @param  string  $message
-     * @return void
      */
     public function replyText(string $replyToken, string $message): void
     {
@@ -65,15 +58,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 回覆 Confirm Template 訊息。
-     *
-     * @param  string  $replyToken
-     * @param  string  $altText
-     * @param  string  $promptText
-     * @param  string  $confirmLabel
-     * @param  string  $confirmText
-     * @param  string  $rejectLabel
-     * @param  string  $rejectText
-     * @return void
      */
     public function replyConfirmTemplate(
         string $replyToken,
@@ -119,9 +103,7 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /**
      * 回覆帳本選擇的 Carousel Template。
      *
-     * @param  string  $replyToken
      * @param  array<int, array<string, mixed>>  $wallets
-     * @return void
      */
     public function replyWalletSelectionTemplate(string $replyToken, array $wallets): void
     {
@@ -170,10 +152,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 主動推播純文字訊息。
-     *
-     * @param  string  $lineUserId
-     * @param  string  $message
-     * @return void
      */
     public function pushText(string $lineUserId, string $message): void
     {
@@ -195,9 +173,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 依 LINE userId 查詢系統 userId。
-     *
-     * @param  string  $lineUserId
-     * @return int|null
      */
     public function findUserIdByLineUserId(string $lineUserId): ?int
     {
@@ -219,7 +194,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /**
      * 取得使用者可存取帳本清單。
      *
-     * @param  int  $userId
      * @return array<int, array<string, mixed>>
      */
     public function listWalletsByUserId(int $userId): array
@@ -245,8 +219,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /**
      * 以帳本代碼查詢使用者可選擇帳本。
      *
-     * @param  int  $userId
-     * @param  string  $code
      * @return array<string, mixed>|null
      */
     public function findWalletByCodeForUser(int $userId, string $code): ?array
@@ -264,10 +236,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 更新 LINE social 綁定的帳本 ID。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $walletId
-     * @return void
      */
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void
     {
@@ -279,9 +247,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 查詢 LINE social 綁定帳本 ID。
-     *
-     * @param  string  $lineUserId
-     * @return int|null
      */
     public function findSocialWalletIdByLineUserId(string $lineUserId): ?int
     {
@@ -322,8 +287,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
 
     /**
      * 取得第一筆分類 ID。
-     *
-     * @return int|null
      */
     public function firstCategoryId(): ?int
     {
@@ -353,7 +316,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /**
      * 取得帳本結算摘要（供 LINE 結算訊息使用）。
      *
-     * @param  int  $walletId
      * @return array<string, mixed>|null
      */
     public function getWalletCalculateSummary(int $walletId): ?array

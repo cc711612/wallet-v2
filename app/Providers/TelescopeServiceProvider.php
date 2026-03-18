@@ -21,16 +21,16 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         Telescope::filter(function (IncomingEntry $entry) {
             $blockUri = [
                 '/api/auth/cache',
-                '/up'
+                '/up',
             ];
             $host = request()->getHost();
-            
+
             // 檢查主機是否為 IP 地址
             if (filter_var($host, FILTER_VALIDATE_IP)) {
                 return false;
             }
-            
-            return !in_array(request()->getRequestUri(), $blockUri)
+
+            return ! in_array(request()->getRequestUri(), $blockUri)
                 && request()->method() != 'OPTIONS';
         });
     }

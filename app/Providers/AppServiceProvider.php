@@ -34,6 +34,9 @@ use App\Infrastructure\Persistence\Eloquent\Repositories\WalletMemberTokenReposi
 use App\Infrastructure\Persistence\Eloquent\Repositories\WalletServiceRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\WalletUserServiceRepository;
 use App\Observers\WalletDetailObserver;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -58,6 +61,22 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(NotificationJobRepositoryInterface::class, NotificationJobRepository::class);
         $this->app->bind(LineWebhookJobRepositoryInterface::class, LineWebhookJobRepository::class);
         $this->app->bind(ExchangeRateRepositoryInterface::class, ExchangeRateRepository::class);
+
+        if (class_exists(Scramble::class)) {
+            Scramble::afterOpenApiGenerated(function (OpenApi $openApi): void {
+                $openApi->secure(
+                    SecurityScheme::http('bearer', 'JWT')
+                        ->as('bearerAuth')
+                        ->setDescription('Authorization header: Bearer <JWT>')
+                );
+
+                $openApi->secure(
+                    SecurityScheme::apiKey('query', 'member_token')
+                        ->as('memberToken')
+                        ->setDescription('Wallet member token (query parameter)')
+                );
+            });
+        }
     }
 
     /**

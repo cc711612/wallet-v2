@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Webhook\Services;
 
-use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
 use App\Domain\Gemini\Services\GeminiService;
+use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
 use App\Jobs\CreateWalletDetailJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -17,7 +17,6 @@ class LineWebhookJobService
     private const ADD_CONFIRM_CACHE_PREFIX = 'line_add_pending_';
 
     /**
-     * @param  LineWebhookJobRepositoryInterface  $lineWebhookJobRepository
      * @param  WalletService  $walletService
      * @return void
      */
@@ -30,7 +29,6 @@ class LineWebhookJobService
      * 接收 LINE webhook 事件並分派指令處理。
      *
      * @param  array<string, mixed>  $payload
-     * @return void
      */
     public function relayWebhook(array $payload): void
     {
@@ -98,7 +96,6 @@ class LineWebhookJobService
      * 推播通知訊息到指定 LINE 使用者。
      *
      * @param  array<string, mixed>  $payload
-     * @return void
      */
     public function relayNotifySendMessage(array $payload): void
     {
@@ -129,9 +126,6 @@ class LineWebhookJobService
 
     /**
      * 判斷是否為帳本列表指令。
-     *
-     * @param  string  $message
-     * @return bool
      */
     private function isWalletCommand(string $message): bool
     {
@@ -142,9 +136,6 @@ class LineWebhookJobService
 
     /**
      * 判斷是否為切換帳本指令。
-     *
-     * @param  string  $message
-     * @return bool
      */
     private function isSelectedCommand(string $message): bool
     {
@@ -153,9 +144,6 @@ class LineWebhookJobService
 
     /**
      * 判斷是否為新增記帳指令。
-     *
-     * @param  string  $message
-     * @return bool
      */
     private function isAddCommand(string $message): bool
     {
@@ -166,9 +154,6 @@ class LineWebhookJobService
 
     /**
      * 判斷是否為結算指令。
-     *
-     * @param  string  $message
-     * @return bool
      */
     private function isCalculateCommand(string $message): bool
     {
@@ -179,9 +164,6 @@ class LineWebhookJobService
 
     /**
      * 判斷是否為確認新增回覆。
-     *
-     * @param  string  $message
-     * @return bool
      */
     private function isConfirmAddCommand(string $message): bool
     {
@@ -190,9 +172,6 @@ class LineWebhookJobService
 
     /**
      * 判斷是否為取消新增回覆。
-     *
-     * @param  string  $message
-     * @return bool
      */
     private function isRejectAddCommand(string $message): bool
     {
@@ -201,10 +180,6 @@ class LineWebhookJobService
 
     /**
      * 回覆可用帳本列表。
-     *
-     * @param  int  $userId
-     * @param  string  $replyToken
-     * @return void
      */
     private function handleWalletCommand(int $userId, string $replyToken): void
     {
@@ -220,12 +195,6 @@ class LineWebhookJobService
 
     /**
      * 切換目前操作帳本。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $userId
-     * @param  string  $message
-     * @param  string  $replyToken
-     * @return void
      */
     private function handleSelectedCommand(string $lineUserId, int $userId, string $message, string $replyToken): void
     {
@@ -246,12 +215,6 @@ class LineWebhookJobService
 
     /**
      * 解析 add 指令並建立待確認資料。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $userId
-     * @param  string  $message
-     * @param  string  $replyToken
-     * @return void
      */
     private function handleAddCommand(string $lineUserId, int $userId, string $message, string $replyToken): void
     {
@@ -317,7 +280,6 @@ class LineWebhookJobService
     /**
      * 使用 AI 將使用者輸入正規化為可入庫資料。
      *
-     * @param  string  $raw
      * @param  array<int, array{id:int,name:string}>  $categories
      * @return array{categoryId:int,categoryName:string,amount:int,title:string}
      */
@@ -381,7 +343,6 @@ class LineWebhookJobService
      * 從 Gemini 回應取出主要文字內容。
      *
      * @param  array<string, mixed>  $response
-     * @return string
      */
     private function extractGeminiText(array $response): string
     {
@@ -402,11 +363,6 @@ class LineWebhookJobService
 
     /**
      * 使用者確認後才建立帳本明細。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $userId
-     * @param  string  $replyToken
-     * @return void
      */
     private function handleConfirmAddCommand(string $lineUserId, int $userId, string $replyToken): void
     {
@@ -437,10 +393,6 @@ class LineWebhookJobService
 
     /**
      * 使用者拒絕新增時清除待確認資料。
-     *
-     * @param  string  $lineUserId
-     * @param  string  $replyToken
-     * @return void
      */
     private function handleRejectAddCommand(string $lineUserId, string $replyToken): void
     {
@@ -450,11 +402,6 @@ class LineWebhookJobService
 
     /**
      * 回覆帳本結算資訊。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $userId
-     * @param  string  $replyToken
-     * @return void
      */
     private function handleCalculateCommand(string $lineUserId, int $userId, string $replyToken): void
     {
@@ -518,10 +465,6 @@ class LineWebhookJobService
 
     /**
      * 取得目前連線帳本 ID。
-     *
-     * @param  string  $lineUserId
-     * @param  int  $userId
-     * @return int|null
      */
     private function connectedWalletId(string $lineUserId, int $userId): ?int
     {
@@ -541,9 +484,6 @@ class LineWebhookJobService
 
     /**
      * 連線帳本 cache key。
-     *
-     * @param  int  $userId
-     * @return string
      */
     private function connectedWalletCacheKey(int $userId): string
     {
@@ -552,9 +492,6 @@ class LineWebhookJobService
 
     /**
      * 待確認新增資料 cache key。
-     *
-     * @param  string  $lineUserId
-     * @return string
      */
     private function pendingAddCacheKey(string $lineUserId): string
     {

@@ -12,10 +12,15 @@ use Illuminate\Support\Facades\Http;
 class ExchangeRateService
 {
     /**
+     * 建立匯率服務並注入儲存庫。
+     *
      * @return void
      */
     public function __construct(private ExchangeRateRepositoryInterface $exchangeRateRepository) {}
 
+    /**
+     * 同步即時匯率資料。
+     */
     public function setExchangeRate(): void
     {
         $domain = (string) config('services.exchangeRate.domain', '');
@@ -52,12 +57,17 @@ class ExchangeRateService
         }
     }
 
+    /**
+     * 檢查指定幣別日期匯率是否已存在。
+     */
     public function isExistExchangeRateByCurrencyAndDate(string $fromCurrency, string $date): bool
     {
         return $this->exchangeRateRepository->existsByCurrencyAndDate($fromCurrency, $date);
     }
 
     /**
+     * 取得歷史匯率資料。
+     *
      * @return array<string, mixed>
      */
     public function getHistoryExchangeRateByCurrencyAndDate(string $fromCurrency, string $date): array
@@ -83,6 +93,8 @@ class ExchangeRateService
     }
 
     /**
+     * 依歷史匯率回應寫入資料庫。
+     *
      * @param  array<string, mixed>  $historyResult
      */
     public function updateHistoryByHistoryResult(array $historyResult): void

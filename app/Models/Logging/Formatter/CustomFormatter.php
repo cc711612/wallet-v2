@@ -10,9 +10,6 @@ use Monolog\LogRecord;
 
 class CustomFormatter extends LineFormatter
 {
-    /**
-     * @param  string|null  $format
-     */
     public function __construct(?string $format = null)
     {
         $this->format = $format
@@ -22,10 +19,6 @@ class CustomFormatter extends LineFormatter
         $this->includeStacktraces(true);
     }
 
-    /**
-     * @param  LogRecord  $record
-     * @return string
-     */
     public function format(LogRecord $record): string
     {
         $output = parent::format($record);
