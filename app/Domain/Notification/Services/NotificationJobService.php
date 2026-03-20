@@ -66,7 +66,7 @@ class NotificationJobService
                             "wallet_id" => $walletId,
                             "ledger_code" => $ledgerCode,
                             "type" => "wallet_record_created",
-                            "link" => "https://easysplit-local.usongrat.tw/ledger/{$ledgerCode}/detail",
+                            "link" => "https://easysplit.usongrat.tw/ledger/{$ledgerCode}/detail",
                             "icon" => "https://easysplit.usongrat.tw/assets/images/Frame.svg",
                         ],
                     ],
