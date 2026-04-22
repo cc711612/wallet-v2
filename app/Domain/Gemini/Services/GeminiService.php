@@ -6,6 +6,7 @@ namespace App\Domain\Gemini\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class GeminiService
@@ -106,23 +107,33 @@ class GeminiService
         }
 
         $url = $this->baseUrl.$path;
-        $request = Http::timeout(30)->acceptJson();
-        $response = $method === 'GET'
-            ? $request->get($url, ['key' => $this->apiKey])
-            : $request->post($url.'?key='.$this->apiKey, $payload);
 
-        if (! $response->successful()) {
-            $message = (string) data_get($response->json(), 'error.message', 'Gemini API request failed');
+        return retry(3, function () use ($method, $url, $payload): array {
+            $request = Http::timeout(30)->acceptJson();
+            $response = $method === 'GET'
+                ? $request->get($url, ['key' => $this->apiKey])
+                : $request->post($url.'?key='.$this->apiKey, $payload);
 
-            throw new RuntimeException($message);
-        }
+            if ($response->status() === 429) {
+                Log::warning('GeminiService rate limited, retrying...', [
+                    'url' => $url,
+                ]);
+                throw new RuntimeException('gemini_rate_limited');
+            }
 
-        $json = $response->json();
+            if (! $response->successful()) {
+                $message = (string) data_get($response->json(), 'error.message', 'Gemini API request failed');
 
-        if (! is_array($json)) {
-            throw new RuntimeException('Gemini API returned invalid response');
-        }
+                throw new RuntimeException($message);
+            }
 
-        return $json;
+            $json = $response->json();
+
+            if (! is_array($json)) {
+                throw new RuntimeException('Gemini API returned invalid response');
+            }
+
+            return $json;
+        }, 2000, static fn (\Throwable $e): bool => $e->getMessage() === 'gemini_rate_limited');
     }
 }
