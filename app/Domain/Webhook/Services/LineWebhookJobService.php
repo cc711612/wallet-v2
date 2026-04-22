@@ -8,6 +8,7 @@ use App\Domain\Gemini\Services\GeminiService;
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
 use App\Jobs\CreateWalletDetailJob;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -42,8 +43,6 @@ class LineWebhookJobService
             if ($lineUserId === '' || $replyToken === '' || $messageType !== 'text') {
                 continue;
             }
-
-            $this->lineWebhookJobRepository->startLoading($lineUserId);
 
             $userId = $this->lineWebhookJobRepository->findUserIdByLineUserId($lineUserId);
             if ($userId === null) {
@@ -242,6 +241,10 @@ class LineWebhookJobService
         try {
             $normalized = $this->normalizeAddCommandByAi($raw, $categories);
         } catch (RuntimeException $exception) {
+            Log::error('LineWebhookJobService handleAddCommand failed', [
+                'message' => $exception->getMessage(),
+                'raw' => $raw,
+            ]);
             $this->lineWebhookJobRepository->replyText($replyToken, $exception->getMessage());
 
             return;
@@ -304,7 +307,11 @@ class LineWebhookJobService
         try {
             $response = $this->geminiService->chat($messages);
             $text = $this->extractGeminiText($response);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Log::error('LineWebhookJobService normalizeAddCommandByAi failed', [
+                'message' => $e->getMessage(),
+                'raw' => $raw,
+            ]);
             throw new RuntimeException('AI 服務暫時無法使用，請稍後再試');
         }
 
