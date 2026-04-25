@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Repositories;
 use App\Domain\Wallet\Entities\WalletDetail;
 use App\Domain\Wallet\Entities\WalletDetailEntity;
 use App\Domain\Wallet\Entities\WalletDetailSplitEntity;
+use App\Domain\Wallet\Entities\WalletEntity;
 use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Wallet\Enums\SymbolOperationType;
 use App\Domain\Wallet\Enums\WalletDetailType;
@@ -69,66 +70,70 @@ class WalletDetailRepository implements WalletDetailRepositoryInterface
         $attributes = $walletDetail->toPersistenceAttributes();
 
         /** @var int $detailId */
-        $detailId = DB::transaction(function () use ($attributes, $now): int {
-            /** @var array<int, int> $users */
-            $users = array_values(array_unique(array_map('intval', $attributes['users'] ?? [])));
+        $detailId = WalletDetailEntity::withoutTouching(function () use ($attributes, $now) {
+            return WalletEntity::withoutTouching(function () use ($attributes, $now) {
+                return DB::transaction(function () use ($attributes, $now): int {
+                    /** @var array<int, int> $users */
+                    $users = array_values(array_unique(array_map('intval', $attributes['users'] ?? [])));
 
-            if ((bool) ($attributes['select_all'] ?? false) === true) {
-                $users = WalletUserEntity::query()
-                    ->where('wallet_id', (int) $attributes['wallet_id'])
-                    ->pluck('id')
-                    ->map(static fn ($id): int => (int) $id)
-                    ->values()
-                    ->all();
-            }
+                    if ((bool) ($attributes['select_all'] ?? false) === true) {
+                        $users = WalletUserEntity::query()
+                            ->where('wallet_id', (int) $attributes['wallet_id'])
+                            ->pluck('id')
+                            ->map(static fn ($id): int => (int) $id)
+                            ->values()
+                            ->all();
+                    }
 
-            /** @var array<int, array{user_id:int, value:float|int}> $splits */
-            $splits = is_array($attributes['splits'] ?? null) ? $attributes['splits'] : [];
+                    /** @var array<int, array{user_id:int, value:float|int}> $splits */
+                    $splits = is_array($attributes['splits'] ?? null) ? $attributes['splits'] : [];
 
-            $insertPayload = [
-                'wallet_id' => $attributes['wallet_id'],
-                'category_id' => $attributes['category_id'] ?? null,
-                'type' => $attributes['type'],
-                'payment_wallet_user_id' => $attributes['payment_wallet_user_id'] ?? null,
-                'title' => $attributes['title'],
-                'symbol_operation_type_id' => $attributes['symbol_operation_type_id'],
-                'select_all' => (int) ($attributes['select_all'] ? 1 : 0),
-                'is_personal' => (int) ($attributes['is_personal'] ? 1 : 0),
-                'value' => $attributes['value'],
-                'unit' => $attributes['unit'],
-                'rates' => $attributes['rates'] ?? null,
-                'date' => $attributes['date'],
-                'note' => $attributes['note'] ?? null,
-                'splits' => json_encode($splits, JSON_THROW_ON_ERROR),
-                'created_by' => $attributes['created_by'] ?? null,
-                'updated_by' => $attributes['updated_by'] ?? null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-
-            /** @var WalletDetailEntity $entity */
-            $entity = WalletDetailEntity::query()->create($insertPayload);
-            $id = (int) $entity->id;
-
-            $entity->users()->sync($users);
-
-            if ($splits !== []) {
-                $splitRows = array_map(
-                    static fn (array $split): array => [
-                        'wallet_detail_id' => $id,
-                        'wallet_user_id' => (int) $split['user_id'],
-                        'unit' => (string) ($attributes['unit'] ?? 'TWD'),
-                        'value' => (float) $split['value'],
+                    $insertPayload = [
+                        'wallet_id' => $attributes['wallet_id'],
+                        'category_id' => $attributes['category_id'] ?? null,
+                        'type' => $attributes['type'],
+                        'payment_wallet_user_id' => $attributes['payment_wallet_user_id'] ?? null,
+                        'title' => $attributes['title'],
+                        'symbol_operation_type_id' => $attributes['symbol_operation_type_id'],
+                        'select_all' => (int) ($attributes['select_all'] ? 1 : 0),
+                        'is_personal' => (int) ($attributes['is_personal'] ? 1 : 0),
+                        'value' => $attributes['value'],
+                        'unit' => $attributes['unit'],
+                        'rates' => $attributes['rates'] ?? null,
+                        'date' => $attributes['date'],
+                        'note' => $attributes['note'] ?? null,
+                        'splits' => json_encode($splits, JSON_THROW_ON_ERROR),
+                        'created_by' => $attributes['created_by'] ?? null,
+                        'updated_by' => $attributes['updated_by'] ?? null,
                         'created_at' => $now,
                         'updated_at' => $now,
-                    ],
-                    $splits
-                );
+                    ];
 
-                WalletDetailSplitEntity::query()->insert($splitRows);
-            }
+                    /** @var WalletDetailEntity $entity */
+                    $entity = WalletDetailEntity::query()->create($insertPayload);
+                    $id = (int) $entity->id;
 
-            return $id;
+                    $entity->users()->sync($users);
+
+                    if ($splits !== []) {
+                        $splitRows = array_map(
+                            static fn (array $split): array => [
+                                'wallet_detail_id' => $id,
+                                'wallet_user_id' => (int) $split['user_id'],
+                                'unit' => (string) ($attributes['unit'] ?? 'TWD'),
+                                'value' => (float) $split['value'],
+                                'created_at' => $now,
+                                'updated_at' => $now,
+                            ],
+                            $splits
+                        );
+
+                        WalletDetailSplitEntity::query()->insert($splitRows);
+                    }
+
+                    return $id;
+                });
+            });
         });
 
         /** @var WalletDetailEntity|null $record */
