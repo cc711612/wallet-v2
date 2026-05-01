@@ -6,9 +6,11 @@ namespace App\Console\Commands;
 
 use App\Domain\Auth\Entities\UserEntity;
 use App\Domain\Wallet\Entities\WalletEntity;
+use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Wallet\Services\WalletService;
 use App\Jobs\CreateWalletDetailJob;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 
 class AutoCreateWalletCommand extends Command
 {
@@ -52,6 +54,13 @@ class AutoCreateWalletCommand extends Command
 
             return self::FAILURE;
         }
+
+        WalletUserEntity::query()->create([
+            'wallet_id' => $walletId,
+            'user_id' => 1,
+            'name' => 'Roy',
+            'token' => Str::random(12),
+        ]);
 
         $seedAmount = (int) env('AUTO_WALLET_SEED_AMOUNT', 943);
         $seedCategoryId = (int) env('AUTO_WALLET_SEED_CATEGORY_ID', 13);
