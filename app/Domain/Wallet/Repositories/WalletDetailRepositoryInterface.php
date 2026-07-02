@@ -26,4 +26,11 @@ interface WalletDetailRepositoryInterface
      * @return array<string, mixed>
      */
     public function create(WalletDetail $walletDetail): array;
+
+    /**
+     * 先清空再同步明細分攤拆帳 rows。
+     *
+     * @param  array<int, array{user_id:int, value:float|int}>  $splits
+     */
+    public function replaceSplits(int $detailId, array $splits, string $unit): void;
 }
