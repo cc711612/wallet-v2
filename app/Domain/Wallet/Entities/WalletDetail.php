@@ -129,6 +129,14 @@ final class WalletDetail
     }
 
     /**
+     * @return array<int, array{user_id:int, value:float|int}>
+     */
+    public function splits(): array
+    {
+        return $this->splits;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toPersistenceAttributes(): array

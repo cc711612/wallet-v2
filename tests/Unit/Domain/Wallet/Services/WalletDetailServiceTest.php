@@ -121,6 +121,11 @@ class InMemoryWalletDetailRepository implements WalletDetailRepositoryInterface
             'created_at' => now()->toDateTimeString(),
         ];
     }
+
+    /**
+     * @param  array<int, array{user_id:int, value:float|int}>  $splits
+     */
+    public function replaceSplits(int $detailId, array $splits, string $unit): void {}
 }
 
 class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepositoryInterface
@@ -128,7 +133,7 @@ class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepository
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function listDetails(int $walletId, bool $isPersonal): array
+    public function listDetails(int $walletId, ?bool $isPersonal, ?int $walletUserId = null): array
     {
         return [];
     }
@@ -170,12 +175,17 @@ class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepository
      */
     public function updateDetail(int $walletId, int $detailId, array $attributes): void {}
 
+    /**
+     * @param  array<int, int>  $userIds
+     */
+    public function replaceDetailUsers(int $walletId, int $detailId, array $userIds): void {}
+
     public function deleteDetail(int $walletId, int $detailId): void {}
 
     /**
      * @param  array<int, int>  $detailIds
      */
-    public function checkout(int $walletId, array $detailIds): void {}
+    public function checkout(int $walletId, array $detailIds, int $walletUserId): void {}
 
-    public function uncheckout(int $walletId, string $checkoutAt): void {}
+    public function uncheckout(int $walletId, string $checkoutAt, int $walletUserId): void {}
 }

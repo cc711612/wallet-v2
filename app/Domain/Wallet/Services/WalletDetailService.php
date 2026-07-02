@@ -141,6 +141,9 @@ class WalletDetailService
 
         $attributes = $walletDetail->toPersistenceAttributes();
 
+        /** @var array<int, array{user_id:int, value:float|int}> $splits */
+        $splits = $walletDetail->splits();
+
         $this->walletDetailQueryRepository->updateDetail($walletDetail->walletId(), $detailId, [
             'type' => $attributes['type'],
             'payment_wallet_user_id' => $attributes['payment_wallet_user_id'],
@@ -155,6 +158,7 @@ class WalletDetailService
             'note' => $attributes['note'],
             'category_id' => $attributes['category_id'],
             'updated_by' => $attributes['updated_by'],
+            'splits' => json_encode($splits),
         ]);
 
         /** @var array<int, int> $users */
@@ -167,6 +171,8 @@ class WalletDetailService
         }
 
         $this->walletDetailQueryRepository->replaceDetailUsers($walletDetail->walletId(), $detailId, $users);
+
+        $this->walletDetailRepository->replaceSplits($detailId, $splits, (string) ($attributes['unit'] ?? 'TWD'));
     }
 
     /**

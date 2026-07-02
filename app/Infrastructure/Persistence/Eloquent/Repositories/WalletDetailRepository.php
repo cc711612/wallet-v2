@@ -102,7 +102,7 @@ class WalletDetailRepository implements WalletDetailRepositoryInterface
                         'rates' => $attributes['rates'] ?? null,
                         'date' => $attributes['date'],
                         'note' => $attributes['note'] ?? null,
-                        'splits' => json_encode($splits, JSON_THROW_ON_ERROR),
+                        'splits' => $splits,
                         'created_by' => $attributes['created_by'] ?? null,
                         'updated_by' => $attributes['updated_by'] ?? null,
                         'created_at' => $now,
@@ -151,5 +151,36 @@ class WalletDetailRepository implements WalletDetailRepositoryInterface
         $created = $record ? $record->toArray() : [];
 
         return $created;
+    }
+
+    /**
+     * 先清空再同步明細分攤拆帳 rows。
+     *
+     * @param  array<int, array{user_id:int, value:float|int}>  $splits
+     */
+    public function replaceSplits(int $detailId, array $splits, string $unit): void
+    {
+        WalletDetailSplitEntity::query()->where('wallet_detail_id', $detailId)->delete();
+
+        if ($splits === []) {
+            return;
+        }
+
+        /** @var Carbon $now */
+        $now = now();
+
+        $splitRows = array_map(
+            static fn (array $split): array => [
+                'wallet_detail_id' => $detailId,
+                'wallet_user_id' => (int) $split['user_id'],
+                'unit' => $unit,
+                'value' => (float) $split['value'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $splits
+        );
+
+        WalletDetailSplitEntity::query()->insert($splitRows);
     }
 }
