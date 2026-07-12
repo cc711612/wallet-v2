@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Wallet\Services;
 
+use App\Domain\Wallet\Entities\WalletDetail;
 use App\Domain\Wallet\Repositories\WalletJobRepositoryInterface;
-use App\Support\JwtTokenService;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class CreateWalletDetailJobService
 {
@@ -19,11 +17,17 @@ class CreateWalletDetailJobService
      */
     public function __construct(
         private WalletJobRepositoryInterface $walletJobRepository,
-        private JwtTokenService $jwtTokenService,
+        private WalletDetailService $walletDetailService,
     ) {}
 
     /**
      * 建立公費支出明細。
+     *
+     * 原先是在 queued job 內透過 HTTP loopback 呼叫 /api/wallet/{id}/detail，
+     * 失敗才 fallback 直寫 DB；現改為直接呼叫 domain 層 WalletDetailService，
+     * 收斂成單一路徑（不再有 HTTP 呼叫，也不再需要另一套直寫 DB 的 fallback邏輯）。
+     * 若寫入失敗（例如業務規則例外或 DB 例外），交由例外往上拋，
+     * 讓 job 本身的 $tries/$backoff 重試機制處理。
      *
      * @param  array<string, mixed>  $params
      */
@@ -41,70 +45,25 @@ class CreateWalletDetailJobService
             return;
         }
 
-        $payload = [
+        $walletUserId = (int) ($walletUser['id'] ?? 0);
+
+        $walletDetail = WalletDetail::fromPayload([
+            'wallet' => $walletId,
+            'wallet_user_id' => $walletUserId,
             'type' => 2,
             'symbol_operation_type_id' => 2,
             'title' => (string) Arr::get($params, 'title', ''),
             'value' => (int) Arr::get($params, 'amount', 0),
             'unit' => (string) Arr::get($params, 'unit', 'TWD'),
             'select_all' => true,
-            'payment_wallet_user_id' => (int) ($walletUser['id'] ?? 0),
+            'is_personal' => false,
+            'payment_wallet_user_id' => $walletUserId,
             'date' => (string) Arr::get($params, 'date', now()->format('Y-m-d')),
             'category_id' => Arr::get($params, 'categoryId'),
-        ];
-
-        $jwt = $this->jwtTokenService->makeUserJwt($user);
-        $url = rtrim((string) config('app.url'), '/').'/api/wallet/'.$walletId.'/detail';
-        $response = Http::timeout(15)
-            ->acceptJson()
-            ->withToken($jwt)
-            ->post($url, $payload);
-
-        if ($response->successful()) {
-            return;
-        }
-
-        Log::warning('CreateWalletDetailJobService API fallback to direct DB insert', [
-            'status' => $response->status(),
-            'body' => $response->body(),
-            'wallet_id' => $walletId,
-            'user_id' => $userId,
-        ]);
-
-        $this->createDirect($userId, $walletId, $walletUser, $params);
-    }
-
-    /**
-     * 直接寫入資料庫建立帳本明細。
-     *
-     * @param  array<string, mixed>  $walletUser
-     * @param  array<string, mixed>  $params
-     */
-    private function createDirect(int $userId, int $walletId, array $walletUser, array $params): void
-    {
-
-        $detailId = $this->walletJobRepository->createWalletDetail([
-            'wallet_id' => $walletId,
-            'category_id' => Arr::get($params, 'categoryId'),
-            'type' => 2,
-            'payment_wallet_user_id' => (int) ($walletUser['id'] ?? 0),
-            'title' => (string) Arr::get($params, 'title', ''),
-            'symbol_operation_type_id' => 2,
-            'select_all' => 1,
-            'is_personal' => 0,
-            'value' => (int) Arr::get($params, 'amount', 0),
-            'unit' => (string) Arr::get($params, 'unit', 'TWD'),
-            'rates' => null,
-            'date' => (string) Arr::get($params, 'date', now()->format('Y-m-d')),
-            'note' => null,
+            'users' => [],
             'splits' => [],
-            'created_by' => $userId,
-            'updated_by' => $userId,
         ]);
 
-        $walletUserIds = $this->walletJobRepository->listWalletUserIds($walletId);
-        if ($walletUserIds !== []) {
-            $this->walletJobRepository->syncDetailUsers($detailId, $walletUserIds);
-        }
+        $this->walletDetailService->create($walletDetail);
     }
 }

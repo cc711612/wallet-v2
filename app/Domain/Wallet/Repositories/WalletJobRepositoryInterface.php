@@ -29,6 +29,15 @@ interface WalletJobRepositoryInterface
     public function syncDetailUsersWithoutDetaching(int $detailId, array $walletUserIds): void;
 
     /**
+     * 批次同步多筆明細與多個成員的關聯（不移除既有關聯）。
+     * 一次處理所有明細 x 成員組合，避免逐筆 find + pivot sync 造成的 N+1。
+     *
+     * @param  array<int, int>  $detailIds
+     * @param  array<int, int>  $walletUserIds
+     */
+    public function syncDetailUsersWithoutDetachingBatch(array $detailIds, array $walletUserIds): void;
+
+    /**
      * @return array<string, mixed>|null
      */
     public function findWalletUserByWalletAndUser(int $walletId, int $userId): ?array;

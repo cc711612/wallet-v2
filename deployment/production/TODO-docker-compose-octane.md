@@ -28,12 +28,12 @@
 - [x] worker 管理策略確定：使用獨立 worker container
 - [x] 補齊核心服務 restart policy 與 healthcheck
 
-## 4）Octane 導入路徑（目前尚未安裝）
-- [ ] 安裝 Octane：`composer require laravel/octane`
-- [ ] 安裝伺服器（擇一）：Swoole 或 RoadRunner
-- [ ] 初始化 Octane：`php artisan octane:install`
+## 4）Octane 導入路徑（已完成，採用 FrankenPHP）
+- [x] 安裝 Octane：composer.json 已含 `laravel/octane ^2.14`
+- [x] 伺服器採用 FrankenPHP（base image `dunglas/frankenphp:php8.4-alpine`，非原規劃的 Swoole/RoadRunner）
+- [x] 初始化 Octane：`entrypoint-web.sh` 以 `octane:start --server=frankenphp` 啟動
 - [x] 新增 Octane service 定義並由 nginx 反向代理
-- [ ] 補齊 Octane 調校參數（`OCTANE_SERVER`、worker 數、max requests）
+- [x] 補齊 Octane 調校參數（`OCTANE_SERVER`、`OCTANE_WORKERS`、`OCTANE_MAX_REQUESTS` 由 env 控制，見 entrypoint-web.sh）
 - [x] 驗證 Octane 與 queue/scheduler 分離（避免職責混跑）
 
 ## 5）Entrypoint / 行程管理
@@ -45,8 +45,8 @@
 
 ## 6）Nginx 與 TLS
 - [x] 建立 `wallet-v2` 網域對應的 nginx 設定與 upstream（`php-fpm` 或 `octane`）
-- [ ] 加入靜態資源快取與基礎安全標頭
-- [x] 規劃 TLS 憑證掛載結構（憑證檔不入版控）
+- [x] 加入靜態資源快取與基礎安全標頭（2026-07-11：gzip、public/ 靜態直出、security headers）
+- [x] TLS 由 VM 上外層 nginx 終結，容器內 nginx 不處理 TLS（2026-07-11 確認架構）
 - [ ] 驗證 API 所需的 body size / timeout 設定
 
 ## 7）資料與 Queue 安全檢查
@@ -61,7 +61,7 @@
 - [ ] 執行應用健康檢查與關鍵 API smoke tests
 - [ ] 執行 queue 投遞/消費 smoke tests
 - [ ] 執行 scheduler smoke test（`schedule:run`）
-- [ ] 確認 log 路徑與輪替策略
+- [x] 確認 log 路徑與輪替策略（2026-07-11：compose 全 service json-file max-size 10m / max-file 3）
 
 ## 9）上線計畫
 - [ ] 先建立 staging compose，使用接近 production 的環境驗證

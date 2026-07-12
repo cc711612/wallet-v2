@@ -18,6 +18,11 @@ class NotificationFCM implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public $tries = 3;
+
+    /** @var array<int, int> */
+    public $backoff = [5, 30];
+
     public function __construct(
         private int $walletDetailId,
         private int $walletUserId,
