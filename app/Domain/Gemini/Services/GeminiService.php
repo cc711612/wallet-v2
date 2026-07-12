@@ -19,6 +19,12 @@ class GeminiService
 
     private string $defaultModel;
 
+    private int $timeout;
+
+    private int $retryTimes;
+
+    private int $retryDelayMs;
+
     /**
      * 初始化 Gemini API 設定。
      *
@@ -30,6 +36,9 @@ class GeminiService
         $this->baseUrl = rtrim((string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com'), '/');
         $this->apiVersion = (string) config('services.gemini.api_version', 'v1beta');
         $this->defaultModel = (string) config('services.gemini.default_model', 'gemini-2.0-flash');
+        $this->timeout = (int) config('services.gemini.timeout', 15);
+        $this->retryTimes = (int) config('services.gemini.retry_times', 2);
+        $this->retryDelayMs = (int) config('services.gemini.retry_delay_ms', 2000);
     }
 
     /**
@@ -108,8 +117,8 @@ class GeminiService
 
         $url = $this->baseUrl.$path;
 
-        return retry(3, function () use ($method, $url, $payload): array {
-            $request = Http::timeout(30)->acceptJson();
+        return retry($this->retryTimes, function () use ($method, $url, $payload): array {
+            $request = Http::timeout($this->timeout)->acceptJson();
             $response = $method === 'GET'
                 ? $request->get($url, ['key' => $this->apiKey])
                 : $request->post($url.'?key='.$this->apiKey, $payload);
@@ -134,6 +143,6 @@ class GeminiService
             }
 
             return $json;
-        }, 2000, static fn (\Throwable $e): bool => $e->getMessage() === 'gemini_rate_limited');
+        }, $this->retryDelayMs, static fn (\Throwable $e): bool => $e->getMessage() === 'gemini_rate_limited');
     }
 }

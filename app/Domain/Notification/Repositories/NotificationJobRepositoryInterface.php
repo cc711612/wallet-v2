@@ -25,6 +25,7 @@ interface NotificationJobRepositoryInterface
      * 發送 FCM 批次通知。
      *
      * @param  array<string, mixed>  $requestBody
+     * @return array{success: bool, status: int, body: string}
      */
-    public function sendFcmBatch(array $requestBody): bool;
+    public function sendFcmBatch(array $requestBody): array;
 }
