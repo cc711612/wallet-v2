@@ -51,8 +51,8 @@ Route::group(['as' => 'api.'], function (): void {
 
     Route::group(['as' => 'webhook.', 'prefix' => 'webhook'], function (): void {
         Route::group(['as' => 'line.', 'prefix' => 'line'], function (): void {
-            Route::any('/', [LineController::class, 'store'])->name('store');
-            Route::any('/notify', [LineController::class, 'notify'])->name('notify');
+            Route::any('/', [LineController::class, 'store'])->middleware(['VerifyLineSignature'])->name('store');
+            Route::any('/notify', [LineController::class, 'notify'])->middleware(['VerifyLineSignature'])->name('notify');
             Route::any('/notifyBind', [LineController::class, 'notifyBind'])->middleware(['VerifyApi'])->name('notifyBind');
             Route::any('/notifyToken', [LineController::class, 'notifyToken'])->middleware(['VerifyApi'])->name('notifyToken');
             Route::any('/notifySendMessage', [LineController::class, 'notifySendMessage'])->middleware(['VerifyApi'])->name('notifySendMessage');

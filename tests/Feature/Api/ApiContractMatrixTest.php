@@ -123,7 +123,6 @@ class ApiContractMatrixTest extends TestCase
             ['GET', '/api/wallet/1/detail/1', []],
             ['PUT', '/api/wallet/1/detail/checkout', ['checkout_id' => [1, 2]]],
             ['PUT', '/api/wallet/1/detail/undo_checkout', ['checkout_at' => now()->toDateTimeString()]],
-            ['POST', '/api/webhook/line/notify', ['code' => 'W001']],
             ['POST', '/api/gemini/chat', ['messages' => [['role' => 'user', 'content' => 'hello']]]],
         ];
 
