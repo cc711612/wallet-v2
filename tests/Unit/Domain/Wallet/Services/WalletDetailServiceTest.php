@@ -11,6 +11,9 @@ use App\Domain\Wallet\Exceptions\WalletDetailBusinessException;
 use App\Domain\Wallet\Repositories\WalletDetailQueryRepositoryInterface;
 use App\Domain\Wallet\Repositories\WalletDetailRepositoryInterface;
 use App\Domain\Wallet\Services\WalletDetailService;
+use Illuminate\Support\Facades\DB;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 class WalletDetailServiceTest extends TestCase
@@ -72,6 +75,68 @@ class WalletDetailServiceTest extends TestCase
 
         $this->assertSame(1, $result['id']);
         $this->assertSame('Dinner', $result['title']);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
+    }
+
+    public function test_update_runs_all_three_writes_inside_a_single_db_transaction(): void
+    {
+        $callLog = [];
+
+        $queryRepository = new RecordingWalletDetailQueryRepository($callLog);
+        $repository = new RecordingWalletDetailRepository($callLog);
+        $service = new WalletDetailService($repository, $queryRepository);
+
+        DB::shouldReceive('transaction')
+            ->once()
+            ->andReturnUsing(static fn (\Closure $callback) => $callback());
+
+        $service->update(WalletDetail::fromPayload([
+            'wallet' => 1,
+            'wallet_user_id' => 10,
+            'type' => WalletDetailType::GENERAL_EXPENSE->value,
+            'symbol_operation_type_id' => SymbolOperationType::DECREMENT->value,
+            'title' => 'Taxi',
+            'value' => 200,
+            'select_all' => false,
+            'users' => [10, 11],
+        ]), 99);
+
+        $this->assertSame(['updateDetail', 'replaceDetailUsers', 'replaceSplits'], $callLog);
+    }
+
+    public function test_update_aborts_remaining_writes_when_a_step_throws(): void
+    {
+        $callLog = [];
+
+        $queryRepository = new RecordingWalletDetailQueryRepository($callLog);
+        $repository = new RecordingWalletDetailRepository($callLog, throwOnReplaceSplits: true);
+        $service = new WalletDetailService($repository, $queryRepository);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('replaceSplits failed');
+
+        try {
+            $service->update(WalletDetail::fromPayload([
+                'wallet' => 1,
+                'wallet_user_id' => 10,
+                'type' => WalletDetailType::GENERAL_EXPENSE->value,
+                'symbol_operation_type_id' => SymbolOperationType::DECREMENT->value,
+                'title' => 'Taxi',
+                'value' => 200,
+                'select_all' => false,
+                'users' => [10, 11],
+            ]), 99);
+        } finally {
+            // 驗證前兩步確實執行過（在同一個 transaction closure 內依序執行），
+            // 第三步拋例外後整個 closure 中止，交由 DB::transaction 負責 rollback。
+            $this->assertSame(['updateDetail', 'replaceDetailUsers', 'replaceSplits'], $callLog);
+        }
     }
 }
 
@@ -179,6 +244,123 @@ class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepository
      * @param  array<int, int>  $userIds
      */
     public function replaceDetailUsers(int $walletId, int $detailId, array $userIds): void {}
+
+    public function deleteDetail(int $walletId, int $detailId): void {}
+
+    /**
+     * @param  array<int, int>  $detailIds
+     */
+    public function checkout(int $walletId, array $detailIds, int $walletUserId): void {}
+
+    public function uncheckout(int $walletId, string $checkoutAt, int $walletUserId): void {}
+}
+
+class RecordingWalletDetailRepository implements WalletDetailRepositoryInterface
+{
+    /**
+     * @param  array<int, string>  $callLog
+     */
+    public function __construct(
+        private array &$callLog,
+        private bool $throwOnReplaceSplits = false,
+    ) {}
+
+    public function getWalletBalance(int $walletId): float
+    {
+        return 1000.0;
+    }
+
+    /**
+     * @param  array<int, int>  $walletUserIds
+     */
+    public function walletUsersExistInWallet(int $walletId, array $walletUserIds): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function create(WalletDetail $walletDetail): array
+    {
+        return [];
+    }
+
+    /**
+     * @param  array<int, array{user_id:int, value:float|int}>  $splits
+     */
+    public function replaceSplits(int $detailId, array $splits, string $unit): void
+    {
+        $this->callLog[] = 'replaceSplits';
+
+        if ($this->throwOnReplaceSplits) {
+            throw new RuntimeException('replaceSplits failed');
+        }
+    }
+}
+
+class RecordingWalletDetailQueryRepository implements WalletDetailQueryRepositoryInterface
+{
+    /**
+     * @param  array<int, string>  $callLog
+     */
+    public function __construct(private array &$callLog) {}
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function listDetails(int $walletId, ?bool $isPersonal, ?int $walletUserId = null): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function listWalletUsers(int $walletId): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findDetail(int $walletId, int $detailId): ?array
+    {
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findWallet(int $walletId): ?array
+    {
+        return [
+            'id' => $walletId,
+            'code' => 'WALLET001',
+            'title' => 'test-wallet',
+            'status' => 1,
+            'mode' => 'multi',
+            'unit' => 'TWD',
+            'properties' => [],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function updateDetail(int $walletId, int $detailId, array $attributes): void
+    {
+        $this->callLog[] = 'updateDetail';
+    }
+
+    /**
+     * @param  array<int, int>  $userIds
+     */
+    public function replaceDetailUsers(int $walletId, int $detailId, array $userIds): void
+    {
+        $this->callLog[] = 'replaceDetailUsers';
+    }
 
     public function deleteDetail(int $walletId, int $detailId): void {}
 
