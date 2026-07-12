@@ -28,4 +28,5 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
 
-CMD ["/bin/bash"]
+# 預設以 web 角色啟動；compose 會依 service 各自覆蓋 command
+CMD ["/var/www/html/deployment/production/entrypoint-web.sh"]

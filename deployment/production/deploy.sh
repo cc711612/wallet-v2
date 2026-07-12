@@ -76,10 +76,20 @@ do_octane_reload() {
 do_worker_supervisor_reload() {
     ensure_worker_running
     info "Reload worker supervisor programs..."
-    docker exec "$WORKER_CONTAINER" supervisorctl reread
-    docker exec "$WORKER_CONTAINER" supervisorctl update
-    docker exec "$WORKER_CONTAINER" supervisorctl restart all
+    docker exec "$WORKER_CONTAINER" supervisorctl -c /var/www/html/deployment/production/supervisor/supervisord.conf reread
+    docker exec "$WORKER_CONTAINER" supervisorctl -c /var/www/html/deployment/production/supervisor/supervisord.conf update
+    # queue:restart 讓進行中的 job 跑完後 worker 自行退出，由 supervisor autorestart 帶起新行程
+    docker exec "$WORKER_CONTAINER" php artisan queue:restart
+    # scheduler (schedule:work) 不吃 queue:restart 訊號，需要單獨 restart
+    docker exec "$WORKER_CONTAINER" supervisorctl -c /var/www/html/deployment/production/supervisor/supervisord.conf restart scheduler:*
     info "Worker supervisor reload 完成"
+}
+
+do_composer() {
+    ensure_container_running
+    info "同步 composer 依賴 (composer.lock 無變動時會直接跳過)..."
+    docker exec "$WEB_CONTAINER" composer install --no-dev --optimize-autoloader --no-interaction
+    info "Composer 依賴同步完成"
 }
 
 do_restart_containers() {
@@ -95,17 +105,14 @@ do_rebuild_image() {
 }
 
 do_full_redeploy() {
-    warning "準備執行全清空重部署（會刪除 compose services、匿名 volume、舊 image）"
+    warning "準備執行全清空重部署（會刪除 compose services、網路、舊 image；保留 redis-data volume）"
     if ! confirm "確定要繼續嗎？"; then
         warning "已取消"
         return
     fi
 
-    warning "停止並移除容器/網路/volume..."
-    $COMPOSE_CMD down --volumes --remove-orphans
-
-    warning "刪除專案 image..."
-    $COMPOSE_CMD down --rmi local --remove-orphans || true
+    warning "停止並移除容器/網路/image（不刪 volume，Redis 佇列與快取資料保留）..."
+    $COMPOSE_CMD down --rmi local --remove-orphans
 
     info "重新 build 並啟動..."
     $COMPOSE_CMD up -d --build --force-recreate --remove-orphans
@@ -113,8 +120,26 @@ do_full_redeploy() {
     info "全清空重部署完成"
 }
 
+do_wipe_volumes() {
+    warning "!!! 危險操作：將刪除具名 volume（含 Redis AOF 持久化資料）"
+    warning "!!! 所有尚未消化的 queue jobs 與快取會永久遺失，無法復原"
+    if ! confirm "你確定要刪除 Redis 資料嗎？"; then
+        warning "已取消"
+        return
+    fi
+    echo -n "請輸入專案名稱 (${PROJECT_NAME}) 以再次確認: "
+    read -r typed_name
+    if [ "$typed_name" != "$PROJECT_NAME" ]; then
+        warning "名稱不符，已取消"
+        return
+    fi
+    $COMPOSE_CMD down --volumes --remove-orphans
+    info "Volume 已刪除，重新啟動請執行 rebuild"
+}
+
 do_deploy() {
-    info "執行標準部署流程 (cache + octane reload + worker supervisor reload)..."
+    info "執行標準部署流程 (composer + cache + octane reload + worker supervisor reload)..."
+    do_composer
     do_cache
     do_octane_reload
     do_worker_supervisor_reload
@@ -128,16 +153,17 @@ show_menu() {
     echo "=============================="
     echo "  wallet-v2 部署工具"
     echo "=============================="
-    echo "  1) 標準部署        (cache + octane reload + worker reload)"
+    echo "  1) 標準部署        (composer + cache + octane reload + worker reload)"
     echo "  2) 重新 cache      (config / route / view)"
     echo "  3) Octane reload   (graceful，不中斷服務)"
     echo "  4) 執行 migrate"
     echo "  5) 重開所有 container"
     echo "  6) 重建 Docker image"
-    echo "  7) 全清空重部署 (down --volumes + rebuild)"
+    echo "  7) 全清空重部署    (down + rebuild，保留 redis-data)"
+    echo "  8) [危險] 刪除 volume (會清空 Redis 佇列資料)"
     echo "  q) 離開"
     echo "=============================="
-    echo -n "請選擇 [1-7 / q]: "
+    echo -n "請選擇 [1-8 / q]: "
 }
 
 run_menu() {
@@ -153,6 +179,7 @@ run_menu() {
             5) do_restart_containers ;;
             6) do_rebuild_image ;;
             7) do_full_redeploy ;;
+            8) do_wipe_volumes ;;
             q|Q) info "離開"; exit 0 ;;
             *) warning "無效選項，請重新輸入" ;;
         esac
@@ -166,15 +193,17 @@ run_menu() {
 
 case "${1:-}" in
     deploy)   do_deploy ;;
+    composer) do_composer ;;
     cache)    do_cache ;;
     reload)   do_octane_reload ;;
     migrate)  do_migrate ;;
     restart)  do_restart_containers ;;
     rebuild)  do_rebuild_image ;;
     clean)    do_full_redeploy ;;
+    wipe-volumes) do_wipe_volumes ;;
     "")       run_menu ;;
     *)
-        warning "用法: $0 [deploy|cache|reload|migrate|restart|rebuild|clean]"
+        warning "用法: $0 [deploy|composer|cache|reload|migrate|restart|rebuild|clean|wipe-volumes]"
         error "未知指令: $1"
         ;;
 esac
