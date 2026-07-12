@@ -19,6 +19,11 @@ class WalletUserRegister implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
+    public $tries = 3;
+
+    /** @var array<int, int> */
+    public $backoff = [5, 30];
+
     /**
      * @param  array<string, mixed>  $params
      */

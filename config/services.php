@@ -44,6 +44,8 @@ return [
     'notification' => [
         'url' => env('NOTIFICATION_SERVICE_URL', ''),
         'key' => env('NOTIFICATION_SERVICE_KEY', ''),
+        'retry_times' => env('NOTIFICATION_RETRY_TIMES', 3),
+        'retry_delay_ms' => env('NOTIFICATION_RETRY_DELAY_MS', 500),
     ],
 
     'gemini' => [
@@ -51,6 +53,16 @@ return [
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
         'api_version' => env('GEMINI_API_VERSION', 'v1beta'),
         'default_model' => env('GEMINI_DEFAULT_MODEL', 'gemini-2.0-flash'),
+        'timeout' => env('GEMINI_TIMEOUT', 15),
+        'retry_times' => env('GEMINI_RETRY_TIMES', 2),
+        'retry_delay_ms' => env('GEMINI_RETRY_DELAY_MS', 2000),
+    ],
+
+    'easysplit' => [
+        'app_url' => env('EASYSPLIT_APP_URL', 'https://easysplit.usongrat.tw'),
+        'logo_path' => env('EASYSPLIT_LOGO_PATH', '/images/logo.png'),
+        'frame_icon_path' => env('EASYSPLIT_FRAME_ICON_PATH', '/assets/images/Frame.svg'),
+        'bot_id' => env('EASYSPLIT_BOT_ID', 'Easysplit-App'),
     ],
 
 ];
