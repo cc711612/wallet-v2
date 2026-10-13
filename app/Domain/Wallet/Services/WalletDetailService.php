@@ -136,6 +136,10 @@ class WalletDetailService
      */
     public function update(WalletDetail $walletDetail, int $detailId): void
     {
+        if ($this->walletDetailQueryRepository->findDetail($walletDetail->walletId(), $detailId) === null) {
+            throw new WalletDetailBusinessException('參數有誤');
+        }
+
         $this->guardPublicExpenseNotNegative($walletDetail);
         $this->guardWalletUsersValid($walletDetail);
 
@@ -172,7 +176,7 @@ class WalletDetailService
 
         $this->walletDetailQueryRepository->replaceDetailUsers($walletDetail->walletId(), $detailId, $users);
 
-        $this->walletDetailRepository->replaceSplits($detailId, $splits, (string) ($attributes['unit'] ?? 'TWD'));
+        $this->walletDetailRepository->replaceSplits($walletDetail->walletId(), $detailId, $splits, (string) ($attributes['unit'] ?? 'TWD'));
     }
 
     /**
@@ -238,6 +242,15 @@ class WalletDetailService
      */
     private function guardWalletUsersValid(WalletDetail $walletDetail): void
     {
+        // 分攤拆帳的成員也必須屬於該帳本（公費、全選同樣要驗）
+        $splitUserIds = array_values(array_unique(array_map(
+            static fn (array $split): int => (int) ($split['user_id'] ?? 0),
+            $walletDetail->splits()
+        )));
+        if ($splitUserIds !== [] && ! $this->walletDetailRepository->walletUsersExistInWallet($walletDetail->walletId(), $splitUserIds)) {
+            throw new WalletDetailBusinessException('分攤成員有誤');
+        }
+
         if ($walletDetail->type() === WalletDetailType::PUBLIC_EXPENSE->value || $walletDetail->selectAll()) {
             return;
         }

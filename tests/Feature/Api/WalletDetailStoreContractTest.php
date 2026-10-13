@@ -74,5 +74,5 @@ class ApiFakeWalletDetailRepository implements WalletDetailRepositoryInterface
         ];
     }
 
-    public function replaceSplits(int $detailId, array $splits, string $unit): void {}
+    public function replaceSplits(int $walletId, int $detailId, array $splits, string $unit): void {}
 }
