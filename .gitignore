@@ -26,3 +26,6 @@ Thumbs.db
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+# Firebase 服務帳號金鑰，不可進版控
+/storage/easysplit-firebase-key.json

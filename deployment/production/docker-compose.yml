@@ -8,6 +8,8 @@ services:
       provenance: false
     image: ${PROJECT_NAME:-wallet-v2}:app
     container_name: ${PROJECT_NAME:-wallet-v2}-web
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
     restart: always
     environment:
       TZ: ${TZ:-Asia/Taipei}
@@ -32,6 +34,8 @@ services:
   worker:
     image: ${PROJECT_NAME:-wallet-v2}:app
     container_name: ${PROJECT_NAME:-wallet-v2}-worker
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
     restart: always
     environment:
       TZ: ${TZ:-Asia/Taipei}
@@ -54,7 +58,7 @@ services:
       start_period: 15s
 
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.30-alpine
     container_name: ${PROJECT_NAME:-wallet-v2}-nginx
     restart: always
     networks:
