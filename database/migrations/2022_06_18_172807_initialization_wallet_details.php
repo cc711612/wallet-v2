@@ -28,7 +28,10 @@ class InitializationWalletDetails extends Migration
             $table->timestamps();
             $table->softDeletes();
             // 建立索引鍵
-            $table->unique(['wallet_id', 'deleted_at'], 'index-wallet_id-deleted_at');
+            // SQLite 的索引名稱為整個資料庫唯一，與 wallet_users 同名會衝突；MySQL 維持原名以與正式環境一致
+            $table->unique(['wallet_id', 'deleted_at'], Schema::getConnection()->getDriverName() === 'sqlite'
+                ? 'wallet_details_wallet_id_deleted_at_unique'
+                : 'index-wallet_id-deleted_at');
             $table->foreign('wallet_id')->on('wallets')->references('id');
         });
     }
