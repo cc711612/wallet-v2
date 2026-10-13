@@ -73,6 +73,73 @@ class WalletDetailServiceTest extends TestCase
         $this->assertSame(1, $result['id']);
         $this->assertSame('Dinner', $result['title']);
     }
+
+    public function test_update_rejects_detail_that_belongs_to_another_wallet(): void
+    {
+        $repository = new InMemoryWalletDetailRepository(1000.0, true);
+        $queryRepository = new InMemoryWalletDetailQueryRepository;
+        $queryRepository->details[2][99] = ['id' => 99, 'wallet_id' => 2];
+        $service = new WalletDetailService($repository, $queryRepository);
+
+        try {
+            $service->update($this->generalExpense(walletId: 1, splits: [['user_id' => 10, 'value' => 300]]), 99);
+            $this->fail('預期跨帳本更新會被拒絕');
+        } catch (WalletDetailBusinessException $exception) {
+            $this->assertSame('參數有誤', $exception->getMessage());
+        }
+
+        $this->assertSame([], $repository->replacedSplits);
+    }
+
+    public function test_update_replaces_splits_scoped_to_wallet(): void
+    {
+        $repository = new InMemoryWalletDetailRepository(1000.0, true);
+        $queryRepository = new InMemoryWalletDetailQueryRepository;
+        $queryRepository->details[1][5] = ['id' => 5, 'wallet_id' => 1];
+        $service = new WalletDetailService($repository, $queryRepository);
+
+        $service->update($this->generalExpense(walletId: 1, splits: [['user_id' => 10, 'value' => 300]]), 5);
+
+        $this->assertSame([['wallet_id' => 1, 'detail_id' => 5]], $repository->replacedSplits);
+    }
+
+    public function test_it_throws_when_split_users_are_not_in_wallet(): void
+    {
+        $repository = new InMemoryWalletDetailRepository(1000.0, false);
+        $service = new WalletDetailService($repository, new InMemoryWalletDetailQueryRepository);
+
+        $this->expectException(WalletDetailBusinessException::class);
+        $this->expectExceptionMessage('分攤成員有誤');
+
+        $service->create(WalletDetail::fromPayload([
+            'wallet' => 1,
+            'wallet_user_id' => 10,
+            'type' => WalletDetailType::GENERAL_EXPENSE->value,
+            'symbol_operation_type_id' => SymbolOperationType::DECREMENT->value,
+            'title' => 'Dinner',
+            'value' => 300,
+            'select_all' => true,
+            'splits' => [['user_id' => 999, 'value' => 300]],
+        ]));
+    }
+
+    /**
+     * @param  array<int, array{user_id:int, value:float|int}>  $splits
+     */
+    private function generalExpense(int $walletId, array $splits): WalletDetail
+    {
+        return WalletDetail::fromPayload([
+            'wallet' => $walletId,
+            'wallet_user_id' => 10,
+            'type' => WalletDetailType::GENERAL_EXPENSE->value,
+            'symbol_operation_type_id' => SymbolOperationType::DECREMENT->value,
+            'title' => 'Dinner',
+            'value' => 300,
+            'select_all' => false,
+            'users' => [10],
+            'splits' => $splits,
+        ]);
+    }
 }
 
 class InMemoryWalletDetailRepository implements WalletDetailRepositoryInterface
@@ -122,10 +189,16 @@ class InMemoryWalletDetailRepository implements WalletDetailRepositoryInterface
         ];
     }
 
+    /** @var array<int, array{wallet_id:int, detail_id:int}> */
+    public array $replacedSplits = [];
+
     /**
      * @param  array<int, array{user_id:int, value:float|int}>  $splits
      */
-    public function replaceSplits(int $detailId, array $splits, string $unit): void {}
+    public function replaceSplits(int $walletId, int $detailId, array $splits, string $unit): void
+    {
+        $this->replacedSplits[] = ['wallet_id' => $walletId, 'detail_id' => $detailId];
+    }
 }
 
 class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepositoryInterface
@@ -149,9 +222,12 @@ class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepository
     /**
      * @return array<string, mixed>|null
      */
+    /** @var array<int, array<int, array<string, mixed>>> walletId => detailId => detail */
+    public array $details = [];
+
     public function findDetail(int $walletId, int $detailId): ?array
     {
-        return null;
+        return $this->details[$walletId][$detailId] ?? null;
     }
 
     /**

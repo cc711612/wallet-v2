@@ -28,9 +28,9 @@ interface WalletDetailRepositoryInterface
     public function create(WalletDetail $walletDetail): array;
 
     /**
-     * 先清空再同步明細分攤拆帳 rows。
+     * 先清空再同步明細分攤拆帳 rows；明細不屬於該帳本時不做任何事。
      *
      * @param  array<int, array{user_id:int, value:float|int}>  $splits
      */
-    public function replaceSplits(int $detailId, array $splits, string $unit): void;
+    public function replaceSplits(int $walletId, int $detailId, array $splits, string $unit): void;
 }
