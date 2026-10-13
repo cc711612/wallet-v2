@@ -74,4 +74,6 @@ class ApiFakeWalletDetailRepository implements WalletDetailRepositoryInterface
             'created_at' => now()->toDateTimeString(),
         ];
     }
+
+    public function replaceSplits(int $detailId, array $splits, string $unit): void {}
 }
