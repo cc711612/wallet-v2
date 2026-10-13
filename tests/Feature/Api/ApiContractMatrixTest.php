@@ -8,20 +8,29 @@ use App\Domain\Auth\Services\AuthService;
 use App\Domain\Device\Services\DeviceService;
 use App\Domain\Gemini\Services\GeminiService;
 use App\Domain\Option\Services\OptionService;
+use App\Domain\Social\Enums\SocialTypeEnum;
 use App\Domain\Social\Services\SocialService;
 use App\Domain\Wallet\Services\WalletAuthService;
 use App\Domain\Wallet\Services\WalletDetailService;
 use App\Domain\Wallet\Services\WalletService;
 use App\Domain\Wallet\Services\WalletUserService;
 use App\Domain\Webhook\Services\LineWebhookService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Mockery\MockInterface;
 use Tests\TestCase;
 
 class ApiContractMatrixTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // VerifyApi 在測試環境注入 id=1 的 user，Wallet 相關 FormRequest 以 exists:users,id 驗證
+        DB::table('users')->insert(['id' => 1, 'account' => 'tester', 'password' => Hash::make('secret'), 'token' => 'tk']);
 
         $this->mock(AuthService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('login')->andReturn(['id' => 1, 'name' => 'tester', 'member_token' => 'tk', 'jwt' => 'tk', 'wallet' => ['id' => 1, 'code' => 'WALLET001'], 'walletUsers' => [], 'devices' => [], 'notifies' => []]);
@@ -98,7 +107,7 @@ class ApiContractMatrixTest extends TestCase
             ['POST', '/api/auth/register', ['account' => 'a1', 'password' => '123456', 'name' => 'Roy']],
             ['POST', '/api/auth/register/token', ['token' => 'social-token']],
             ['POST', '/api/auth/thirdParty/login', ['provider' => 'line', 'token' => 'tk']],
-            ['POST', '/api/auth/thirdParty/checkBind', ['socialType' => 'line', 'socialTypeValue' => 'u123']],
+            ['POST', '/api/auth/thirdParty/checkBind', ['socialType' => SocialTypeEnum::SOCIAL_TYPE_LINE->value, 'socialTypeValue' => 'u123']],
             ['GET', '/api/option/category', []],
             ['POST', '/api/wallet/auth/login', ['code' => 'W001', 'name' => 'member-a']],
             ['POST', '/api/wallet/auth/login/token', ['code' => 'W001', 'member_token' => 'mtk']],
@@ -125,7 +134,8 @@ class ApiContractMatrixTest extends TestCase
 
             $response->assertOk();
 
-            if (str_starts_with($uri, '/api/gemini/models')) {
+            // Gemini 端點回傳原始結構（不包 envelope），不檢查 envelope
+            if (str_starts_with($uri, '/api/gemini/')) {
                 continue;
             }
 

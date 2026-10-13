@@ -35,9 +35,8 @@ class WalletDetailStoreContractTest extends TestCase
             ->assertJsonPath('status', true)
             ->assertJsonPath('code', 200)
             ->assertJsonPath('message', '')
-            ->assertJsonPath('data.wallet_detail.id', 9001)
-            ->assertJsonPath('data.wallet_detail.wallet_id', 1)
-            ->assertJsonPath('data.wallet_detail.title', 'Dinner');
+            // 自 ef5a406 起 store 成功只回 envelope，不再回傳 wallet_detail
+            ->assertJsonPath('data', []);
     }
 }
 

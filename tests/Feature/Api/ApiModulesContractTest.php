@@ -14,11 +14,16 @@ use App\Domain\Wallet\Services\WalletDetailService;
 use App\Domain\Wallet\Services\WalletService;
 use App\Domain\Wallet\Services\WalletUserService;
 use App\Domain\Webhook\Services\LineWebhookService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Mockery\MockInterface;
 use Tests\TestCase;
 
 class ApiModulesContractTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -131,6 +136,9 @@ class ApiModulesContractTest extends TestCase
 
     public function test_auth_login_endpoint_returns_standard_envelope(): void
     {
+        // LoginRequest 以 exists:users,account 驗證帳號存在，需要一筆真實的 user
+        DB::table('users')->insert(['account' => 'roy', 'password' => Hash::make('123456'), 'token' => 'tk']);
+
         $response = $this->postJson('/api/auth/login', [
             'account' => 'roy',
             'password' => '123456',
@@ -166,7 +174,8 @@ class ApiModulesContractTest extends TestCase
         $geminiResponse = $this->postJson('/api/gemini/generate', [
             'prompt' => 'hello',
         ]);
-        $geminiResponse->assertOk()->assertJsonPath('data.success', true);
+        // Gemini 端點回傳原始結構（不包 envelope）
+        $geminiResponse->assertOk()->assertJsonPath('success', true);
     }
 
     public function test_auth_cache_uses_legacy_null_message_contract(): void
