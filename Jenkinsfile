@@ -1,5 +1,31 @@
 // wallet CI/CD（usongrat Jenkins）
-// 流程：composer install → 測試 → 人工核准 → 透過受限 SSH 呼叫主機上的 deploy-app wallet
+// 流程：composer install → 測試 → Slack 通知待核准 → 人工核准 → 透過受限 SSH 呼叫主機上的 deploy-app wallet
+
+// 送 Slack 通知；commit message 會跳脫 & < >，避免注入 Slack 格式（例如 <!channel>）
+def notifySlack(String kind) {
+    node('php') {
+        withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+            withEnv(["KIND=${kind}", "RESULT=${currentBuild.currentResult}"]) {
+                sh '''
+                    php -r '
+                        $esc = fn ($s) => str_replace(["&", "<", ">"], ["&amp;", "&lt;", "&gt;"], (string) $s);
+                        $url = (string) getenv("BUILD_URL");
+                        $title = getenv("JOB_NAME")." #".getenv("BUILD_NUMBER")." ".substr((string) getenv("DEPLOY_SHA"), 0, 7)." ".$esc(getenv("COMMIT_MSG"));
+                        if (getenv("KIND") === "approval") {
+                            $text = ":raised_hand: *等待部署核准* → ".getenv("PROD_HOST")."\n".$title."\n<".$url."input/|點此核准或拒絕>（30 分鐘內）";
+                        } else {
+                            $map = ["SUCCESS" => [":white_check_mark:", "部署成功"], "ABORTED" => [":double_vertical_bar:", "未部署（取消或核准逾時）"]];
+                            [$icon, $word] = $map[getenv("RESULT")] ?? [":x:", "失敗"];
+                            $text = $icon." ".$word." — ".$title." (<".$url."|build log>)";
+                        }
+                        echo json_encode(["text" => $text], JSON_UNESCAPED_UNICODE);
+                    ' | curl -sf -X POST -H 'Content-Type: application/json' --data @- "$SLACK_URL" >/dev/null || true
+                '''
+            }
+        }
+    }
+}
+
 pipeline {
     agent none
 
@@ -40,9 +66,10 @@ pipeline {
         }
 
         stage('Approve') {
-            // 不佔用 agent，等人工按「部署」，30 分鐘沒按就中止
+            // 先發 Slack 附核准連結；等待期間不佔用 agent，30 分鐘沒按就中止
             options { timeout(time: 30, unit: 'MINUTES') }
             steps {
+                notifySlack('approval')
                 input message: "部署 ${env.DEPLOY_SHA.take(7)}「${env.COMMIT_MSG}」到 ${env.PROD_HOST}？", ok: '部署'
             }
         }
@@ -64,22 +91,7 @@ pipeline {
 
     post {
         always {
-            node('php') {
-                withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-                    withEnv(["RESULT=${currentBuild.currentResult}"]) {
-                        sh '''
-                            case "$RESULT" in
-                              SUCCESS) icon=":white_check_mark:"; word="部署成功" ;;
-                              ABORTED) icon=":double_vertical_bar:"; word="未部署（取消或核准逾時）" ;;
-                              *)       icon=":x:"; word="失敗" ;;
-                            esac
-                            MSG="$icon $JOB_NAME #$BUILD_NUMBER $word — ${DEPLOY_SHA:-unknown} ${COMMIT_MSG:-} ($BUILD_URL)"
-                            MSG="$MSG" php -r 'echo json_encode(["text" => getenv("MSG")], JSON_UNESCAPED_UNICODE);' \
-                              | curl -sf -X POST -H 'Content-Type: application/json' --data @- "$SLACK_URL" >/dev/null || true
-                        '''
-                    }
-                }
-            }
+            notifySlack('result')
         }
     }
 }
