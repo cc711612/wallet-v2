@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\ExchangeRate\Services;
 
 use App\Domain\ExchangeRate\Repositories\ExchangeRateRepositoryInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ExchangeRateService
 {
@@ -42,18 +44,7 @@ class ExchangeRateService
             /** @var array<string, float|int|string> $rates */
             $rates = (array) Arr::get($result, 'rates', []);
 
-            foreach ($rates as $unit => $rate) {
-                $this->exchangeRateRepository->upsertByDateAndCurrency([
-                    'date' => $checkDate,
-                    'from_currency' => $baseUnit,
-                    'to_currency' => (string) $unit,
-                ], [
-                    'date' => $checkDate,
-                    'from_currency' => $baseUnit,
-                    'to_currency' => (string) $unit,
-                    'rate' => (float) $rate,
-                ]);
-            }
+            $this->saveRates($checkDate, $baseUnit, $rates);
         }
     }
 
@@ -114,18 +105,51 @@ class ExchangeRateService
             (int) Arr::get($historyResult, 'day', 1),
         )->format('Y-m-d');
 
+        /** @var array<string, float|int|string> $rates */
         $rates = (array) Arr::get($historyResult, 'conversion_rates', []);
+        $this->saveRates($date, $currency, $rates);
+    }
+
+    /**
+     * 逐筆寫入匯率；單一幣別寫入失敗只記 log，不中斷其他幣別。
+     * 全部幣別都失敗（例如資料庫無法連線）時拋出最後一個例外，避免靜默失敗。
+     *
+     * @param  array<string, float|int|string>  $rates
+     *
+     * @throws QueryException
+     */
+    private function saveRates(string $date, string $fromCurrency, array $rates): void
+    {
+        $lastException = null;
+        $failedCount = 0;
+
         foreach ($rates as $toCurrency => $rate) {
-            $this->exchangeRateRepository->upsertByDateAndCurrency([
-                'date' => $date,
-                'from_currency' => $currency,
-                'to_currency' => (string) $toCurrency,
-            ], [
-                'date' => $date,
-                'from_currency' => $currency,
-                'to_currency' => (string) $toCurrency,
-                'rate' => (float) $rate,
-            ]);
+            try {
+                $this->exchangeRateRepository->upsertByDateAndCurrency([
+                    'date' => $date,
+                    'from_currency' => $fromCurrency,
+                    'to_currency' => (string) $toCurrency,
+                ], [
+                    'date' => $date,
+                    'from_currency' => $fromCurrency,
+                    'to_currency' => (string) $toCurrency,
+                    'rate' => (float) $rate,
+                ]);
+            } catch (QueryException $exception) {
+                $lastException = $exception;
+                $failedCount++;
+                Log::warning('ExchangeRateService failed to save rate', [
+                    'date' => $date,
+                    'from_currency' => $fromCurrency,
+                    'to_currency' => (string) $toCurrency,
+                    'rate' => $rate,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        if ($lastException !== null && $failedCount === count($rates)) {
+            throw $lastException;
         }
     }
 }
