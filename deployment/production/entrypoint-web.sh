@@ -43,4 +43,4 @@ exec php artisan octane:start \
   --port="${OCTANE_PORT:-8000}" \
   --workers="${OCTANE_WORKERS:-2}" \
   --task-workers="${OCTANE_TASK_WORKERS:-0}" \
-  --max-requests="${OCTANE_MAX_REQUESTS:-300}"
+  --max-requests="${OCTANE_MAX_REQUESTS:-1000}"
