@@ -49,7 +49,7 @@ return [
     ],
 
     'jwt' => [
-        // HS256 簽章金鑰。未設定時沿用歷史行為（以 APP_NAME 簽章），設定後舊 token 會全部失效
+        // HS256 簽章金鑰，必填且至少 32 字元（openssl rand -base64 48）。未設定時簽發與驗證都會拒絕
         'secret' => env('JWT_SECRET', ''),
         // 驗證 exp / nbf 時容許的時鐘誤差（秒）
         'leeway' => (int) env('JWT_LEEWAY', 60),
