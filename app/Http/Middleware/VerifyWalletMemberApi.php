@@ -21,14 +21,16 @@ class VerifyWalletMemberApi
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $walletId = (int) $request->route('wallet', 1);
+        // 路由沒有 {wallet}（device、wallet/user/{id}）時為 null，不限定帳本
+        $routeWallet = $request->route('wallet');
+        $walletId = $routeWallet !== null ? (int) $routeWallet : null;
 
         $bearerToken = (string) ($request->bearerToken() ?? '');
         if ($bearerToken !== '') {
             $walletUsers = $this->verifyWalletMemberService->resolveWalletUsersByJwt($bearerToken);
             if ($walletUsers !== []) {
                 // 路由帶 {wallet} 時，必須是自己所屬的帳本
-                if ($request->route('wallet') !== null && ! isset($walletUsers[$walletId])) {
+                if ($walletId !== null && ! isset($walletUsers[$walletId])) {
                     return response()->json([
                         'status' => false,
                         'code' => 403,
@@ -72,7 +74,7 @@ class VerifyWalletMemberApi
 
         /** @var array<int, array<string, mixed>> $walletUser */
         $walletUser = [
-            $walletId => $walletUserRecord,
+            (int) ($walletUserRecord['wallet_id'] ?? 0) => $walletUserRecord,
         ];
 
         $request->merge([

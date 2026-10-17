@@ -33,6 +33,11 @@ class Response
         return $this->success(null, $message, HttpResponse::HTTP_BAD_REQUEST);
     }
 
+    public function errorForbidden(string $message = '無此權限'): JsonResponse
+    {
+        return $this->success(null, $message, HttpResponse::HTTP_FORBIDDEN);
+    }
+
     public function errorInternal(string $message = ''): JsonResponse
     {
         return $this->success(null, $message, HttpResponse::HTTP_INTERNAL_SERVER_ERROR);

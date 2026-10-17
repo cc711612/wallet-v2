@@ -80,7 +80,7 @@ class ApiContractMatrixTest extends TestCase
         $this->mock(DeviceService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('index')->andReturn([]);
             $mock->shouldReceive('store')->andReturn(['stored' => true]);
-            $mock->shouldReceive('destroy')->andReturn(['deleted' => true]);
+            $mock->shouldReceive('destroy')->andReturn(true);
         });
 
         $this->mock(WalletDetailService::class, function (MockInterface $mock): void {

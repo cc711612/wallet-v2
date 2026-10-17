@@ -22,7 +22,7 @@ class VerifyWalletMemberService
     /**
      * @return array<string, mixed>|null
      */
-    public function resolveWalletUserByToken(string $token, int $walletId): ?array
+    public function resolveWalletUserByToken(string $token, ?int $walletId): ?array
     {
         if ($token === '') {
             return null;
@@ -33,7 +33,8 @@ class VerifyWalletMemberService
             return null;
         }
 
-        if ((int) ($walletUser['wallet_id'] ?? 0) !== $walletId) {
+        // $walletId 為 null 表示路由不限定帳本（例如 device），否則 token 必須屬於該帳本
+        if ($walletId !== null && (int) ($walletUser['wallet_id'] ?? 0) !== $walletId) {
             return null;
         }
 

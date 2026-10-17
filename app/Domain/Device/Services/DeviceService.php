@@ -64,12 +64,16 @@ class DeviceService
     }
 
     /**
-     * @return array<string, mixed>
+     * 只能刪除屬於自己帳本成員身分的裝置；回傳是否有刪到。
+     *
+     * @param  array<int, int>  $ownerWalletUserIds
      */
-    public function destroy(int $deviceId): array
+    public function destroy(int $deviceId, array $ownerWalletUserIds): bool
     {
-        $this->deviceRepository->delete($deviceId);
+        if ($ownerWalletUserIds === []) {
+            return false;
+        }
 
-        return ['id' => $deviceId, 'deleted' => true];
+        return $this->deviceRepository->deleteOwnedBy($deviceId, $ownerWalletUserIds) > 0;
     }
 }

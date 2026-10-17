@@ -29,7 +29,10 @@ class DeviceController extends ApiController
     #[Response(200, '取得裝置清單成功', type: 'array{status: true, code: 200, message: string, data: array{devices: array<int, '.OpenApiSchemas::DEVICE.'>}}')]
     public function index(Request $request, DeviceService $deviceService): JsonResponse
     {
-        $owner = (array) data_get($request->input('wallet_user', []), (string) $request->route('wallet', 1), []);
+        /** @var array<int, array<string, mixed>> $walletUsers */
+        $walletUsers = (array) $request->input('wallet_user', []);
+        // device 路由沒有 {wallet}，取 middleware 驗證過的第一個帳本成員（與 DeviceStoreRequest 一致）
+        $owner = (array) (array_values($walletUsers)[0] ?? []);
 
         return $this->response()->success(['devices' => $deviceService->index($owner)]);
     }
@@ -70,9 +73,13 @@ class DeviceController extends ApiController
      * 更新裝置資料。
      */
     #[Response(200, '更新裝置成功', type: 'array{status: true, code: 200, message: string, data: array<string,mixed>|object}')]
-    public function update(int $device, Request $request, DeviceService $deviceService): JsonResponse
+    public function update(int $device, DeviceStoreRequest $request, DeviceService $deviceService): JsonResponse
     {
-        $deviceService->store($request->all());
+        // 不再使用 $request->all()：wallet_user_id 一律取自 middleware 驗證過的成員身分
+        /** @var array<string, mixed> $validated */
+        $validated = $request->validated();
+
+        $deviceService->store($validated);
 
         return $this->response()->success();
     }
@@ -81,9 +88,17 @@ class DeviceController extends ApiController
      * 刪除裝置資料。
      */
     #[Response(200, '刪除裝置成功', type: 'array{status: true, code: 200, message: string, data: array<string,mixed>|object}')]
-    public function destroy(int $device, DeviceService $deviceService): JsonResponse
+    #[Response(403, '無此裝置權限', type: 'array{status: false, code: 403, message: string, data: array<string,mixed>|object}')]
+    public function destroy(int $device, Request $request, DeviceService $deviceService): JsonResponse
     {
-        $deviceService->destroy($device);
+        $ownWalletUserIds = array_values(array_filter(array_map(
+            static fn (mixed $walletUser): int => (int) data_get($walletUser, 'id', 0),
+            array_values((array) $request->input('wallet_user', []))
+        )));
+
+        if (! $deviceService->destroy($device, $ownWalletUserIds)) {
+            return $this->response()->errorForbidden('無此裝置權限');
+        }
 
         return $this->response()->success();
     }
