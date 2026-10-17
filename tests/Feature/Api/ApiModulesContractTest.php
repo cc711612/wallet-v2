@@ -128,7 +128,6 @@ class ApiModulesContractTest extends TestCase
         $this->mock(LineWebhookService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('store')->andReturn(['received' => true]);
             $mock->shouldReceive('notify')->andReturn(['queued' => true]);
-            $mock->shouldReceive('notifyBindUrl')->andReturn(['url' => 'https://example.test/line/bind']);
         });
 
         $this->mock(GeminiService::class, function (MockInterface $mock): void {
