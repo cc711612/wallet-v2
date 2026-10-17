@@ -25,7 +25,7 @@ class AutoCalculateWalletCommand extends Command
 
     public function handle(): int
     {
-        $userId = (int) env('AUTO_WALLET_USER_ID', 58);
+        $userId = (int) config('wallet.auto_wallet.user_id');
         $title = now()->subMonth()->format('Y.m');
 
         $wallet = WalletEntity::query()->where('user_id', $userId)->where('title', $title)->first(['id', 'title']);

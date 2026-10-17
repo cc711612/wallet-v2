@@ -25,7 +25,7 @@ class AutoCreateWalletCommand extends Command
 
     public function handle(): int
     {
-        $userId = (int) env('AUTO_WALLET_USER_ID', 58);
+        $userId = (int) config('wallet.auto_wallet.user_id');
         $user = UserEntity::query()->find($userId, ['id', 'name']);
         if ($user === null) {
             $this->warn("User {$userId} not found, skip auto create wallet.");
@@ -62,12 +62,12 @@ class AutoCreateWalletCommand extends Command
             'token' => Str::random(12),
         ]);
 
-        $seedAmount = (int) env('AUTO_WALLET_SEED_AMOUNT', 943);
-        $seedCategoryId = (int) env('AUTO_WALLET_SEED_CATEGORY_ID', 13);
+        $seedAmount = (int) config('wallet.auto_wallet.seed_amount');
+        $seedCategoryId = (int) config('wallet.auto_wallet.seed_category_id');
         if ($seedAmount > 0 && $seedCategoryId > 0) {
             CreateWalletDetailJob::dispatch($userId, $walletId, [
                 'amount' => $seedAmount,
-                'title' => (string) env('AUTO_WALLET_SEED_TITLE', '多多健保'),
+                'title' => (string) config('wallet.auto_wallet.seed_title'),
                 'categoryId' => $seedCategoryId,
                 'unit' => 'TWD',
                 'date' => now()->format('Y-m-d'),
