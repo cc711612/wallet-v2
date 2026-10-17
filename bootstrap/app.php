@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\VerifyApi;
 use App\Http\Middleware\VerifyLineSignature;
+use App\Http\Middleware\VerifyNotifyRelayKey;
 use App\Http\Middleware\VerifyWalletMemberApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'VerifyApi' => VerifyApi::class,
             'VerifyWalletMemberApi' => VerifyWalletMemberApi::class,
             'VerifyLineSignature' => VerifyLineSignature::class,
+            'VerifyNotifyRelayKey' => VerifyNotifyRelayKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
