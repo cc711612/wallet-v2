@@ -14,7 +14,10 @@ class SocialService
     /**
      * @return void
      */
-    public function __construct(private SocialServiceRepositoryInterface $socialRepository) {}
+    public function __construct(
+        private SocialServiceRepositoryInterface $socialRepository,
+        private SocialTokenVerifier $socialTokenVerifier,
+    ) {}
 
     /**
      * 檢查社群帳號是否已綁定。
@@ -26,6 +29,16 @@ class SocialService
     {
         $socialType = (int) ($payload['socialType'] ?? 0);
         $socialTypeValue = (string) ($payload['socialTypeValue'] ?? '');
+
+        // 不再信任 client 傳來的 social id：向 provider 驗證 id_token 後，以 provider 回傳的 sub 為準
+        if ((bool) config('services.social_login.verify_token', true)) {
+            $verifiedValue = $this->socialTokenVerifier->verify($socialType, (string) ($payload['id_token'] ?? ''));
+            if ($verifiedValue === null || ($socialTypeValue !== '' && ! hash_equals($verifiedValue, $socialTypeValue))) {
+                throw new RuntimeException('第三方登入驗證失敗');
+            }
+
+            $socialTypeValue = $verifiedValue;
+        }
 
         $social = $this->socialRepository->findByTypeAndValue($socialType, $socialTypeValue);
         $bindToken = Str::random(12);
