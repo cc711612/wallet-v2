@@ -118,10 +118,13 @@ class GeminiService
         $url = $this->baseUrl.$path;
 
         return retry($this->retryTimes, function () use ($method, $url, $payload): array {
-            $request = Http::timeout($this->timeout)->acceptJson();
+            // API key 放 header，避免出現在 URL（Telescope、log、例外訊息都會記錄 URL）
+            $request = Http::timeout($this->timeout)
+                ->acceptJson()
+                ->withHeaders(['x-goog-api-key' => $this->apiKey]);
             $response = $method === 'GET'
-                ? $request->get($url, ['key' => $this->apiKey])
-                : $request->post($url.'?key='.$this->apiKey, $payload);
+                ? $request->get($url)
+                : $request->post($url, $payload);
 
             if ($response->status() === 429) {
                 Log::warning('GeminiService rate limited, retrying...', [
