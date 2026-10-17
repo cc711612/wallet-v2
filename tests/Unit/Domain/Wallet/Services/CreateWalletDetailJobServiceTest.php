@@ -173,7 +173,7 @@ class RecordingCreateJobWalletDetailRepository implements WalletDetailRepository
 {
     public ?WalletDetail $created = null;
 
-    public function getWalletBalance(int $walletId): float
+    public function getWalletBalance(int $walletId, ?int $excludeDetailId = null): float
     {
         return 0.0;
     }

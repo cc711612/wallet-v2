@@ -222,7 +222,7 @@ class InMemoryWalletDetailRepository implements WalletDetailRepositoryInterface
         $this->walletUsersValid = $walletUsersValid;
     }
 
-    public function getWalletBalance(int $walletId): float
+    public function getWalletBalance(int $walletId, ?int $excludeDetailId = null): float
     {
         return $this->walletBalance;
     }
@@ -341,7 +341,7 @@ class RecordingWalletDetailRepository implements WalletDetailRepositoryInterface
         private bool $throwOnReplaceSplits = false,
     ) {}
 
-    public function getWalletBalance(int $walletId): float
+    public function getWalletBalance(int $walletId, ?int $excludeDetailId = null): float
     {
         return 1000.0;
     }

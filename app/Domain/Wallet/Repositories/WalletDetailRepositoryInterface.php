@@ -11,7 +11,7 @@ interface WalletDetailRepositoryInterface
     /**
      * 取得帳本公費餘額。
      */
-    public function getWalletBalance(int $walletId): float;
+    public function getWalletBalance(int $walletId, ?int $excludeDetailId = null): float;
 
     /**
      * 檢查分攤成員是否都在帳本中。
