@@ -18,15 +18,19 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Mockery\MockInterface;
+use Tests\Concerns\FakesApiAuthentication;
 use Tests\TestCase;
 
 class ApiModulesContractTest extends TestCase
 {
+    use FakesApiAuthentication;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->fakeApiAuthentication();
 
         $this->mock(AuthService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('login')->andReturn(['id' => 1, 'name' => 'tester', 'member_token' => 'tk', 'jwt' => 'tk', 'wallet' => ['id' => 1, 'code' => 'WALLET001'], 'walletUsers' => [], 'devices' => [], 'notifies' => []]);

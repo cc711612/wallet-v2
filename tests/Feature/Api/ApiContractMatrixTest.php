@@ -19,17 +19,21 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Mockery\MockInterface;
+use Tests\Concerns\FakesApiAuthentication;
 use Tests\TestCase;
 
 class ApiContractMatrixTest extends TestCase
 {
+    use FakesApiAuthentication;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // VerifyApi 在測試環境注入 id=1 的 user，Wallet 相關 FormRequest 以 exists:users,id 驗證
+        $this->fakeApiAuthentication();
+
+        // fakeApiAuthentication 注入 id=1 的 user，Wallet 相關 FormRequest 以 exists:users,id 驗證
         DB::table('users')->insert(['id' => 1, 'account' => 'tester', 'password' => Hash::make('secret'), 'token' => 'tk']);
 
         $this->mock(AuthService::class, function (MockInterface $mock): void {
