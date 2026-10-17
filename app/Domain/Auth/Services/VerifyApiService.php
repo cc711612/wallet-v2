@@ -6,8 +6,6 @@ namespace App\Domain\Auth\Services;
 
 use App\Domain\Auth\Repositories\UserTokenRepositoryInterface;
 use App\Support\JwtTokenService;
-use Illuminate\Support\Facades\Crypt;
-use Throwable;
 
 class VerifyApiService
 {
@@ -48,14 +46,9 @@ class VerifyApiService
             return null;
         }
 
-        // user.id 為 Crypt::encryptString 加密值；不再接受以 account 明文登入的 fallback
-        try {
-            $userId = (int) Crypt::decryptString((string) $userPayload['id']);
-        } catch (Throwable) {
-            return null;
-        }
-
-        if ($userId <= 0) {
+        // user.id 為帶 user: 前綴的加密值；不接受 account 明文 fallback，也不接受其他型別的密文
+        $userId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_USER, (string) $userPayload['id']);
+        if ($userId === null) {
             return null;
         }
 

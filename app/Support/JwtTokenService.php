@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Illuminate\Support\Facades\Crypt;
+use Throwable;
 use UnexpectedValueException;
 
 class JwtTokenService
 {
+    public const SUBJECT_USER = 'user';
+
+    public const SUBJECT_WALLET_USER = 'wallet_user';
+
     private const MIN_SECRET_LENGTH = 32;
 
     /**
@@ -23,7 +28,7 @@ class JwtTokenService
             'exp' => now()->addYear()->timestamp,
             'nbf' => now()->timestamp,
             'user' => [
-                'id' => Crypt::encryptString((string) ($user['id'] ?? '')),
+                'id' => $this->encryptSubject(self::SUBJECT_USER, (int) ($user['id'] ?? 0)),
                 'account' => (string) ($user['account'] ?? ''),
                 'name' => (string) ($user['name'] ?? ''),
                 'created_at' => (string) ($user['created_at'] ?? ''),
@@ -44,7 +49,7 @@ class JwtTokenService
             'exp' => now()->addYear()->timestamp,
             'nbf' => now()->timestamp,
             'wallet_user' => [
-                'id' => Crypt::encryptString((string) ($walletUser['id'] ?? '')),
+                'id' => $this->encryptSubject(self::SUBJECT_WALLET_USER, (int) ($walletUser['id'] ?? 0)),
                 'name' => (string) ($walletUser['name'] ?? ''),
                 'created_at' => (string) ($walletUser['created_at'] ?? ''),
                 'updated_at' => (string) ($walletUser['updated_at'] ?? ''),
@@ -68,6 +73,42 @@ class JwtTokenService
         $signature = hash_hmac('sha256', $headerEncoded.'.'.$payloadEncoded, $secret, true);
 
         return $headerEncoded.'.'.$payloadEncoded.'.'.$this->base64UrlEncode($signature);
+    }
+
+    /**
+     * 加密 JWT 內的 id，並帶上型別前綴（user:／wallet_user:），避免不同型別的密文互換使用。
+     */
+    public function encryptSubject(string $type, int $id): string
+    {
+        return Crypt::encryptString($type.':'.$id);
+    }
+
+    /**
+     * 解密並檢查型別前綴；前綴不符、沒有前綴（舊格式）或解密失敗一律回 null。
+     */
+    public function decryptSubject(string $type, string $cipher): ?int
+    {
+        if ($cipher === '') {
+            return null;
+        }
+
+        try {
+            $plain = Crypt::decryptString($cipher);
+        } catch (Throwable) {
+            return null;
+        }
+
+        $prefix = $type.':';
+        if (! str_starts_with($plain, $prefix)) {
+            return null;
+        }
+
+        $id = substr($plain, strlen($prefix));
+        if ($id === '' || ! ctype_digit($id) || (int) $id <= 0) {
+            return null;
+        }
+
+        return (int) $id;
     }
 
     /**

@@ -6,8 +6,6 @@ namespace App\Domain\Wallet\Services;
 
 use App\Domain\Wallet\Repositories\WalletMemberTokenRepositoryInterface;
 use App\Support\JwtTokenService;
-use Illuminate\Support\Facades\Crypt;
-use Throwable;
 
 class VerifyWalletMemberService
 {
@@ -55,28 +53,28 @@ class VerifyWalletMemberService
         /** @var array<string, mixed> $userPayload */
         $userPayload = (array) ($payload['user'] ?? []);
         if (! empty($userPayload['id'])) {
-            try {
-                $userId = (int) Crypt::decryptString((string) $userPayload['id']);
-                $items = $this->walletMemberTokenRepository->listByUserId($userId);
-                if ($items !== []) {
-                    return $this->keyByWalletId($items);
-                }
-            } catch (Throwable) {
-                // Continue next path.
+            $userId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_USER, (string) $userPayload['id']);
+            if ($userId === null) {
+                return [];
+            }
+
+            $items = $this->walletMemberTokenRepository->listByUserId($userId);
+            if ($items !== []) {
+                return $this->keyByWalletId($items);
             }
         }
 
         /** @var array<string, mixed> $walletUserPayload */
         $walletUserPayload = (array) ($payload['wallet_user'] ?? []);
         if (! empty($walletUserPayload['id'])) {
-            try {
-                $walletUserId = (int) Crypt::decryptString((string) $walletUserPayload['id']);
-                $item = $this->walletMemberTokenRepository->findByWalletUserId($walletUserId);
-                if ($item !== null) {
-                    return $this->keyByWalletId([$item]);
-                }
-            } catch (Throwable) {
+            $walletUserId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_WALLET_USER, (string) $walletUserPayload['id']);
+            if ($walletUserId === null) {
                 return [];
+            }
+
+            $item = $this->walletMemberTokenRepository->findByWalletUserId($walletUserId);
+            if ($item !== null) {
+                return $this->keyByWalletId([$item]);
             }
         }
 
