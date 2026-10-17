@@ -34,7 +34,7 @@ class AuthService
         $user = $this->authServiceRepository->findUserByAccount((string) ($credentials['account'] ?? ''));
 
         if ($user === null || ! Hash::check((string) ($credentials['password'] ?? ''), (string) ($user['password'] ?? ''))) {
-            abort(400, '密碼有誤');
+            abort(400, '帳號或密碼錯誤');
         }
 
         $token = Str::random(64);
