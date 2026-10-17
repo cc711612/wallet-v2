@@ -8,7 +8,6 @@ use App\Domain\Auth\Repositories\AuthServiceRepositoryInterface;
 use App\Support\JwtTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -100,9 +99,9 @@ class AuthService
             throw new RuntimeException('系統錯誤查詢不到綁定資訊');
         }
 
-        try {
-            $walletUserId = (int) Crypt::decryptString($walletUserEncryptedId);
-        } catch (\Throwable) {
+        // 必須是帶 wallet_user: 前綴的密文，user 密文或舊格式一律拒絕
+        $walletUserId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_WALLET_USER, $walletUserEncryptedId);
+        if ($walletUserId === null) {
             throw new RuntimeException('系統錯誤查詢不到綁定資訊');
         }
 
