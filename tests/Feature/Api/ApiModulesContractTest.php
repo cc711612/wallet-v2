@@ -139,7 +139,7 @@ class ApiModulesContractTest extends TestCase
 
     public function test_auth_login_endpoint_returns_standard_envelope(): void
     {
-        // LoginRequest 以 exists:users,account 驗證帳號存在，需要一筆真實的 user
+        // AuthService 為 mock，這筆 user 僅保留作為登入情境的資料
         DB::table('users')->insert(['account' => 'roy', 'password' => Hash::make('123456'), 'token' => 'tk']);
 
         $response = $this->postJson('/api/auth/login', [

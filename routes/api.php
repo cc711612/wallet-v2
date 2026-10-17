@@ -22,13 +22,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['as' => 'api.'], function (): void {
     Route::group(['as' => 'auth.', 'prefix' => 'auth'], function (): void {
-        Route::post('/login', [LoginController::class, 'login'])->name('login');
+        Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:auth')->name('login');
         Route::match(['get', 'post'], '/cache', [LoginController::class, 'cache'])->name('cache');
         Route::group(['as' => 'register.', 'prefix' => 'register'], function (): void {
             Route::post('/', [RegisterController::class, 'register'])->name('index');
             Route::post('/token', [RegisterController::class, 'registerByToken'])->name('token');
         });
-        Route::group(['as' => 'thirdParty.', 'prefix' => 'thirdParty'], function (): void {
+        Route::group(['as' => 'thirdParty.', 'prefix' => 'thirdParty', 'middleware' => ['throttle:auth']], function (): void {
             Route::post('/login', [LoginController::class, 'thirdPartyLogin'])->name('login');
             Route::post('/checkBind', [SocialController::class, 'checkBind'])->name('checkBind');
         });
@@ -40,8 +40,8 @@ Route::group(['as' => 'api.'], function (): void {
     });
 
     Route::group(['as' => 'wallet.', 'prefix' => 'wallet'], function (): void {
-        Route::match(['get', 'post'], '/user', [WalletUserController::class, 'index'])->name('user');
-        Route::group(['as' => 'auth.', 'prefix' => 'auth'], function (): void {
+        Route::match(['get', 'post'], '/user', [WalletUserController::class, 'index'])->middleware('throttle:auth')->name('user');
+        Route::group(['as' => 'auth.', 'prefix' => 'auth', 'middleware' => ['throttle:auth']], function (): void {
             Route::post('/login', [WalletLoginController::class, 'login'])->name('login');
             Route::post('/login/token', [WalletLoginController::class, 'token'])->name('token');
             Route::post('/register', [WalletRegisterController::class, 'register'])->name('register');
@@ -58,7 +58,7 @@ Route::group(['as' => 'api.'], function (): void {
     });
 
     Route::group(['as' => 'log.', 'prefix' => 'log'], function (): void {
-        Route::group(['as' => 'front.', 'prefix' => 'front'], function (): void {
+        Route::group(['as' => 'front.', 'prefix' => 'front', 'middleware' => ['throttle:front-log']], function (): void {
             Route::post('/normal', [FrontLogController::class, 'normal'])->name('normal');
             Route::post('/serious', [FrontLogController::class, 'serious'])->name('serious');
         });
