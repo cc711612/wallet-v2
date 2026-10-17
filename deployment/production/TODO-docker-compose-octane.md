@@ -52,6 +52,7 @@
 ## 7）資料與 Queue 安全檢查
 - [ ] 確認正式環境 queue driver（建議 `redis`）
 - [ ] 確認 failed jobs table 與 retry 策略
+- [x] redis `retry_after` 預設 180 秒，需大於 worker `--timeout=120`（`REDIS_QUEUE_RETRY_AFTER`；`tests/Unit/Config/QueueConfigTest` 會比對 laravel-worker.ini）
 - [ ] 驗證排程指令是否符合 production-only 條件
 - [ ] 確認已無舊專案執行期依賴（runtime relay）
 
