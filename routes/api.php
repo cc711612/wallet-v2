@@ -113,7 +113,8 @@ Route::group(['as' => 'api.'], function (): void {
 
 Route::get('/health', [HealthController::class, 'check'])->name('health');
 
-Route::prefix('gemini')->group(function (): void {
+// Gemini 端點需登入且限流（每位使用者／IP 每分鐘 10 次），避免成為公開代理與 DoS 入口
+Route::prefix('gemini')->middleware(['VerifyApi', 'throttle:10,1'])->group(function (): void {
     Route::post('/generate', [GeminiController::class, 'generateContent'])->name('generate');
     Route::post('/stream', [GeminiController::class, 'streamContent'])->name('stream');
     Route::post('/chat', [GeminiController::class, 'chat'])->name('chat');

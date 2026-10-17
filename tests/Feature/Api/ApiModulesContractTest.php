@@ -175,7 +175,7 @@ class ApiModulesContractTest extends TestCase
         $optionResponse = $this->getJson('/api/option/exchangeRate?unit=TWD');
         $optionResponse->assertOk()->assertJsonPath('status', true);
 
-        $geminiResponse = $this->postJson('/api/gemini/generate', [
+        $geminiResponse = $this->withHeader('Authorization', 'Bearer test')->postJson('/api/gemini/generate', [
             'prompt' => 'hello',
         ]);
         // Gemini 端點回傳原始結構（不包 envelope）
