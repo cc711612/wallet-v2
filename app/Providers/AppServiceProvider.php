@@ -107,6 +107,16 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // 註冊／批次建訪客：同 IP 每分鐘 5 次、每小時 30 次（不分帳號或帳本 code，避免換值繞過）
+        RateLimiter::for('register', static function (Request $request): array {
+            $ip = (string) $request->ip();
+
+            return [
+                Limit::perMinute(5)->by('register-min|'.$ip),
+                Limit::perHour(30)->by('register-hour|'.$ip),
+            ];
+        });
+
         RateLimiter::for('front-log', static fn (Request $request): Limit => Limit::perMinute(30)->by('front-log|'.$request->ip()));
     }
 }

@@ -24,7 +24,7 @@ Route::group(['as' => 'api.'], function (): void {
     Route::group(['as' => 'auth.', 'prefix' => 'auth'], function (): void {
         Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:auth')->name('login');
         Route::match(['get', 'post'], '/cache', [LoginController::class, 'cache'])->name('cache');
-        Route::group(['as' => 'register.', 'prefix' => 'register'], function (): void {
+        Route::group(['as' => 'register.', 'prefix' => 'register', 'middleware' => ['throttle:register']], function (): void {
             Route::post('/', [RegisterController::class, 'register'])->name('index');
             Route::post('/token', [RegisterController::class, 'registerByToken'])->name('token');
         });
@@ -45,7 +45,7 @@ Route::group(['as' => 'api.'], function (): void {
             Route::post('/login', [WalletLoginController::class, 'login'])->name('login');
             Route::post('/login/token', [WalletLoginController::class, 'token'])->name('token');
             Route::post('/register', [WalletRegisterController::class, 'register'])->name('register');
-            Route::post('/register/batch', [WalletRegisterController::class, 'registerBatch'])->name('batch');
+            Route::post('/register/batch', [WalletRegisterController::class, 'registerBatch'])->middleware('throttle:register')->name('batch');
         });
     });
 

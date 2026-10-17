@@ -64,4 +64,32 @@ class RateLimitTest extends TestCase
         $existing->assertJsonPath('message', '帳號或密碼錯誤');
         $missing->assertJsonPath('message', '帳號或密碼錯誤');
     }
+
+    public function test_register_is_throttled(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/auth/register', ['account' => 'u'.$i, 'password' => '123456', 'name' => 'n']);
+        }
+
+        $this->postJson('/api/auth/register', ['account' => 'u9', 'password' => '123456', 'name' => 'n'])->assertStatus(429);
+    }
+
+    public function test_register_by_token_is_throttled(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/auth/register/token', ['token' => 'tk'.$i]);
+        }
+
+        $this->postJson('/api/auth/register/token', ['token' => 'tk9'])->assertStatus(429);
+    }
+
+    public function test_wallet_guest_batch_register_is_throttled_regardless_of_code(): void
+    {
+        // 換不同帳本 code 也不能繞過（以 IP 計）
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/wallet/auth/register/batch', ['code' => 'C'.$i, 'name' => ['a']]);
+        }
+
+        $this->postJson('/api/wallet/auth/register/batch', ['code' => 'C9', 'name' => ['a']])->assertStatus(429);
+    }
 }
