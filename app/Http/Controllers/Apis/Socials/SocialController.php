@@ -45,7 +45,7 @@ class SocialController extends ApiController
 
             return $this->response()->success(array_merge($login, ['action' => 'bind']));
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
             report($exception);
 
@@ -70,7 +70,7 @@ class SocialController extends ApiController
 
             return $this->response()->success();
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 

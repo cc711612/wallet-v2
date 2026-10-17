@@ -42,11 +42,9 @@ class WalletDetailController extends ApiController
 
             return $this->response()->success();
         } catch (WalletDetailBusinessException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorInternal($exception->getMessage());
+            return $this->response()->errorInternal($this->clientMessage($exception));
         }
     }
 
@@ -64,7 +62,7 @@ class WalletDetailController extends ApiController
 
             return $this->response()->success($this->walletDetailService->index($wallet, $isPersonal, $walletUserId));
         } catch (RuntimeException $exception) {
-            return $this->response()->errorInternal($exception->getMessage());
+            return $this->response()->errorInternal($this->clientMessage($exception));
         }
     }
 
@@ -78,7 +76,7 @@ class WalletDetailController extends ApiController
         try {
             return $this->response()->success($this->walletDetailService->show($wallet, $detail));
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 
@@ -97,13 +95,11 @@ class WalletDetailController extends ApiController
 
             return $this->response()->success();
         } catch (WalletDetailBusinessException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorInternal($exception->getMessage());
+            return $this->response()->errorInternal($this->clientMessage($exception));
         }
     }
 
@@ -122,11 +118,9 @@ class WalletDetailController extends ApiController
 
             return $this->response()->success();
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorInternal($exception->getMessage());
+            return $this->response()->errorInternal($this->clientMessage($exception));
         }
     }
 
@@ -148,11 +142,9 @@ class WalletDetailController extends ApiController
 
             return $this->response()->success();
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorInternal($exception->getMessage());
+            return $this->response()->errorInternal($this->clientMessage($exception));
         }
     }
 
@@ -174,11 +166,9 @@ class WalletDetailController extends ApiController
 
             return $this->response()->success();
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorInternal($exception->getMessage());
+            return $this->response()->errorInternal($this->clientMessage($exception));
         }
     }
 }
