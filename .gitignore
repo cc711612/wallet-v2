@@ -1,8 +1,9 @@
 *.log
 .DS_Store
-.env
-.env.backup
-.env.production
+# env 檔（任何目錄層級，含 .env.bak-*、.env.backup），僅保留 example
+**/.env
+**/.env.*
+!**/.env.example
 .phpactor.json
 .phpunit.result.cache
 /.fleet
