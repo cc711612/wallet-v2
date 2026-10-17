@@ -27,6 +27,16 @@ class VerifyWalletMemberApi
         if ($bearerToken !== '') {
             $walletUsers = $this->verifyWalletMemberService->resolveWalletUsersByJwt($bearerToken);
             if ($walletUsers !== []) {
+                // 路由帶 {wallet} 時，必須是自己所屬的帳本
+                if ($request->route('wallet') !== null && ! isset($walletUsers[$walletId])) {
+                    return response()->json([
+                        'status' => false,
+                        'code' => 403,
+                        'message' => '無此帳本權限',
+                        'data' => [],
+                    ], 403);
+                }
+
                 $request->merge(['wallet_user' => $walletUsers]);
 
                 return $next($request);
