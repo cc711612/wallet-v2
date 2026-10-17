@@ -6,12 +6,16 @@ namespace Tests\Feature\Api;
 
 use App\Domain\Wallet\Entities\WalletDetail;
 use App\Domain\Wallet\Repositories\WalletDetailRepositoryInterface;
+use Tests\Concerns\FakesApiAuthentication;
 use Tests\TestCase;
 
 class WalletDetailStoreContractTest extends TestCase
 {
+    use FakesApiAuthentication;
+
     public function test_it_matches_success_envelope_without_db_access(): void
     {
+        $this->fakeApiAuthentication();
         $this->app->bind(WalletDetailRepositoryInterface::class, static fn (): WalletDetailRepositoryInterface => new ApiFakeWalletDetailRepository);
 
         $payload = [
@@ -28,7 +32,7 @@ class WalletDetailStoreContractTest extends TestCase
             ],
         ];
 
-        $response = $this->postJson('/api/wallet/1/detail', $payload);
+        $response = $this->withHeader('Authorization', 'Bearer test')->postJson('/api/wallet/1/detail', $payload);
 
         $response
             ->assertOk()

@@ -21,19 +21,6 @@ class VerifyWalletMemberApi
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (app()->runningUnitTests()) {
-            $walletId = (int) $request->route('wallet', 1);
-
-            /** @var array<int, array<string, mixed>> $testingWalletUser */
-            $testingWalletUser = [
-                $walletId => ['id' => 100, 'wallet_id' => $walletId, 'name' => 'testing-member', 'is_admin' => 1],
-            ];
-
-            $request->merge(['wallet_user' => $testingWalletUser, 'member_token' => 'testing-member-token']);
-
-            return $next($request);
-        }
-
         $walletId = (int) $request->route('wallet', 1);
 
         $bearerToken = (string) ($request->bearerToken() ?? '');
