@@ -14,6 +14,8 @@ use Throwable;
 
 class GeminiController extends ApiController
 {
+    private const GENERIC_ERROR = '系統錯誤，請稍後再試';
+
     /**
      * Gemini 文字生成。
      */
@@ -32,9 +34,12 @@ class GeminiController extends ApiController
                 'raw_response' => $response,
             ]);
         } catch (Throwable $exception) {
+            report($exception);
+
+            // 不回傳原始例外訊息（可能含上游 URL、設定細節）
             return response()->json([
                 'success' => false,
-                'error' => $exception->getMessage(),
+                'error' => self::GENERIC_ERROR,
             ], 500);
         }
     }
@@ -52,7 +57,9 @@ class GeminiController extends ApiController
                 $response = $geminiService->generate((string) $validated['prompt'], $options);
                 echo $this->extractTextFromResponse($response);
             } catch (Throwable $exception) {
-                echo 'Error: '.$exception->getMessage();
+                report($exception);
+
+                echo 'Error: '.self::GENERIC_ERROR;
             }
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -82,9 +89,12 @@ class GeminiController extends ApiController
                 'raw_response' => $response,
             ]);
         } catch (Throwable $exception) {
+            report($exception);
+
+            // 不回傳原始例外訊息（可能含上游 URL、設定細節）
             return response()->json([
                 'success' => false,
-                'error' => $exception->getMessage(),
+                'error' => self::GENERIC_ERROR,
             ], 500);
         }
     }
@@ -104,9 +114,12 @@ class GeminiController extends ApiController
                 'models' => data_get($response, 'models', []),
             ]);
         } catch (Throwable $exception) {
+            report($exception);
+
+            // 不回傳原始例外訊息（可能含上游 URL、設定細節）
             return response()->json([
                 'success' => false,
-                'error' => $exception->getMessage(),
+                'error' => self::GENERIC_ERROR,
             ], 500);
         }
     }
