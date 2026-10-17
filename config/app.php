@@ -67,6 +67,10 @@ return [
 
     'timezone' => 'UTC',
 
+    // 業務日期（明細「預設今天」）使用的時區。app.timezone 維持 UTC 不變，
+    // 避免影響既有 created_at 等時間欄位的寫入語意
+    'business_timezone' => env('APP_BUSINESS_TIMEZONE', 'Asia/Taipei'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

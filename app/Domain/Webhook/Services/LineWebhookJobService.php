@@ -260,7 +260,7 @@ class LineWebhookJobService
             'amount' => $amount,
             'categoryId' => $categoryId,
             'unit' => 'TWD',
-            'date' => now()->format('Y-m-d'),
+            'date' => now((string) config('app.business_timezone'))->format('Y-m-d'),
         ];
 
         Cache::put($this->pendingAddCacheKey($lineUserId), [

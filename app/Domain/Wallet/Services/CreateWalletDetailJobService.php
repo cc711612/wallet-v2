@@ -58,7 +58,7 @@ class CreateWalletDetailJobService
             'select_all' => true,
             'is_personal' => false,
             'payment_wallet_user_id' => $walletUserId,
-            'date' => (string) Arr::get($params, 'date', now()->format('Y-m-d')),
+            'date' => (string) Arr::get($params, 'date', now((string) config('app.business_timezone'))->format('Y-m-d')),
             'category_id' => Arr::get($params, 'categoryId'),
             'users' => [],
             'splits' => [],

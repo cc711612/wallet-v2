@@ -62,11 +62,11 @@ class StoreWalletDetailRequest extends FormRequest
         /** @var array<string, mixed> $walletUser */
         $walletUser = (array) data_get($this->input('wallet_user', []), (string) $walletId, []);
 
-        $normalizedDate = (string) ($this->input('date') ?: now()->toDateString());
+        $normalizedDate = (string) ($this->input('date') ?: now((string) config('app.business_timezone'))->toDateString());
         try {
             $normalizedDate = Carbon::parse($normalizedDate)->toDateString();
         } catch (Throwable) {
-            $normalizedDate = now()->toDateString();
+            $normalizedDate = now((string) config('app.business_timezone'))->toDateString();
         }
 
         $this->merge([
