@@ -94,7 +94,7 @@ class AuthService
      */
     private function bindWalletUserByJwt(int $userId, string $jwtToken, string $agent, string $ip): void
     {
-        $payload = $this->decodeJwtPayload($jwtToken);
+        $payload = $this->jwtTokenService->decodeVerified($jwtToken) ?? [];
         $walletUserEncryptedId = (string) data_get($payload, 'wallet_user.id', '');
         if ($walletUserEncryptedId === '') {
             throw new RuntimeException('系統錯誤查詢不到綁定資訊');
@@ -125,35 +125,6 @@ class AuthService
         if (! $bound) {
             throw new RuntimeException('已被綁定或是有重複的帳本使用者');
         }
-    }
-
-    /**
-     * 解析 JWT payload。
-     *
-     * @return array<string, mixed>
-     */
-    private function decodeJwtPayload(string $jwt): array
-    {
-        $parts = explode('.', $jwt);
-        if (count($parts) < 2) {
-            return [];
-        }
-
-        $payloadB64 = str_replace(['-', '_'], ['+', '/'], $parts[1]);
-        $padding = strlen($payloadB64) % 4;
-        if ($padding > 0) {
-            $payloadB64 .= str_repeat('=', 4 - $padding);
-        }
-
-        $decoded = base64_decode($payloadB64, true);
-        if ($decoded === false) {
-            return [];
-        }
-
-        /** @var array<string, mixed>|null $payload */
-        $payload = json_decode($decoded, true);
-
-        return $payload ?? [];
     }
 
     /**

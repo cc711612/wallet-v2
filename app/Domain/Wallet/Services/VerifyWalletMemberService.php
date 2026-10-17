@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Wallet\Services;
 
-use App\Domain\Auth\Repositories\UserTokenRepositoryInterface;
 use App\Domain\Wallet\Repositories\WalletMemberTokenRepositoryInterface;
+use App\Support\JwtTokenService;
 use Illuminate\Support\Facades\Crypt;
 use Throwable;
 
@@ -15,8 +15,8 @@ class VerifyWalletMemberService
      * @return void
      */
     public function __construct(
-        private UserTokenRepositoryInterface $userTokenRepository,
-        private WalletMemberTokenRepositoryInterface $walletMemberTokenRepository
+        private WalletMemberTokenRepositoryInterface $walletMemberTokenRepository,
+        private JwtTokenService $jwtTokenService,
     ) {}
 
     /**
@@ -45,8 +45,9 @@ class VerifyWalletMemberService
      */
     public function resolveWalletUsersByJwt(string $jwt): array
     {
-        $payload = $this->decodeJwtPayload($jwt);
-        if ($payload === []) {
+        // 只接受本服務簽發、簽章正確且未過期的 JWT
+        $payload = $this->jwtTokenService->decodeVerified($jwt);
+        if ($payload === null) {
             return [];
         }
 
@@ -61,16 +62,6 @@ class VerifyWalletMemberService
                 }
             } catch (Throwable) {
                 // Continue next path.
-            }
-        }
-
-        if (! empty($userPayload['account'])) {
-            $user = $this->userTokenRepository->findByAccount((string) $userPayload['account']);
-            if ($user !== null) {
-                $items = $this->walletMemberTokenRepository->listByUserId((int) $user['id']);
-                if ($items !== []) {
-                    return $this->keyByWalletId($items);
-                }
             }
         }
 
@@ -106,32 +97,5 @@ class VerifyWalletMemberService
         }
 
         return $result;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodeJwtPayload(string $jwt): array
-    {
-        $parts = explode('.', $jwt);
-        if (count($parts) < 2) {
-            return [];
-        }
-
-        $payloadB64 = str_replace(['-', '_'], ['+', '/'], $parts[1]);
-        $padding = strlen($payloadB64) % 4;
-        if ($padding > 0) {
-            $payloadB64 .= str_repeat('=', 4 - $padding);
-        }
-
-        $decoded = base64_decode($payloadB64, true);
-        if ($decoded === false) {
-            return [];
-        }
-
-        /** @var array<string, mixed>|null $payload */
-        $payload = json_decode($decoded, true);
-
-        return $payload ?? [];
     }
 }
