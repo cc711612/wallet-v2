@@ -18,15 +18,19 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Mockery\MockInterface;
+use Tests\Concerns\FakesApiAuthentication;
 use Tests\TestCase;
 
 class ApiModulesContractTest extends TestCase
 {
+    use FakesApiAuthentication;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->fakeApiAuthentication();
 
         $this->mock(AuthService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('login')->andReturn(['id' => 1, 'name' => 'tester', 'member_token' => 'tk', 'jwt' => 'tk', 'wallet' => ['id' => 1, 'code' => 'WALLET001'], 'walletUsers' => [], 'devices' => [], 'notifies' => []]);
@@ -95,7 +99,7 @@ class ApiModulesContractTest extends TestCase
         $this->mock(DeviceService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('index')->andReturn([]);
             $mock->shouldReceive('store')->andReturn(['stored' => true]);
-            $mock->shouldReceive('destroy')->andReturn(['deleted' => true]);
+            $mock->shouldReceive('destroy')->andReturn(true);
         });
 
         $this->mock(WalletDetailService::class, function (MockInterface $mock): void {
@@ -124,7 +128,6 @@ class ApiModulesContractTest extends TestCase
         $this->mock(LineWebhookService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('store')->andReturn(['received' => true]);
             $mock->shouldReceive('notify')->andReturn(['queued' => true]);
-            $mock->shouldReceive('notifyBindUrl')->andReturn(['url' => 'https://example.test/line/bind']);
         });
 
         $this->mock(GeminiService::class, function (MockInterface $mock): void {
@@ -136,7 +139,7 @@ class ApiModulesContractTest extends TestCase
 
     public function test_auth_login_endpoint_returns_standard_envelope(): void
     {
-        // LoginRequest 以 exists:users,account 驗證帳號存在，需要一筆真實的 user
+        // AuthService 為 mock，這筆 user 僅保留作為登入情境的資料
         DB::table('users')->insert(['account' => 'roy', 'password' => Hash::make('123456'), 'token' => 'tk']);
 
         $response = $this->postJson('/api/auth/login', [
@@ -171,7 +174,7 @@ class ApiModulesContractTest extends TestCase
         $optionResponse = $this->getJson('/api/option/exchangeRate?unit=TWD');
         $optionResponse->assertOk()->assertJsonPath('status', true);
 
-        $geminiResponse = $this->postJson('/api/gemini/generate', [
+        $geminiResponse = $this->withHeader('Authorization', 'Bearer test')->postJson('/api/gemini/generate', [
             'prompt' => 'hello',
         ]);
         // Gemini 端點回傳原始結構（不包 envelope）

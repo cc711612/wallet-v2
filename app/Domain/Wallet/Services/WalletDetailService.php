@@ -10,6 +10,7 @@ use App\Domain\Wallet\Enums\WalletDetailType;
 use App\Domain\Wallet\Exceptions\WalletDetailBusinessException;
 use App\Domain\Wallet\Repositories\WalletDetailQueryRepositoryInterface;
 use App\Domain\Wallet\Repositories\WalletDetailRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class WalletDetailService
@@ -140,7 +141,7 @@ class WalletDetailService
             throw new WalletDetailBusinessException('參數有誤');
         }
 
-        $this->guardPublicExpenseNotNegative($walletDetail);
+        $this->guardPublicExpenseNotNegative($walletDetail, $detailId);
         $this->guardWalletUsersValid($walletDetail);
 
         $attributes = $walletDetail->toPersistenceAttributes();
@@ -148,35 +149,37 @@ class WalletDetailService
         /** @var array<int, array{user_id:int, value:float|int}> $splits */
         $splits = $walletDetail->splits();
 
-        $this->walletDetailQueryRepository->updateDetail($walletDetail->walletId(), $detailId, [
-            'type' => $attributes['type'],
-            'payment_wallet_user_id' => $attributes['payment_wallet_user_id'],
-            'title' => $attributes['title'],
-            'symbol_operation_type_id' => $attributes['symbol_operation_type_id'],
-            'select_all' => (int) ((bool) $attributes['select_all']),
-            'is_personal' => (int) ((bool) $attributes['is_personal']),
-            'value' => $attributes['value'],
-            'unit' => $attributes['unit'],
-            'rates' => $attributes['rates'],
-            'date' => $attributes['date'],
-            'note' => $attributes['note'],
-            'category_id' => $attributes['category_id'],
-            'updated_by' => $attributes['updated_by'],
-            'splits' => json_encode($splits),
-        ]);
+        DB::transaction(function () use ($walletDetail, $detailId, $attributes, $splits): void {
+            $this->walletDetailQueryRepository->updateDetail($walletDetail->walletId(), $detailId, [
+                'type' => $attributes['type'],
+                'payment_wallet_user_id' => $attributes['payment_wallet_user_id'],
+                'title' => $attributes['title'],
+                'symbol_operation_type_id' => $attributes['symbol_operation_type_id'],
+                'select_all' => (int) ((bool) $attributes['select_all']),
+                'is_personal' => (int) ((bool) $attributes['is_personal']),
+                'value' => $attributes['value'],
+                'unit' => $attributes['unit'],
+                'rates' => $attributes['rates'],
+                'date' => $attributes['date'],
+                'note' => $attributes['note'],
+                'category_id' => $attributes['category_id'],
+                'updated_by' => $attributes['updated_by'],
+                'splits' => json_encode($splits),
+            ]);
 
-        /** @var array<int, int> $users */
-        $users = array_values(array_unique(array_map('intval', (array) ($attributes['users'] ?? []))));
-        if ((bool) ($attributes['select_all'] ?? false) === true) {
-            $users = array_values(array_map(
-                static fn (array $walletUser): int => (int) ($walletUser['id'] ?? 0),
-                $this->walletDetailQueryRepository->listWalletUsers($walletDetail->walletId())
-            ));
-        }
+            /** @var array<int, int> $users */
+            $users = array_values(array_unique(array_map('intval', (array) ($attributes['users'] ?? []))));
+            if ((bool) ($attributes['select_all'] ?? false) === true) {
+                $users = array_values(array_map(
+                    static fn (array $walletUser): int => (int) ($walletUser['id'] ?? 0),
+                    $this->walletDetailQueryRepository->listWalletUsers($walletDetail->walletId())
+                ));
+            }
 
-        $this->walletDetailQueryRepository->replaceDetailUsers($walletDetail->walletId(), $detailId, $users);
+            $this->walletDetailQueryRepository->replaceDetailUsers($walletDetail->walletId(), $detailId, $users);
 
-        $this->walletDetailRepository->replaceSplits($walletDetail->walletId(), $detailId, $splits, (string) ($attributes['unit'] ?? 'TWD'));
+            $this->walletDetailRepository->replaceSplits($walletDetail->walletId(), $detailId, $splits, (string) ($attributes['unit'] ?? 'TWD'));
+        });
     }
 
     /**
@@ -221,7 +224,7 @@ class WalletDetailService
     /**
      * 檢查公費扣款後不可為負數。
      */
-    private function guardPublicExpenseNotNegative(WalletDetail $walletDetail): void
+    private function guardPublicExpenseNotNegative(WalletDetail $walletDetail, ?int $excludeDetailId = null): void
     {
         if (
             $walletDetail->type() !== WalletDetailType::PUBLIC_EXPENSE->value
@@ -230,7 +233,8 @@ class WalletDetailService
             return;
         }
 
-        $walletBalance = $this->walletDetailRepository->getWalletBalance($walletDetail->walletId());
+        // update 時排除該筆明細自身，避免舊值與新值重複扣除
+        $walletBalance = $this->walletDetailRepository->getWalletBalance($walletDetail->walletId(), $excludeDetailId);
         $nextBalance = $walletBalance - $walletDetail->value();
         if ($nextBalance < 0) {
             throw new WalletDetailBusinessException('公費結算金額不得為負數');

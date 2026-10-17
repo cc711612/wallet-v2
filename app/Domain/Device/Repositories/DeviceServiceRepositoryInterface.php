@@ -31,7 +31,10 @@ interface DeviceServiceRepositoryInterface
     public function create(array $attributes): void;
 
     /**
-     * 刪除裝置資料。
+     * 刪除指定裝置，限定 wallet_user_id 屬於傳入名單。
+     *
+     * @param  array<int, int>  $walletUserIds
+     * @return int 實際刪除筆數
      */
-    public function delete(int $deviceId): void;
+    public function deleteOwnedBy(int $deviceId, array $walletUserIds): int;
 }

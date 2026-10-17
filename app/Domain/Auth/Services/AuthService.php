@@ -8,7 +8,6 @@ use App\Domain\Auth\Repositories\AuthServiceRepositoryInterface;
 use App\Support\JwtTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -34,7 +33,7 @@ class AuthService
         $user = $this->authServiceRepository->findUserByAccount((string) ($credentials['account'] ?? ''));
 
         if ($user === null || ! Hash::check((string) ($credentials['password'] ?? ''), (string) ($user['password'] ?? ''))) {
-            abort(400, '密碼有誤');
+            abort(400, '帳號或密碼錯誤');
         }
 
         $token = Str::random(64);
@@ -94,15 +93,15 @@ class AuthService
      */
     private function bindWalletUserByJwt(int $userId, string $jwtToken, string $agent, string $ip): void
     {
-        $payload = $this->decodeJwtPayload($jwtToken);
+        $payload = $this->jwtTokenService->decodeVerified($jwtToken) ?? [];
         $walletUserEncryptedId = (string) data_get($payload, 'wallet_user.id', '');
         if ($walletUserEncryptedId === '') {
             throw new RuntimeException('系統錯誤查詢不到綁定資訊');
         }
 
-        try {
-            $walletUserId = (int) Crypt::decryptString($walletUserEncryptedId);
-        } catch (\Throwable) {
+        // 必須是帶 wallet_user: 前綴的密文，user 密文或舊格式一律拒絕
+        $walletUserId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_WALLET_USER, $walletUserEncryptedId);
+        if ($walletUserId === null) {
             throw new RuntimeException('系統錯誤查詢不到綁定資訊');
         }
 
@@ -125,35 +124,6 @@ class AuthService
         if (! $bound) {
             throw new RuntimeException('已被綁定或是有重複的帳本使用者');
         }
-    }
-
-    /**
-     * 解析 JWT payload。
-     *
-     * @return array<string, mixed>
-     */
-    private function decodeJwtPayload(string $jwt): array
-    {
-        $parts = explode('.', $jwt);
-        if (count($parts) < 2) {
-            return [];
-        }
-
-        $payloadB64 = str_replace(['-', '_'], ['+', '/'], $parts[1]);
-        $padding = strlen($payloadB64) % 4;
-        if ($padding > 0) {
-            $payloadB64 .= str_repeat('=', 4 - $padding);
-        }
-
-        $decoded = base64_decode($payloadB64, true);
-        if ($decoded === false) {
-            return [];
-        }
-
-        /** @var array<string, mixed>|null $payload */
-        $payload = json_decode($decoded, true);
-
-        return $payload ?? [];
     }
 
     /**

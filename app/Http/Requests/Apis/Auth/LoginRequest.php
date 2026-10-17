@@ -25,7 +25,8 @@ class LoginRequest extends FormRequest
     {
         return [
             'password' => ['required', 'string', 'min:6', 'max:18'],
-            'account' => ['required', 'string', 'exists:users,account'],
+            // 不使用 exists:users,account，避免透過不同錯誤訊息列舉帳號；由 AuthService 統一判斷
+            'account' => ['required', 'string'],
         ];
     }
 }

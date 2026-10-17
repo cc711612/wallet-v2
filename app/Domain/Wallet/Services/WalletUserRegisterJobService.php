@@ -30,8 +30,10 @@ class WalletUserRegisterJobService
         }
 
         $detailIds = $this->walletJobRepository->listSelectAllDetailIds($walletId);
-        foreach ($detailIds as $detailId) {
-            $this->walletJobRepository->syncDetailUsersWithoutDetaching($detailId, $walletUserIds);
+        if ($detailIds === []) {
+            return;
         }
+
+        $this->walletJobRepository->syncDetailUsersWithoutDetachingBatch($detailIds, $walletUserIds);
     }
 }

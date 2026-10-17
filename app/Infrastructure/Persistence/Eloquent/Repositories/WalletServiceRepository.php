@@ -21,7 +21,8 @@ class WalletServiceRepository implements WalletServiceRepositoryInterface
      */
     public function listWallets(array $filters): array
     {
-        $perPage = max(1, (int) ($filters['per_page'] ?? $filters['page_count'] ?? 50));
+        // 上限 100，避免 client 帶極大的 per_page 一次撈出整張表
+        $perPage = min(100, max(1, (int) ($filters['per_page'] ?? $filters['page_count'] ?? 50)));
         $userId = (int) data_get($filters, 'user.id', data_get($filters, 'users.id', 0));
         $status = data_get($filters, 'wallets.status', $filters['status'] ?? null);
         $isGuest = data_get($filters, 'wallets.is_guest', $filters['is_guest'] ?? null);

@@ -19,6 +19,10 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- 測試專用固定金鑰（非正式環境金鑰），Crypt::encryptString 與 JWT 測試需要 -->
+        <env name="APP_KEY" value="base64:cGhwdW5pdC1vbmx5LWtleS1ub3QtZm9yLXByb2QtMDA="/>
+        <!-- 測試專用 JWT 金鑰（≥32 字元，非正式環境金鑰） -->
+        <env name="JWT_SECRET" value="phpunit-only-jwt-secret-not-for-production-use"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

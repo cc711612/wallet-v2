@@ -25,6 +25,8 @@ class SocialCheckBindRequest extends FormRequest
         return [
             'socialType' => ['required', 'integer', new Enum(SocialTypeEnum::class)],
             'socialTypeValue' => ['required', 'string'],
+            // provider 簽發的 id_token（LINE Login／Google），後端會向 provider 驗證
+            'id_token' => ['sometimes', 'string'],
         ];
     }
 
