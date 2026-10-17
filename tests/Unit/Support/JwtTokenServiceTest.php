@@ -6,6 +6,7 @@ namespace Tests\Unit\Support;
 
 use App\Support\JwtTokenService;
 use Illuminate\Support\Carbon;
+use RuntimeException;
 use Tests\Concerns\BuildsAuthFixtures;
 use Tests\TestCase;
 
@@ -54,7 +55,7 @@ class JwtTokenServiceTest extends TestCase
 
         $this->assertNull($service->decodeVerified($this->craftJwt($payload)));
         $this->assertNull($service->decodeVerified($this->craftJwt($payload, null, ['typ' => 'JWT', 'alg' => 'none'])));
-        $this->assertNull($service->decodeVerified($this->craftJwt($payload, (string) config('app.name'), ['typ' => 'JWT', 'alg' => 'HS512'])));
+        $this->assertNull($service->decodeVerified($this->craftJwt($payload, (string) config('services.jwt.secret'), ['typ' => 'JWT', 'alg' => 'HS512'])));
         $this->assertNull($service->decodeVerified('not-a-jwt'));
     }
 
@@ -70,27 +71,47 @@ class JwtTokenServiceTest extends TestCase
 
     public function test_token_without_exp_is_rejected(): void
     {
-        $jwt = $this->craftJwt(['user' => ['id' => 'x']], (string) config('app.name'));
+        $jwt = $this->craftJwt(['user' => ['id' => 'x']], (string) config('services.jwt.secret'));
 
         $this->assertNull((new JwtTokenService)->decodeVerified($jwt));
     }
 
     public function test_not_yet_valid_token_is_rejected(): void
     {
-        $jwt = $this->craftJwt(['user' => ['id' => 'x'], 'exp' => time() + 7200, 'nbf' => time() + 3600], (string) config('app.name'));
+        $jwt = $this->craftJwt(['user' => ['id' => 'x'], 'exp' => time() + 7200, 'nbf' => time() + 3600], (string) config('services.jwt.secret'));
 
         $this->assertNull((new JwtTokenService)->decodeVerified($jwt));
     }
 
-    public function test_jwt_secret_config_is_used_when_set(): void
+    public function test_issue_and_verify_fail_closed_when_secret_is_empty(): void
     {
         $service = new JwtTokenService;
-        $legacy = $service->makeUserJwt(['id' => 1]);
+        $issuedWithSecret = $service->makeUserJwt(['id' => 1]);
 
-        config(['services.jwt.secret' => 'dedicated-secret']);
-        $fresh = $service->makeUserJwt(['id' => 1]);
+        config(['services.jwt.secret' => '']);
 
-        $this->assertNotNull($service->decodeVerified($fresh));
-        $this->assertNull($service->decodeVerified($legacy), '設定 JWT_SECRET 後，以 APP_NAME 簽發的舊 token 應失效');
+        $this->assertNull($service->decodeVerified($issuedWithSecret));
+        $this->assertNull($service->decodeVerified($this->craftJwt(['exp' => time() + 3600, 'user' => ['id' => 'x']], (string) config('app.name'))));
+
+        $this->expectException(RuntimeException::class);
+        $service->makeUserJwt(['id' => 1]);
+    }
+
+    public function test_issue_and_verify_fail_closed_when_secret_is_too_short(): void
+    {
+        config(['services.jwt.secret' => str_repeat('a', 31)]);
+        $service = new JwtTokenService;
+
+        $this->assertNull($service->decodeVerified($this->craftJwt(['exp' => time() + 3600, 'user' => ['id' => 'x']], str_repeat('a', 31))));
+
+        $this->expectException(RuntimeException::class);
+        $service->makeWalletUserJwt(['id' => 1]);
+    }
+
+    public function test_token_signed_with_app_name_is_rejected(): void
+    {
+        $jwt = $this->craftJwt(['exp' => time() + 3600, 'user' => ['id' => 'x']], (string) config('app.name'));
+
+        $this->assertNull((new JwtTokenService)->decodeVerified($jwt));
     }
 }

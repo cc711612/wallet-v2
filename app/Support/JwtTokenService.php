@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Illuminate\Support\Facades\Crypt;
+use UnexpectedValueException;
 
 class JwtTokenService
 {
+    private const MIN_SECRET_LENGTH = 32;
+
     /**
      * @param  array<string, mixed>  $user
      */
@@ -56,7 +59,13 @@ class JwtTokenService
     {
         $headerEncoded = $this->base64UrlEncode((string) json_encode(['typ' => 'JWT', 'alg' => 'HS256'], JSON_UNESCAPED_SLASHES));
         $payloadEncoded = $this->base64UrlEncode((string) json_encode($payload, JSON_UNESCAPED_SLASHES));
-        $signature = hash_hmac('sha256', $headerEncoded.'.'.$payloadEncoded, $this->secret(), true);
+        $secret = $this->secret();
+        if ($secret === null) {
+            // fail-closed：金鑰未設定或太短時不簽發（非 RuntimeException 本身，clientMessage 不會回傳原文）
+            throw new UnexpectedValueException('JWT_SECRET 未設定或長度不足，無法簽發 JWT');
+        }
+
+        $signature = hash_hmac('sha256', $headerEncoded.'.'.$payloadEncoded, $secret, true);
 
         return $headerEncoded.'.'.$payloadEncoded.'.'.$this->base64UrlEncode($signature);
     }
@@ -86,7 +95,12 @@ class JwtTokenService
             return null;
         }
 
-        $expected = hash_hmac('sha256', $headerEncoded.'.'.$payloadEncoded, $this->secret(), true);
+        $secret = $this->secret();
+        if ($secret === null) {
+            return null;
+        }
+
+        $expected = hash_hmac('sha256', $headerEncoded.'.'.$payloadEncoded, $secret, true);
         if (! hash_equals($expected, $signature)) {
             return null;
         }
@@ -111,13 +125,14 @@ class JwtTokenService
     }
 
     /**
-     * 簽章金鑰：優先使用 JWT_SECRET；未設定時沿用歷史行為（APP_NAME），避免既有 token 全部失效。
+     * 簽章金鑰只接受 JWT_SECRET（至少 32 字元）；未設定或太短回傳 null，簽發與驗證都會拒絕。
+     * 不再退回 APP_NAME（APP_NAME 是公開值）。
      */
-    private function secret(): string
+    private function secret(): ?string
     {
         $secret = (string) config('services.jwt.secret', '');
 
-        return $secret !== '' ? $secret : (string) config('app.name', 'Laravel');
+        return strlen($secret) >= self::MIN_SECRET_LENGTH ? $secret : null;
     }
 
     /**

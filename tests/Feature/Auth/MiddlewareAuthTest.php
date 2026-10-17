@@ -67,11 +67,11 @@ class MiddlewareAuthTest extends TestCase
 
     public function test_jwt_with_only_account_cannot_login_even_if_signed(): void
     {
-        // 簽章金鑰沿用 APP_NAME（非秘密），因此即使簽章正確，只帶 account 也不能登入
+        // 即使簽章正確，只帶 account 也不能登入
         $user = $this->createUser(1, 'roy');
         $this->createWallet(1, 1);
         $this->createWalletUser(100, 1, (int) $user['id'], true);
-        $jwt = $this->craftJwt(['exp' => time() + 3600, 'user' => ['account' => 'roy']], (string) config('app.name'));
+        $jwt = $this->craftJwt(['exp' => time() + 3600, 'user' => ['account' => 'roy']], (string) config('services.jwt.secret'));
 
         $this->withToken($jwt)->getJson('/api/wallet')->assertStatus(401);
         $this->withToken($jwt)->getJson('/api/wallet/1/detail')->assertStatus(401);
@@ -80,7 +80,7 @@ class MiddlewareAuthTest extends TestCase
     public function test_jwt_with_undecryptable_id_and_account_fallback_returns_401(): void
     {
         $this->createUser(1, 'roy');
-        $jwt = $this->craftJwt(['exp' => time() + 3600, 'user' => ['id' => 'garbage', 'account' => 'roy']], (string) config('app.name'));
+        $jwt = $this->craftJwt(['exp' => time() + 3600, 'user' => ['id' => 'garbage', 'account' => 'roy']], (string) config('services.jwt.secret'));
 
         $this->withToken($jwt)->getJson('/api/wallet')->assertStatus(401);
     }
@@ -91,7 +91,17 @@ class MiddlewareAuthTest extends TestCase
         $jwt = $this->craftJwt([
             'exp' => time() - 3600,
             'user' => ['id' => Crypt::encryptString((string) $user['id'])],
-        ], (string) config('app.name'));
+        ], (string) config('services.jwt.secret'));
+
+        $this->withToken($jwt)->getJson('/api/wallet')->assertStatus(401);
+    }
+
+    public function test_jwt_signed_with_public_app_name_returns_401(): void
+    {
+        $user = $this->createUser(1, 'roy');
+        // 合法 token 的 payload，改用公開的 APP_NAME 重新簽章
+        $payload = json_decode((string) base64_decode(strtr(explode('.', $this->userJwt($user))[1], '-_', '+/')), true);
+        $jwt = $this->craftJwt($payload, (string) config('app.name'));
 
         $this->withToken($jwt)->getJson('/api/wallet')->assertStatus(401);
     }
