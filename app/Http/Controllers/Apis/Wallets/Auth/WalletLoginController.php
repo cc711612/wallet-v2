@@ -37,7 +37,7 @@ class WalletLoginController extends ApiController
             return response()->json([
                 'status' => false,
                 'code' => $exception->getCode() === 401 ? 401 : 400,
-                'message' => $exception->getMessage(),
+                'message' => $this->clientMessage($exception),
                 'data' => (object) [],
             ]);
         } catch (Throwable $exception) {
@@ -73,7 +73,7 @@ class WalletLoginController extends ApiController
             return response()->json([
                 'status' => false,
                 'code' => $exception->getCode() === 401 ? 401 : 400,
-                'message' => $exception->getMessage(),
+                'message' => $this->clientMessage($exception),
                 'data' => (object) [],
             ]);
         } catch (Throwable $exception) {

@@ -29,9 +29,7 @@ class WalletUserController extends ApiController
 
             return $this->response()->success(new WalletUserIndexResource($walletUserService->index((string) $validated['code'])));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 

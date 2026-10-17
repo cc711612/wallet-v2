@@ -45,9 +45,7 @@ class LoginController extends ApiController
 
             return $this->response()->success(new AuthLoginResource($authService->login($payload)));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 
@@ -89,9 +87,7 @@ class LoginController extends ApiController
 
             return $this->response()->success(new AuthLoginResource($authService->thirdPartyLogin($validated)));
         } catch (Throwable $exception) {
-            report($exception);
-
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 }
