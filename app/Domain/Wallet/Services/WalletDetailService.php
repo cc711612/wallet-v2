@@ -141,7 +141,7 @@ class WalletDetailService
             throw new WalletDetailBusinessException('參數有誤');
         }
 
-        $this->guardPublicExpenseNotNegative($walletDetail);
+        $this->guardPublicExpenseNotNegative($walletDetail, $detailId);
         $this->guardWalletUsersValid($walletDetail);
 
         $attributes = $walletDetail->toPersistenceAttributes();
@@ -224,7 +224,7 @@ class WalletDetailService
     /**
      * 檢查公費扣款後不可為負數。
      */
-    private function guardPublicExpenseNotNegative(WalletDetail $walletDetail): void
+    private function guardPublicExpenseNotNegative(WalletDetail $walletDetail, ?int $excludeDetailId = null): void
     {
         if (
             $walletDetail->type() !== WalletDetailType::PUBLIC_EXPENSE->value
@@ -233,7 +233,8 @@ class WalletDetailService
             return;
         }
 
-        $walletBalance = $this->walletDetailRepository->getWalletBalance($walletDetail->walletId());
+        // update 時排除該筆明細自身，避免舊值與新值重複扣除
+        $walletBalance = $this->walletDetailRepository->getWalletBalance($walletDetail->walletId(), $excludeDetailId);
         $nextBalance = $walletBalance - $walletDetail->value();
         if ($nextBalance < 0) {
             throw new WalletDetailBusinessException('公費結算金額不得為負數');

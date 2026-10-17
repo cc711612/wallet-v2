@@ -46,7 +46,7 @@ class WalletDetailStoreContractTest extends TestCase
 
 class ApiFakeWalletDetailRepository implements WalletDetailRepositoryInterface
 {
-    public function getWalletBalance(int $walletId): float
+    public function getWalletBalance(int $walletId, ?int $excludeDetailId = null): float
     {
         return 9999.0;
     }
