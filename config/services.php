@@ -55,6 +55,19 @@ return [
         'leeway' => (int) env('JWT_LEEWAY', 60),
     ],
 
+    // 第三方登入：checkBind 時向 provider 驗證 id_token（預設開啟，fail-closed）
+    'social_login' => [
+        'verify_token' => (bool) env('SOCIAL_LOGIN_VERIFY_TOKEN', true),
+    ],
+
+    'line_login' => [
+        'channel_id' => env('LINE_LOGIN_CHANNEL_ID', ''),
+    ],
+
+    'google_login' => [
+        'client_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('GOOGLE_LOGIN_CLIENT_IDS', ''))))),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY', ''),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
