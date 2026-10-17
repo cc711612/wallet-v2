@@ -48,6 +48,13 @@ return [
         'retry_delay_ms' => env('NOTIFICATION_RETRY_DELAY_MS', 500),
     ],
 
+    'jwt' => [
+        // HS256 簽章金鑰。未設定時沿用歷史行為（以 APP_NAME 簽章），設定後舊 token 會全部失效
+        'secret' => env('JWT_SECRET', ''),
+        // 驗證 exp / nbf 時容許的時鐘誤差（秒）
+        'leeway' => (int) env('JWT_LEEWAY', 60),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY', ''),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
