@@ -52,8 +52,6 @@ Route::group(['as' => 'api.'], function (): void {
     Route::group(['as' => 'webhook.', 'prefix' => 'webhook'], function (): void {
         Route::group(['as' => 'line.', 'prefix' => 'line'], function (): void {
             Route::any('/', [LineController::class, 'store'])->middleware(['VerifyLineSignature'])->name('store');
-            // 內部推播轉發入口：改用共享密鑰 header 驗證（LINE 平台不會呼叫此路由）
-            Route::post('/notify', [LineController::class, 'notify'])->middleware(['VerifyNotifyRelayKey'])->name('notify');
         });
     });
 

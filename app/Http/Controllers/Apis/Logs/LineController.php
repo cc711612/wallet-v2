@@ -22,15 +22,4 @@ class LineController extends ApiController
 
         return $this->response()->success();
     }
-
-    /**
-     * 處理 LINE 通知 webhook。
-     */
-    #[Response(200, '處理通知成功', type: 'array{status:true, code:200, message:string, data:array<string,mixed>|object}')]
-    public function notify(Request $request, LineWebhookService $lineWebhookService): JsonResponse
-    {
-        $lineWebhookService->notify($request->all());
-
-        return $this->response()->success();
-    }
 }
