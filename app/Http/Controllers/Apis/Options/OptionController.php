@@ -27,7 +27,7 @@ class OptionController extends ApiController
         try {
             return $this->response()->success(new ExchangeRateResource($optionService->exchangeRate($unit)));
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 

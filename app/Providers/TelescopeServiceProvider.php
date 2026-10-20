@@ -40,12 +40,22 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function hideSensitiveRequestDetails(): void
     {
-        Telescope::hideRequestParameters(['_token']);
+        Telescope::hideRequestParameters([
+            '_token',
+            'token',
+            'member_token',
+            'jwt_token',
+            'fcm_token',
+            'password',
+        ]);
 
         Telescope::hideRequestHeaders([
+            'authorization',
             'cookie',
             'x-csrf-token',
             'x-xsrf-token',
+            'x-line-signature',
+            'x-goog-api-key',
         ]);
     }
 
@@ -56,8 +66,12 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function () {
-            return true;
+        // 非 local 環境只允許 TELESCOPE_ALLOWED_IPS 白名單（預設空＝全部拒絕）。
+        // 本專案沒有 session 登入，$user 恆為 null，因此以預設值 null 允許 guest 進入判斷。
+        Gate::define('viewTelescope', function ($user = null): bool {
+            $allowedIps = (array) config('telescope.allowed_ips', []);
+
+            return $allowedIps !== [] && in_array((string) request()->ip(), $allowedIps, true);
         });
     }
 }

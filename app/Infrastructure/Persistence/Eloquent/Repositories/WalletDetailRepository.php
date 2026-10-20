@@ -18,20 +18,22 @@ use Illuminate\Support\Facades\DB;
 class WalletDetailRepository implements WalletDetailRepositoryInterface
 {
     /**
-     * 取得帳本公費餘額。
+     * 取得帳本公費餘額；$excludeDetailId 用於 update 時排除該筆明細自身的舊值。
      */
-    public function getWalletBalance(int $walletId): float
+    public function getWalletBalance(int $walletId, ?int $excludeDetailId = null): float
     {
         $increment = WalletDetailEntity::query()
             ->where('wallet_id', $walletId)
             ->where('type', WalletDetailType::PUBLIC_EXPENSE->value)
             ->where('symbol_operation_type_id', SymbolOperationType::INCREMENT->value)
+            ->when($excludeDetailId !== null, static fn ($query) => $query->where('id', '!=', $excludeDetailId))
             ->sum('value');
 
         $decrement = WalletDetailEntity::query()
             ->where('wallet_id', $walletId)
             ->where('type', WalletDetailType::PUBLIC_EXPENSE->value)
             ->where('symbol_operation_type_id', SymbolOperationType::DECREMENT->value)
+            ->when($excludeDetailId !== null, static fn ($query) => $query->where('id', '!=', $excludeDetailId))
             ->sum('value');
 
         return (float) ($increment - $decrement);

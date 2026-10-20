@@ -62,8 +62,14 @@ class DeviceServiceRepository implements DeviceServiceRepositoryInterface
         DeviceEntity::query()->create($attributes);
     }
 
-    public function delete(int $deviceId): void
+    /**
+     * @param  array<int, int>  $walletUserIds
+     */
+    public function deleteOwnedBy(int $deviceId, array $walletUserIds): int
     {
-        DeviceEntity::query()->where('id', $deviceId)->delete();
+        return (int) DeviceEntity::query()
+            ->where('id', $deviceId)
+            ->whereIn('wallet_user_id', $walletUserIds)
+            ->delete();
     }
 }

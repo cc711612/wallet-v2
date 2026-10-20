@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Repositories;
 use App\Domain\Device\Entities\DeviceEntity;
 use App\Domain\Notification\Repositories\NotificationJobRepositoryInterface;
 use App\Domain\Wallet\Entities\WalletUserEntity;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 class NotificationJobRepository implements NotificationJobRepositoryInterface
@@ -50,22 +51,31 @@ class NotificationJobRepository implements NotificationJobRepositoryInterface
 
     /**
      * @param  array<string, mixed>  $requestBody
+     * @return array{success: bool, status: int, body: string}
      */
-    public function sendFcmBatch(array $requestBody): bool
+    public function sendFcmBatch(array $requestBody): array
     {
         $notificationUrl = rtrim((string) config('services.notification.url', ''), '/');
         $notificationKey = (string) config('services.notification.key', '');
         if ($notificationUrl === '' || $notificationKey === '') {
-            return false;
+            return ['success' => false, 'status' => 0, 'body' => 'notification service url/key not configured'];
         }
 
-        $response = Http::timeout(10)
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-                'X-API-KEY' => $notificationKey,
-            ])
-            ->post($notificationUrl.'/api/v1/firebase/batch', $requestBody);
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'X-API-KEY' => $notificationKey,
+                ])
+                ->post($notificationUrl.'/api/v1/firebase/batch', $requestBody);
 
-        return $response->successful();
+            return [
+                'success' => $response->successful(),
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ];
+        } catch (ConnectionException $exception) {
+            return ['success' => false, 'status' => 0, 'body' => $exception->getMessage()];
+        }
     }
 }

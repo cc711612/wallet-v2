@@ -35,7 +35,8 @@ class WalletDetailObserver
                 '記帳金額：'.number_format((float) $walletDetailEntity->value),
             ]);
 
-            NotificationFCM::dispatch((int) $walletDetailEntity->id, (int) $walletUser->id, $message);
+            // 明細建立在 DB::transaction 內，commit 後才推播，避免 rollback 後通知已送出
+            NotificationFCM::dispatch((int) $walletDetailEntity->id, (int) $walletUser->id, $message)->afterCommit();
         }
     }
 

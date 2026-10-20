@@ -8,6 +8,7 @@ use App\Domain\Auth\Entities\UserEntity;
 use App\Domain\Wallet\Entities\WalletDetailEntity;
 use App\Domain\Wallet\Entities\WalletUserEntity;
 use App\Domain\Wallet\Repositories\WalletJobRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 
 class WalletJobRepository implements WalletJobRepositoryInterface
 {
@@ -55,6 +56,31 @@ class WalletJobRepository implements WalletJobRepositoryInterface
         }
 
         $detail->users()->syncWithoutDetaching($walletUserIds);
+    }
+
+    /**
+     * @param  array<int, int>  $detailIds
+     * @param  array<int, int>  $walletUserIds
+     */
+    public function syncDetailUsersWithoutDetachingBatch(array $detailIds, array $walletUserIds): void
+    {
+        if ($detailIds === [] || $walletUserIds === []) {
+            return;
+        }
+
+        $rows = [];
+        foreach ($detailIds as $detailId) {
+            foreach ($walletUserIds as $walletUserId) {
+                $rows[] = [
+                    'wallet_detail_id' => $detailId,
+                    'wallet_user_id' => $walletUserId,
+                ];
+            }
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            DB::table('wallet_detail_wallet_user')->insertOrIgnore($chunk);
+        }
     }
 
     /**
