@@ -37,11 +37,6 @@ interface LineWebhookJobRepositoryInterface
     public function replyWalletSelectionTemplate(string $replyToken, array $wallets): void;
 
     /**
-     * 主動推播純文字訊息。
-     */
-    public function pushText(string $lineUserId, string $message): void;
-
-    /**
      * 依 LINE userId 查詢系統 userId。
      */
     public function findUserIdByLineUserId(string $lineUserId): ?int;

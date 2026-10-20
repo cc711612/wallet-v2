@@ -231,9 +231,6 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /** @var array<int, array<string, string>> */
     public array $replies = [];
 
-    /** @var array<int, array<string, string>> */
-    public array $pushes = [];
-
     /** @var array<int, array<string, mixed>> */
     public array $confirmTemplateReplies = [];
 
@@ -245,11 +242,6 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     public function replyText(string $replyToken, string $message): void
     {
         $this->replies[] = ['replyToken' => $replyToken, 'message' => $message];
-    }
-
-    public function pushText(string $lineUserId, string $message): void
-    {
-        $this->pushes[] = ['lineUserId' => $lineUserId, 'message' => $message];
     }
 
     public function replyConfirmTemplate(

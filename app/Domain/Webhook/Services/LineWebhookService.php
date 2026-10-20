@@ -6,7 +6,6 @@ namespace App\Domain\Webhook\Services;
 
 use App\Domain\Webhook\Repositories\LineWebhookJobRepositoryInterface;
 use App\Jobs\LineWebhookJob;
-use App\Jobs\SendLineMessage;
 
 class LineWebhookService
 {
@@ -37,16 +36,5 @@ class LineWebhookService
         LineWebhookJob::dispatch($payload);
 
         return ['received' => true, 'event_count' => count($events)];
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     * @return array<string, mixed>
-     */
-    public function notify(array $payload): array
-    {
-        SendLineMessage::dispatch($payload);
-
-        return ['queued' => true];
     }
 }
