@@ -52,7 +52,9 @@ class VerifyWalletMemberApi
             ], 401);
         }
 
-        $memberToken = (string) ($request->input('member_token', ''));
+        // member_token 只接受字串；陣列（member_token[]=x）、數字等一律視為沒帶有效憑證，避免 Array to string 500
+        $rawMemberToken = $request->input('member_token', '');
+        $memberToken = is_string($rawMemberToken) ? $rawMemberToken : '';
         if ($memberToken === '') {
             return response()->json([
                 'status' => false,

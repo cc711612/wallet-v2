@@ -15,6 +15,11 @@ use RuntimeException;
 class AuthService
 {
     /**
+     * 帳號不存在時用來比對的假雜湊；每個 worker 只產生一次。
+     */
+    private static ?string $dummyPasswordHash = null;
+
+    /**
      * @return void
      */
     public function __construct(
@@ -32,7 +37,14 @@ class AuthService
     {
         $user = $this->authServiceRepository->findUserByAccount((string) ($credentials['account'] ?? ''));
 
-        if ($user === null || ! Hash::check((string) ($credentials['password'] ?? ''), (string) ($user['password'] ?? ''))) {
+        $storedHash = (string) ($user['password'] ?? '');
+        // 帳號不存在（或沒有密碼）時仍對假雜湊做一次比對，讓回應時間與「密碼錯誤」一致，避免以時間差列舉帳號
+        $passwordMatches = Hash::check(
+            (string) ($credentials['password'] ?? ''),
+            $storedHash !== '' ? $storedHash : $this->dummyPasswordHash(),
+        );
+
+        if ($user === null || $storedHash === '' || ! $passwordMatches) {
             abort(400, '帳號或密碼錯誤');
         }
 
@@ -238,5 +250,17 @@ class AuthService
         }
 
         return ['token' => ''];
+    }
+
+    /**
+     * 產生（並快取）一組與正式密碼相同演算法／成本的假雜湊，只用於等時比對。
+     */
+    private function dummyPasswordHash(): string
+    {
+        if (self::$dummyPasswordHash === null || self::$dummyPasswordHash === '') {
+            self::$dummyPasswordHash = (string) Hash::make(Str::random(32));
+        }
+
+        return self::$dummyPasswordHash;
     }
 }
