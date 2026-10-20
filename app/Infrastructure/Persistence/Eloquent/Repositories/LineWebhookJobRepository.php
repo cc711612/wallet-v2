@@ -151,27 +151,6 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     }
 
     /**
-     * 主動推播純文字訊息。
-     */
-    public function pushText(string $lineUserId, string $message): void
-    {
-        $token = (string) config('bot.line.access_token', '');
-        if ($token === '' || $lineUserId === '') {
-            return;
-        }
-
-        Http::timeout(10)
-            ->withToken($token)
-            ->post('https://api.line.me/v2/bot/message/push', [
-                'to' => $lineUserId,
-                'messages' => [[
-                    'type' => 'text',
-                    'text' => $message,
-                ]],
-            ]);
-    }
-
-    /**
      * 依 LINE userId 查詢系統 userId。
      */
     public function findUserIdByLineUserId(string $lineUserId): ?int

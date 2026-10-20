@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use App\Jobs\SendLineMessage;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * P0-8：LINE Notify 死路由移除；/notify 推播轉發只接受共享密鑰。
+ * LINE Notify 相關推播入口全部移除（LINE Notify 已停止服務，/notify 轉發入口長期無人呼叫）。
  */
 class LineNotifyRouteTest extends TestCase
 {
@@ -22,34 +22,17 @@ class LineNotifyRouteTest extends TestCase
         }
     }
 
-    public function test_notify_without_relay_key_is_rejected(): void
+    public function test_notify_relay_route_is_removed(): void
     {
         Queue::fake();
-        config(['bot.line.notify_relay_key' => 'relay-secret']);
 
-        $this->postJson('/api/webhook/line/notify', ['userIds' => ['U1'], 'message' => 'x'])->assertStatus(401);
-        $this->postJson('/api/webhook/line/notify', ['message' => 'x'], ['X-Notify-Relay-Key' => 'wrong'])->assertStatus(401);
+        $this->assertFalse(Route::has('api.webhook.line.notify'));
 
-        Queue::assertNotPushed(SendLineMessage::class);
-    }
+        // 即使帶上過去的共享密鑰 header，也不再有任何處理，且不會推入任何 job
+        $this->postJson('/api/webhook/line/notify', ['message' => 'x'], ['X-Notify-Relay-Key' => 'relay-secret'])
+            ->assertStatus(405);
+        $this->getJson('/api/webhook/line/notify')->assertNotFound();
 
-    public function test_notify_is_rejected_when_relay_key_not_configured(): void
-    {
-        Queue::fake();
-        config(['bot.line.notify_relay_key' => '']);
-
-        $this->postJson('/api/webhook/line/notify', ['message' => 'x'], ['X-Notify-Relay-Key' => ''])->assertStatus(401);
-
-        Queue::assertNotPushed(SendLineMessage::class);
-    }
-
-    public function test_notify_with_valid_relay_key_is_queued(): void
-    {
-        Queue::fake();
-        config(['bot.line.notify_relay_key' => 'relay-secret']);
-
-        $this->postJson('/api/webhook/line/notify', ['message' => 'x'], ['X-Notify-Relay-Key' => 'relay-secret'])->assertOk();
-
-        Queue::assertPushed(SendLineMessage::class);
+        Queue::assertNothingPushed();
     }
 }

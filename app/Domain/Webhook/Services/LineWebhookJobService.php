@@ -92,38 +92,6 @@ class LineWebhookJobService
     }
 
     /**
-     * 推播通知訊息到指定 LINE 使用者。
-     *
-     * @param  array<string, mixed>  $payload
-     */
-    public function relayNotifySendMessage(array $payload): void
-    {
-        $message = (string) data_get($payload, 'message', '');
-        if ($message === '') {
-            return;
-        }
-
-        $targetLineUserIds = array_values(array_filter(array_map('strval', (array) data_get($payload, 'userIds', []))));
-
-        $adminLineUserIds = (array) config('bot.line.admin_user_ids', []);
-        $targetLineUserIds = array_merge($targetLineUserIds, array_map('strval', $adminLineUserIds));
-
-        $userId = (int) data_get($payload, 'user_id', 0);
-        if ($userId > 0) {
-            $targetLineUserIds = array_merge(
-                $targetLineUserIds,
-                $this->lineWebhookJobRepository->listLineUserIdsByUserIds([$userId]),
-            );
-        }
-
-        $targetLineUserIds = array_values(array_unique(array_filter($targetLineUserIds, static fn (string $id): bool => $id !== '')));
-
-        foreach ($targetLineUserIds as $lineUserId) {
-            $this->lineWebhookJobRepository->pushText($lineUserId, $message);
-        }
-    }
-
-    /**
      * 判斷是否為帳本列表指令。
      */
     private function isWalletCommand(string $message): bool
