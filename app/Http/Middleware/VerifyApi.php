@@ -21,14 +21,6 @@ class VerifyApi
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (app()->runningUnitTests()) {
-            /** @var array<string, mixed> $testingUser */
-            $testingUser = ['id' => 1, 'name' => 'testing-user', 'token' => 'testing-token'];
-            $request->merge(['user' => $testingUser]);
-
-            return $next($request);
-        }
-
         $bearerToken = (string) ($request->bearerToken() ?? '');
         if ($bearerToken !== '') {
             $jwtUser = $this->verifyApiService->resolveUserByJwt($bearerToken);

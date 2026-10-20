@@ -37,6 +37,9 @@ use App\Observers\WalletDetailObserver;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -85,5 +88,35 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         WalletDetailEntity::observe(WalletDetailObserver::class);
+
+        $this->configureRateLimiting();
+    }
+
+    /**
+     * 登入類端點限流：同 IP＋同帳號（或帳本 code）每分鐘 10 次，同 IP 每分鐘 30 次。
+     */
+    private function configureRateLimiting(): void
+    {
+        RateLimiter::for('auth', static function (Request $request): array {
+            $ip = (string) $request->ip();
+            $identity = mb_strtolower((string) ($request->input('account') ?? $request->input('code') ?? $request->input('socialTypeValue') ?? ''));
+
+            return [
+                Limit::perMinute(10)->by('auth|'.$ip.'|'.$identity),
+                Limit::perMinute(30)->by('auth-ip|'.$ip),
+            ];
+        });
+
+        // 註冊／批次建訪客：同 IP 每分鐘 5 次、每小時 30 次（不分帳號或帳本 code，避免換值繞過）
+        RateLimiter::for('register', static function (Request $request): array {
+            $ip = (string) $request->ip();
+
+            return [
+                Limit::perMinute(5)->by('register-min|'.$ip),
+                Limit::perHour(30)->by('register-hour|'.$ip),
+            ];
+        });
+
+        RateLimiter::for('front-log', static fn (Request $request): Limit => Limit::perMinute(30)->by('front-log|'.$request->ip()));
     }
 }

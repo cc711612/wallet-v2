@@ -62,16 +62,17 @@ class StoreWalletDetailRequest extends FormRequest
         /** @var array<string, mixed> $walletUser */
         $walletUser = (array) data_get($this->input('wallet_user', []), (string) $walletId, []);
 
-        $normalizedDate = (string) ($this->input('date') ?: now()->toDateString());
+        $normalizedDate = (string) ($this->input('date') ?: now((string) config('app.business_timezone'))->toDateString());
         try {
             $normalizedDate = Carbon::parse($normalizedDate)->toDateString();
         } catch (Throwable) {
-            $normalizedDate = now()->toDateString();
+            $normalizedDate = now((string) config('app.business_timezone'))->toDateString();
         }
 
         $this->merge([
             'wallet' => $walletId,
-            'wallet_user_id' => (int) ($this->input('wallet_user_id') ?: data_get($walletUser, 'id', 0)),
+            // 建立者一律取自 middleware 驗證過的帳本成員，忽略 client 自帶的 wallet_user_id
+            'wallet_user_id' => (int) data_get($walletUser, 'id', 0),
             'is_personal' => (bool) $this->input('is_personal', false),
             'select_all' => (bool) $this->input('select_all', false),
             'date' => $normalizedDate,

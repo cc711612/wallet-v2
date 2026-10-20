@@ -16,7 +16,11 @@ return [
     |
     */
 
-    'enabled' => env('TELESCOPE_ENABLED', true),
+    // 預設關閉；需要時於 .env 明確設定 TELESCOPE_ENABLED=true
+    'enabled' => env('TELESCOPE_ENABLED', false),
+
+    // 非 local 環境可存取 Telescope 儀表板的來源 IP（逗號分隔），留空＝全部拒絕
+    'allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('TELESCOPE_ALLOWED_IPS', ''))))),
 
     /*
     |--------------------------------------------------------------------------
@@ -94,7 +98,7 @@ return [
 
     'middleware' => [
         // 'web',
-        // Authorize::class,
+        Authorize::class,
     ],
 
     /*

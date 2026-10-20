@@ -44,7 +44,10 @@ class HealthController extends ApiController
 
             return ['ok' => true, 'message' => 'ok'];
         } catch (Throwable $e) {
-            return ['ok' => false, 'message' => $e->getMessage()];
+            report($e);
+
+            // 不對外回傳例外原文（可能含 DB 主機、帳號等資訊）
+            return ['ok' => false, 'message' => 'failed'];
         }
     }
 
@@ -76,7 +79,10 @@ class HealthController extends ApiController
                 ? ['ok' => true, 'message' => 'ok']
                 : ['ok' => false, 'message' => 'read back failed'];
         } catch (Throwable $e) {
-            return ['ok' => false, 'message' => $e->getMessage()];
+            report($e);
+
+            // 不對外回傳例外原文（可能含 DB 主機、帳號等資訊）
+            return ['ok' => false, 'message' => 'failed'];
         }
     }
 }

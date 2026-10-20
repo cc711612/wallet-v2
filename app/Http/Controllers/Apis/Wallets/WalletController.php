@@ -63,7 +63,7 @@ class WalletController extends ApiController
 
             return $this->response()->success(null, $message);
         } catch (RuntimeException $exception) {
-            return $this->response()->errorBadRequest($exception->getMessage());
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
         }
     }
 

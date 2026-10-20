@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Wallet\Services;
 
-use App\Domain\Auth\Repositories\UserTokenRepositoryInterface;
 use App\Domain\Wallet\Repositories\WalletMemberTokenRepositoryInterface;
-use Illuminate\Support\Facades\Crypt;
-use Throwable;
+use App\Support\JwtTokenService;
 
 class VerifyWalletMemberService
 {
@@ -15,14 +13,14 @@ class VerifyWalletMemberService
      * @return void
      */
     public function __construct(
-        private UserTokenRepositoryInterface $userTokenRepository,
-        private WalletMemberTokenRepositoryInterface $walletMemberTokenRepository
+        private WalletMemberTokenRepositoryInterface $walletMemberTokenRepository,
+        private JwtTokenService $jwtTokenService,
     ) {}
 
     /**
      * @return array<string, mixed>|null
      */
-    public function resolveWalletUserByToken(string $token, int $walletId): ?array
+    public function resolveWalletUserByToken(string $token, ?int $walletId): ?array
     {
         if ($token === '') {
             return null;
@@ -33,7 +31,8 @@ class VerifyWalletMemberService
             return null;
         }
 
-        if ((int) ($walletUser['wallet_id'] ?? 0) !== $walletId) {
+        // $walletId 為 null 表示路由不限定帳本（例如 device），否則 token 必須屬於該帳本
+        if ($walletId !== null && (int) ($walletUser['wallet_id'] ?? 0) !== $walletId) {
             return null;
         }
 
@@ -45,46 +44,37 @@ class VerifyWalletMemberService
      */
     public function resolveWalletUsersByJwt(string $jwt): array
     {
-        $payload = $this->decodeJwtPayload($jwt);
-        if ($payload === []) {
+        // 只接受本服務簽發、簽章正確且未過期的 JWT
+        $payload = $this->jwtTokenService->decodeVerified($jwt);
+        if ($payload === null) {
             return [];
         }
 
         /** @var array<string, mixed> $userPayload */
         $userPayload = (array) ($payload['user'] ?? []);
         if (! empty($userPayload['id'])) {
-            try {
-                $userId = (int) Crypt::decryptString((string) $userPayload['id']);
-                $items = $this->walletMemberTokenRepository->listByUserId($userId);
-                if ($items !== []) {
-                    return $this->keyByWalletId($items);
-                }
-            } catch (Throwable) {
-                // Continue next path.
+            $userId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_USER, (string) $userPayload['id']);
+            if ($userId === null) {
+                return [];
             }
-        }
 
-        if (! empty($userPayload['account'])) {
-            $user = $this->userTokenRepository->findByAccount((string) $userPayload['account']);
-            if ($user !== null) {
-                $items = $this->walletMemberTokenRepository->listByUserId((int) $user['id']);
-                if ($items !== []) {
-                    return $this->keyByWalletId($items);
-                }
+            $items = $this->walletMemberTokenRepository->listByUserId($userId);
+            if ($items !== []) {
+                return $this->keyByWalletId($items);
             }
         }
 
         /** @var array<string, mixed> $walletUserPayload */
         $walletUserPayload = (array) ($payload['wallet_user'] ?? []);
         if (! empty($walletUserPayload['id'])) {
-            try {
-                $walletUserId = (int) Crypt::decryptString((string) $walletUserPayload['id']);
-                $item = $this->walletMemberTokenRepository->findByWalletUserId($walletUserId);
-                if ($item !== null) {
-                    return $this->keyByWalletId([$item]);
-                }
-            } catch (Throwable) {
+            $walletUserId = $this->jwtTokenService->decryptSubject(JwtTokenService::SUBJECT_WALLET_USER, (string) $walletUserPayload['id']);
+            if ($walletUserId === null) {
                 return [];
+            }
+
+            $item = $this->walletMemberTokenRepository->findByWalletUserId($walletUserId);
+            if ($item !== null) {
+                return $this->keyByWalletId([$item]);
             }
         }
 
@@ -106,32 +96,5 @@ class VerifyWalletMemberService
         }
 
         return $result;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodeJwtPayload(string $jwt): array
-    {
-        $parts = explode('.', $jwt);
-        if (count($parts) < 2) {
-            return [];
-        }
-
-        $payloadB64 = str_replace(['-', '_'], ['+', '/'], $parts[1]);
-        $padding = strlen($payloadB64) % 4;
-        if ($padding > 0) {
-            $payloadB64 .= str_repeat('=', 4 - $padding);
-        }
-
-        $decoded = base64_decode($payloadB64, true);
-        if ($decoded === false) {
-            return [];
-        }
-
-        /** @var array<string, mixed>|null $payload */
-        $payload = json_decode($decoded, true);
-
-        return $payload ?? [];
     }
 }

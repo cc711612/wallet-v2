@@ -44,6 +44,28 @@ return [
     'notification' => [
         'url' => env('NOTIFICATION_SERVICE_URL', ''),
         'key' => env('NOTIFICATION_SERVICE_KEY', ''),
+        'retry_times' => env('NOTIFICATION_RETRY_TIMES', 3),
+        'retry_delay_ms' => env('NOTIFICATION_RETRY_DELAY_MS', 500),
+    ],
+
+    'jwt' => [
+        // HS256 簽章金鑰，必填且至少 32 字元（openssl rand -base64 48）。未設定時簽發與驗證都會拒絕
+        'secret' => env('JWT_SECRET', ''),
+        // 驗證 exp / nbf 時容許的時鐘誤差（秒）
+        'leeway' => (int) env('JWT_LEEWAY', 60),
+    ],
+
+    // 第三方登入：checkBind 時向 provider 驗證 id_token（預設開啟，fail-closed）
+    'social_login' => [
+        'verify_token' => (bool) env('SOCIAL_LOGIN_VERIFY_TOKEN', true),
+    ],
+
+    'line_login' => [
+        'channel_id' => env('LINE_LOGIN_CHANNEL_ID', ''),
+    ],
+
+    'google_login' => [
+        'client_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('GOOGLE_LOGIN_CLIENT_IDS', ''))))),
     ],
 
     'gemini' => [
@@ -51,6 +73,16 @@ return [
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
         'api_version' => env('GEMINI_API_VERSION', 'v1beta'),
         'default_model' => env('GEMINI_DEFAULT_MODEL', 'gemini-2.0-flash'),
+        'timeout' => env('GEMINI_TIMEOUT', 15),
+        'retry_times' => env('GEMINI_RETRY_TIMES', 2),
+        'retry_delay_ms' => env('GEMINI_RETRY_DELAY_MS', 2000),
+    ],
+
+    'easysplit' => [
+        'app_url' => env('EASYSPLIT_APP_URL', 'https://easysplit.usongrat.tw'),
+        'logo_path' => env('EASYSPLIT_LOGO_PATH', '/images/logo.png'),
+        'frame_icon_path' => env('EASYSPLIT_FRAME_ICON_PATH', '/assets/images/Frame.svg'),
+        'bot_id' => env('EASYSPLIT_BOT_ID', 'Easysplit-App'),
     ],
 
 ];

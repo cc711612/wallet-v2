@@ -59,7 +59,7 @@ final class WalletDetail
         $this->splits = is_array($payload['splits'] ?? null) ? $payload['splits'] : [];
         $this->unit = (string) ($payload['unit'] ?? 'TWD');
         $this->rates = isset($payload['rates']) ? (float) $payload['rates'] : null;
-        $this->date = (string) ($payload['date'] ?? now()->toDateString());
+        $this->date = (string) ($payload['date'] ?? now((string) config('app.business_timezone'))->toDateString());
         $this->note = isset($payload['note']) ? (string) $payload['note'] : null;
         $this->categoryId = isset($payload['category_id']) ? (int) $payload['category_id'] : null;
     }

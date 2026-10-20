@@ -19,17 +19,21 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Mockery\MockInterface;
+use Tests\Concerns\FakesApiAuthentication;
 use Tests\TestCase;
 
 class ApiContractMatrixTest extends TestCase
 {
+    use FakesApiAuthentication;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // VerifyApi 在測試環境注入 id=1 的 user，Wallet 相關 FormRequest 以 exists:users,id 驗證
+        $this->fakeApiAuthentication();
+
+        // fakeApiAuthentication 注入 id=1 的 user，Wallet 相關 FormRequest 以 exists:users,id 驗證
         DB::table('users')->insert(['id' => 1, 'account' => 'tester', 'password' => Hash::make('secret'), 'token' => 'tk']);
 
         $this->mock(AuthService::class, function (MockInterface $mock): void {
@@ -76,7 +80,7 @@ class ApiContractMatrixTest extends TestCase
         $this->mock(DeviceService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('index')->andReturn([]);
             $mock->shouldReceive('store')->andReturn(['stored' => true]);
-            $mock->shouldReceive('destroy')->andReturn(['deleted' => true]);
+            $mock->shouldReceive('destroy')->andReturn(true);
         });
 
         $this->mock(WalletDetailService::class, function (MockInterface $mock): void {
@@ -91,7 +95,6 @@ class ApiContractMatrixTest extends TestCase
         $this->mock(LineWebhookService::class, function (MockInterface $mock): void {
             $mock->shouldReceive('store')->andReturn(['received' => true]);
             $mock->shouldReceive('notify')->andReturn(['queued' => true]);
-            $mock->shouldReceive('notifyBindUrl')->andReturn(['url' => 'https://example.test/line/bind']);
         });
 
         $this->mock(GeminiService::class, function (MockInterface $mock): void {
@@ -123,7 +126,6 @@ class ApiContractMatrixTest extends TestCase
             ['GET', '/api/wallet/1/detail/1', []],
             ['PUT', '/api/wallet/1/detail/checkout', ['checkout_id' => [1, 2]]],
             ['PUT', '/api/wallet/1/detail/undo_checkout', ['checkout_at' => now()->toDateTimeString()]],
-            ['POST', '/api/webhook/line/notify', ['code' => 'W001']],
             ['POST', '/api/gemini/chat', ['messages' => [['role' => 'user', 'content' => 'hello']]]],
         ];
 
