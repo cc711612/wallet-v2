@@ -30,6 +30,13 @@ class VerifyApi
                 return $next($request);
             }
 
+            if ($this->isBlockRoute($request)) {
+                // 登出：JWT 無效時不報錯，但清掉 client 送來的 user，避免替他人登出
+                $request->merge(['user' => []]);
+
+                return $next($request);
+            }
+
             return response()->json([
                 'status' => false,
                 'code' => 401,
@@ -49,6 +56,10 @@ class VerifyApi
         }
 
         if ($this->isBlockRoute($request)) {
+            // 登出：沒帶或帶了無效的 member_token 時維持 200 no-op；
+            // user 一律以伺服器端解析結果覆寫，絕不信任 client 送來的 user
+            $request->merge(['user' => $this->verifyApiService->resolveUserByToken($memberToken) ?? []]);
+
             return $next($request);
         }
 
