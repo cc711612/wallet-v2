@@ -13,7 +13,7 @@ class NotifyV2Repository implements NotifyV2RepositoryInterface
 {
     /**
      * @param  array<string, mixed>  $payload
-     * @return array{status: int, json: array<string, mixed>|null, error: string}
+     * @return array{status: int, json: array<string, mixed>|null, error: string, retry_after: int|null}
      */
     public function sendMessage(array $payload): array
     {
@@ -29,15 +29,18 @@ class NotifyV2Repository implements NotifyV2RepositoryInterface
                 ->timeout($timeout)
                 ->post($url.'/api/v2/messages', $payload);
         } catch (ConnectionException $exception) {
-            return ['status' => 0, 'json' => null, 'error' => $exception->getMessage()];
+            return ['status' => 0, 'json' => null, 'error' => $exception->getMessage(), 'retry_after' => null];
         }
 
         $json = $response->json();
+        $retryAfter = trim($response->header('Retry-After'));
 
         return [
             'status' => $response->status(),
             'json' => is_array($json) ? $json : null,
             'error' => '',
+            // notify 只送秒數格式；HTTP-date 格式不解析，交給 job backoff
+            'retry_after' => ctype_digit($retryAfter) ? (int) $retryAfter : null,
         ];
     }
 
