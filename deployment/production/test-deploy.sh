@@ -42,6 +42,8 @@ BIN="$TMP/bin"; mkdir -p "$BIN"
 cat > "$BIN/docker" <<'STUBEND'
 #!/bin/bash
 echo "docker $*" >> "$FAKE_DOCKER_LOG"
+# FAKE_DOCKER_FAIL：參數含此字串時回 1（模擬該步失敗）
+if [ -n "${FAKE_DOCKER_FAIL:-}" ] && [[ "$*" == *"$FAKE_DOCKER_FAIL"* ]]; then exit 1; fi
 case "$1" in
     ps) printf 'wallet-v2-web\nwallet-v2-worker\nwallet-v2-nginx\nwallet-v2-redis\n' ;;
     inspect) echo healthy ;;
@@ -127,5 +129,43 @@ esac
 
 run_fix 'APP_UID=0\n'
 if [ "$(cat "$TMP/rc")" != 0 ] && [ ! -s "$TMP/docker.log" ]; then ok "fix-perms: APP_UID=0 拒絕且未呼叫 docker"; else bad "fix-perms: APP_UID=0"; fi
+
+# ── 4) composer-install / rebuild（假 docker，stdin 關閉以確保非互動）────────
+run_cmd() { # $1 子指令；輸出 exit code 到 $TMP/rc
+    local d="$TMP/cmd" p="$TMP/cmd/app"
+    rm -rf "$d"; mkdir -p "$d" "$p/storage" "$p/bootstrap/cache"
+    : > "$p/.env"; echo '{}' > "$p/composer.json"
+    cp "$HERE/deploy.sh" "$d/deploy.sh"
+    printf 'PROJECT_NAME="wallet-v2"\nPROJECT_PATH=%s\n' "$p" > "$d/.env"
+    : > "$TMP/docker.log"
+    PATH="$BIN:$PATH" FAKE_DOCKER_LOG="$TMP/docker.log" bash "$d/deploy.sh" "$1" < /dev/null > "$TMP/out.log" 2>&1
+    echo $? > "$TMP/rc"
+}
+calls_short() { grep '^docker ' "$TMP/docker.log" | sed -e "s#--env-file [^ ]*\.env -f [^ ]*docker-compose.yml#--env-file ENV -f COMPOSE#" -e 's# -c .*# -c ...#'; }
+
+run_cmd composer-install
+check_rc0 "composer-install"
+p="$TMP/cmd/app"
+expect_ci="docker run --rm --user 0:0 --entrypoint sh -e COMPOSER_ALLOW_SUPERUSER=1 -e COMPOSER_HOME=/tmp/composer-home -e COMPOSER_CACHE_DIR=/composer-cache -v wallet-v2-composer-cache:/composer-cache -v $p:/var/www/html -w /var/www/html wallet-v2:app -c ...
+docker run --rm --network none --user 0:0 --entrypoint sh -v $p/storage:/fix/storage -v $p/bootstrap/cache:/fix/bootstrap-cache -v $p/.env:/fix/app.env wallet-v2:app -c ..."
+if [ "$(calls_short)" = "$expect_ci" ]; then ok "composer-install: 一次性 root container（rw 掛程式碼、cache 在 named volume）-> fix-perms"; else bad "composer-install: 呼叫不符"; calls_short; fi
+if grep -q -- '--no-dev --optimize-autoloader' "$TMP/docker.log" && grep -q 'chown -R 0:0 vendor' "$TMP/docker.log"; then ok "composer-install: --no-dev --optimize-autoloader 且 vendor 交回 root"; else bad "composer-install: composer 參數 / vendor 擁有者"; fi
+
+FAKE_DOCKER_FAIL='COMPOSER_ALLOW_SUPERUSER' run_cmd composer-install
+if [ "$(cat "$TMP/rc")" != 0 ] && [ "$(grep -c '^docker ' "$TMP/docker.log")" = 1 ]; then ok "composer-install 失敗: 非 0 且不續跑 fix-perms"; else bad "composer-install 失敗: rc=$(cat "$TMP/rc")"; fi
+
+run_cmd rebuild
+check_rc0 "rebuild"
+if [ "$(calls_short | grep -v '^docker ps')" = "docker compose --env-file ENV -f COMPOSE build
+docker run --rm --network none --user 0:0 --entrypoint sh -v $p/storage:/fix/storage -v $p/bootstrap/cache:/fix/bootstrap-cache -v $p/.env:/fix/app.env wallet-v2:app -c ...
+docker compose --env-file ENV -f COMPOSE up -d --remove-orphans" ]; then ok "rebuild: build -> fix-perms -> up -d（stdin 關閉仍完成，非互動）"; else bad "rebuild: 呼叫順序"; calls_short; fi
+if grep -q '\[y/N\]\|請選擇' "$TMP/out.log"; then bad "rebuild: 出現互動提示"; else ok "rebuild: 無互動提示"; fi
+
+for step in build fix-perms 'up -d'; do
+    FAKE_DOCKER_FAIL="$step" run_cmd rebuild
+    if [ "$(cat "$TMP/rc")" != 0 ]; then ok "rebuild: $step 失敗 -> 非 0"; else bad "rebuild: $step 失敗卻回 0"; fi
+done
+FAKE_DOCKER_FAIL=build run_cmd rebuild
+if ! grep -q 'up -d' "$TMP/docker.log"; then ok "rebuild: build 失敗不執行 up"; else bad "rebuild: build 失敗仍 up"; fi
 
 exit "$fail"
