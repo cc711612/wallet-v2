@@ -34,6 +34,14 @@ read_env_value() {
 PROJECT_NAME="$(read_env_value "$ENV_FILE" PROJECT_NAME)"
 PROJECT_NAME="${PROJECT_NAME:-wallet-v2}"
 
+# web / worker 以非 root 執行的 UID/GID（需與 docker-compose.yml、Dockerfile 的預設一致）
+APP_UID="$(read_env_value "$ENV_FILE" APP_UID)"
+APP_UID="${APP_UID:-10001}"
+APP_GID="$(read_env_value "$ENV_FILE" APP_GID)"
+APP_GID="${APP_GID:-10001}"
+PROJECT_PATH="$(read_env_value "$ENV_FILE" PROJECT_PATH)"
+APP_IMAGE="${PROJECT_NAME}:app"
+
 WEB_CONTAINER="${PROJECT_NAME}-web"
 WORKER_CONTAINER="${PROJECT_NAME}-worker"
 COMPOSE_CMD="docker compose --env-file $ENV_FILE -f $SCRIPT_DIR/docker-compose.yml"
@@ -114,6 +122,62 @@ do_worker_supervisor_reload() {
     info "Worker supervisor reload 完成"
 }
 
+# 冪等：只把 storage/、bootstrap/cache/ 內「擁有者不是 APP_UID:APP_GID」的項目改過來，
+# 並讓 .env 群組改為 APP_GID、權限 0640（擁有者不變；非 root 的 container 才讀得到）。不碰程式碼與其他目錄。
+# 透過 app image 以 root 跑一次性 container 執行，主機端只需 docker 權限、不需 sudo。
+do_fix_permissions() {
+    [[ "$APP_UID" =~ ^[0-9]+$ && "$APP_GID" =~ ^[0-9]+$ && "$APP_UID" != 0 ]] \
+        || error "APP_UID/APP_GID 必須是非 0 的數字（目前 ${APP_UID}:${APP_GID}）"
+    [ -n "$PROJECT_PATH" ] || error "$ENV_FILE 未設定 PROJECT_PATH"
+    local d
+    for d in "$PROJECT_PATH/storage" "$PROJECT_PATH/bootstrap/cache"; do
+        [ -d "$d" ] || error "找不到目錄 $d"
+    done
+    [ -f "$PROJECT_PATH/.env" ] || error "找不到 $PROJECT_PATH/.env"
+    info "修正 storage/、bootstrap/cache/ 擁有者為 ${APP_UID}:${APP_GID}，.env 群組改為 ${APP_GID}、0640..."
+    docker run --rm --network none --user 0:0 --entrypoint sh \
+        -v "$PROJECT_PATH/storage:/fix/storage" \
+        -v "$PROJECT_PATH/bootstrap/cache:/fix/bootstrap-cache" \
+        -v "$PROJECT_PATH/.env:/fix/app.env" \
+        "$APP_IMAGE" -c '
+            set -e
+            find /fix/storage /fix/bootstrap-cache \( ! -user "$1" -o ! -group "$2" \) -exec chown -h "$1:$2" {} +
+            chgrp "$2" /fix/app.env
+            chmod 0640 /fix/app.env
+        ' fix-perms "$APP_UID" "$APP_GID" || error "權限修正失敗"
+    info "權限修正完成"
+}
+
+# 非互動、可重複執行：程式碼目錄在 web / worker 內是唯讀，composer 改用 app image 起一次性 root container、
+# 以 rw 掛載程式碼目錄執行。vendor/ 維持 root 擁有、其他人唯讀（與程式碼一致）；composer cache 放 named volume，
+# 不落在程式碼目錄。composer 的 post-autoload-dump（package:discover）會以 root 寫 bootstrap/cache，
+# 所以最後再跑一次 fix-perms。任何一步失敗回非 0。
+do_composer_install() {
+    [ -n "$PROJECT_PATH" ] || error "$ENV_FILE 未設定 PROJECT_PATH"
+    [ -f "$PROJECT_PATH/composer.json" ] || error "找不到 $PROJECT_PATH/composer.json"
+    info "composer install（一次性 container，--no-dev）..."
+    docker run --rm --user 0:0 --entrypoint sh \
+        -e COMPOSER_ALLOW_SUPERUSER=1 \
+        -e COMPOSER_HOME=/tmp/composer-home \
+        -e COMPOSER_CACHE_DIR=/composer-cache \
+        -v "${PROJECT_NAME}-composer-cache:/composer-cache" \
+        -v "$PROJECT_PATH:/var/www/html" \
+        -w /var/www/html \
+        "$APP_IMAGE" -c '
+            set -e
+            composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
+            chown -R 0:0 vendor
+            chmod -R u+rwX,go+rX,go-w vendor
+            # public/frankenphp-worker.php 不進版控；服務容器內程式碼唯讀、entrypoint 無法補，這裡補上（已存在不動）
+            if [ ! -f public/frankenphp-worker.php ]; then
+                cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
+                chmod 0644 public/frankenphp-worker.php
+            fi
+        ' || error "composer install 失敗"
+    do_fix_permissions
+    info "composer install 完成"
+}
+
 do_restart_containers() {
     warning "重開所有 container..."
     $COMPOSE_CMD restart
@@ -122,7 +186,17 @@ do_restart_containers() {
 
 do_rebuild_image() {
     warning "重建 Docker image..."
-    $COMPOSE_CMD up -d --build --remove-orphans
+    $COMPOSE_CMD build || error "docker compose build 失敗"
+    # 先用新 image 裝好 vendor（含 fix-perms）再起容器：新版程式碼若依賴新套件，舊 vendor 會讓 web 起不來，
+    # 而服務容器內程式碼唯讀、無法自行 composer install
+    do_composer_install
+    # web / worker 一律 --force-recreate：容器若正卡在 crash loop（例如 preflight 失敗、Restarting backoff），
+    # 設定沒變時 up -d 不會重建它，後續 docker exec（composer / migrate）會遇到 "container is restarting"
+    $COMPOSE_CMD up -d --force-recreate --remove-orphans web worker || error "docker compose up -d（web / worker）失敗"
+    $COMPOSE_CMD up -d --remove-orphans || error "docker compose up -d 失敗"
+    info "等待 web / worker healthy..."
+    wait_container_healthy "$WEB_CONTAINER" "${REBUILD_WAIT_TRIES:-90}" || error "${WEB_CONTAINER} 重建後未在時限內 healthy"
+    wait_container_healthy "$WORKER_CONTAINER" "${REBUILD_WAIT_TRIES:-90}" || error "${WORKER_CONTAINER} 重建後未在時限內 healthy"
     info "Image 重建完成"
 }
 
@@ -140,7 +214,9 @@ do_full_redeploy() {
     $COMPOSE_CMD down --rmi local --remove-orphans || true
 
     info "重新 build 並啟動..."
-    $COMPOSE_CMD up -d --build --force-recreate --remove-orphans
+    $COMPOSE_CMD build
+    do_fix_permissions
+    $COMPOSE_CMD up -d --force-recreate --remove-orphans
 
     info "全清空重部署完成"
 }
@@ -153,9 +229,9 @@ do_deploy() {
     info "部署完成"
 }
 
-# 等容器 healthcheck 轉 healthy（compose 重建後用）；逾時回非 0
+# 等容器 healthcheck 轉 healthy（compose 重建後用）；$2 可指定次數；逾時回非 0
 wait_container_healthy() {
-    local name="$1" tries="${APPLY_ENV_WAIT_TRIES:-30}" sleep_s="${APPLY_ENV_WAIT_SLEEP:-2}" i status
+    local name="$1" tries="${2:-${APPLY_ENV_WAIT_TRIES:-30}}" sleep_s="${APPLY_ENV_WAIT_SLEEP:-2}" i status
     for ((i = 1; i <= tries; i++)); do
         status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$name" 2>/dev/null || true)
         case "$status" in healthy|running) return 0 ;; esac
@@ -225,7 +301,10 @@ usage_text() {
                        --recreate：先 docker compose up -d（只重建設定有變的 service），
                                    compose 層變數（REDIS_PASSWORD / NGINX_BIND_ADDR / port）才需要
   restart              重開所有 container
-  rebuild              重建 Docker image
+  rebuild              重建 Docker image（build -> composer-install(+fix-perms) -> up -d（web/worker 強制重建）-> 等 healthy；
+                       非互動，任一步失敗或逾時回非 0）
+  composer-install     一次性 root container 執行 composer install --no-dev（程式碼目錄在服務容器內唯讀），完成後 fix-perms
+  fix-perms            storage/、bootstrap/cache/ chown 成 APP_UID:APP_GID，.env 群組改 APP_GID、0640（冪等）
   clean                全清空重部署
   不帶參數             互動選單
 EOF
@@ -246,9 +325,10 @@ show_menu() {
     echo "  6) 重建 Docker image"
     echo "  7) 全清空重部署 (down --volumes + rebuild)"
     echo "  8) 套用 env 變更   (config cache + reload + worker 重啟 + 健康檢查)"
+    echo "  9) 修正檔案權限    (storage / bootstrap/cache / .env，非 root 容器需要)"
     echo "  q) 離開"
     echo "=============================="
-    echo -n "請選擇 [1-8 / q]: "
+    echo -n "請選擇 [1-9 / q]: "
 }
 
 run_menu() {
@@ -265,6 +345,7 @@ run_menu() {
             6) do_rebuild_image ;;
             7) do_full_redeploy ;;
             8) do_apply_env ;;
+            9) do_fix_permissions ;;
             q|Q) info "離開"; exit 0 ;;
             *) warning "無效選項，請重新輸入" ;;
         esac
@@ -284,6 +365,8 @@ main() {
         apply-env) shift; do_apply_env "$@" ;;
         restart)   do_restart_containers ;;
         rebuild)   do_rebuild_image ;;
+        fix-perms) do_fix_permissions ;;
+        composer-install) do_composer_install ;;
         clean)     do_full_redeploy ;;
         -h|--help|help) usage_text ;;
         "")        run_menu ;;
