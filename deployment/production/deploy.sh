@@ -168,6 +168,11 @@ do_composer_install() {
             composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
             chown -R 0:0 vendor
             chmod -R u+rwX,go+rX,go-w vendor
+            # public/frankenphp-worker.php 不進版控；服務容器內程式碼唯讀、entrypoint 無法補，這裡補上（已存在不動）
+            if [ ! -f public/frankenphp-worker.php ]; then
+                cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
+                chmod 0644 public/frankenphp-worker.php
+            fi
         ' || error "composer install 失敗"
     do_fix_permissions
     info "composer install 完成"
@@ -182,8 +187,16 @@ do_restart_containers() {
 do_rebuild_image() {
     warning "重建 Docker image..."
     $COMPOSE_CMD build || error "docker compose build 失敗"
-    do_fix_permissions
+    # 先用新 image 裝好 vendor（含 fix-perms）再起容器：新版程式碼若依賴新套件，舊 vendor 會讓 web 起不來，
+    # 而服務容器內程式碼唯讀、無法自行 composer install
+    do_composer_install
+    # web / worker 一律 --force-recreate：容器若正卡在 crash loop（例如 preflight 失敗、Restarting backoff），
+    # 設定沒變時 up -d 不會重建它，後續 docker exec（composer / migrate）會遇到 "container is restarting"
+    $COMPOSE_CMD up -d --force-recreate --remove-orphans web worker || error "docker compose up -d（web / worker）失敗"
     $COMPOSE_CMD up -d --remove-orphans || error "docker compose up -d 失敗"
+    info "等待 web / worker healthy..."
+    wait_container_healthy "$WEB_CONTAINER" "${REBUILD_WAIT_TRIES:-90}" || error "${WEB_CONTAINER} 重建後未在時限內 healthy"
+    wait_container_healthy "$WORKER_CONTAINER" "${REBUILD_WAIT_TRIES:-90}" || error "${WORKER_CONTAINER} 重建後未在時限內 healthy"
     info "Image 重建完成"
 }
 
@@ -216,9 +229,9 @@ do_deploy() {
     info "部署完成"
 }
 
-# 等容器 healthcheck 轉 healthy（compose 重建後用）；逾時回非 0
+# 等容器 healthcheck 轉 healthy（compose 重建後用）；$2 可指定次數；逾時回非 0
 wait_container_healthy() {
-    local name="$1" tries="${APPLY_ENV_WAIT_TRIES:-30}" sleep_s="${APPLY_ENV_WAIT_SLEEP:-2}" i status
+    local name="$1" tries="${2:-${APPLY_ENV_WAIT_TRIES:-30}}" sleep_s="${APPLY_ENV_WAIT_SLEEP:-2}" i status
     for ((i = 1; i <= tries; i++)); do
         status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$name" 2>/dev/null || true)
         case "$status" in healthy|running) return 0 ;; esac
@@ -288,7 +301,8 @@ usage_text() {
                        --recreate：先 docker compose up -d（只重建設定有變的 service），
                                    compose 層變數（REDIS_PASSWORD / NGINX_BIND_ADDR / port）才需要
   restart              重開所有 container
-  rebuild              重建 Docker image（build -> fix-perms -> up -d；非互動，任一步失敗回非 0）
+  rebuild              重建 Docker image（build -> composer-install(+fix-perms) -> up -d（web/worker 強制重建）-> 等 healthy；
+                       非互動，任一步失敗或逾時回非 0）
   composer-install     一次性 root container 執行 composer install --no-dev（程式碼目錄在服務容器內唯讀），完成後 fix-perms
   fix-perms            storage/、bootstrap/cache/ chown 成 APP_UID:APP_GID，.env 群組改 APP_GID、0640（冪等）
   clean                全清空重部署
