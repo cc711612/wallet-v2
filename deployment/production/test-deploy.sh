@@ -46,7 +46,7 @@ echo "docker $*" >> "$FAKE_DOCKER_LOG"
 if [ -n "${FAKE_DOCKER_FAIL:-}" ] && [[ "$*" == *"$FAKE_DOCKER_FAIL"* ]]; then exit 1; fi
 case "$1" in
     ps) printf 'wallet-v2-web\nwallet-v2-worker\nwallet-v2-nginx\nwallet-v2-redis\n' ;;
-    inspect) echo healthy ;;
+    inspect) echo "${FAKE_HEALTH_STATUS:-healthy}" ;;
     exec) case "$*" in *curl*) printf '%s' "${FAKE_HEALTH_CODE:-200}" ;; esac ;;
 esac
 exit 0
@@ -141,7 +141,7 @@ run_cmd() { # $1 子指令；輸出 exit code 到 $TMP/rc
     PATH="$BIN:$PATH" FAKE_DOCKER_LOG="$TMP/docker.log" bash "$d/deploy.sh" "$1" < /dev/null > "$TMP/out.log" 2>&1
     echo $? > "$TMP/rc"
 }
-calls_short() { grep '^docker ' "$TMP/docker.log" | sed -e "s#--env-file [^ ]*\.env -f [^ ]*docker-compose.yml#--env-file ENV -f COMPOSE#" -e 's# -c .*# -c ...#'; }
+calls_short() { grep '^docker ' "$TMP/docker.log" | grep -v '^docker inspect ' | sed -e "s#--env-file [^ ]*\.env -f [^ ]*docker-compose.yml#--env-file ENV -f COMPOSE#" -e 's# -c .*# -c ...#'; }
 
 run_cmd composer-install
 check_rc0 "composer-install"
@@ -157,11 +157,18 @@ if [ "$(cat "$TMP/rc")" != 0 ] && [ "$(grep -c '^docker ' "$TMP/docker.log")" = 
 run_cmd rebuild
 check_rc0 "rebuild"
 if [ "$(calls_short | grep -v '^docker ps')" = "docker compose --env-file ENV -f COMPOSE build
+docker run --rm --user 0:0 --entrypoint sh -e COMPOSER_ALLOW_SUPERUSER=1 -e COMPOSER_HOME=/tmp/composer-home -e COMPOSER_CACHE_DIR=/composer-cache -v wallet-v2-composer-cache:/composer-cache -v $p:/var/www/html -w /var/www/html wallet-v2:app -c ...
 docker run --rm --network none --user 0:0 --entrypoint sh -v $p/storage:/fix/storage -v $p/bootstrap/cache:/fix/bootstrap-cache -v $p/.env:/fix/app.env wallet-v2:app -c ...
-docker compose --env-file ENV -f COMPOSE up -d --remove-orphans" ]; then ok "rebuild: build -> fix-perms -> up -d（stdin 關閉仍完成，非互動）"; else bad "rebuild: 呼叫順序"; calls_short; fi
+docker compose --env-file ENV -f COMPOSE up -d --force-recreate --remove-orphans web worker
+docker compose --env-file ENV -f COMPOSE up -d --remove-orphans" ]; then ok "rebuild: build -> composer-install -> fix-perms -> up -d（web/worker --force-recreate；stdin 關閉仍完成，非互動）"; else bad "rebuild: 呼叫順序"; calls_short; fi
 if grep -q '\[y/N\]\|請選擇' "$TMP/out.log"; then bad "rebuild: 出現互動提示"; else ok "rebuild: 無互動提示"; fi
 
-for step in build fix-perms 'up -d'; do
+if [ "$(grep -c '^docker inspect .*wallet-v2-web$' "$TMP/docker.log")" -ge 1 ] && [ "$(grep -c '^docker inspect .*wallet-v2-worker$' "$TMP/docker.log")" -ge 1 ]; then ok "rebuild: up 之後等 web / worker healthy"; else bad "rebuild: 未等 healthy"; fi
+
+FAKE_HEALTH_STATUS=unhealthy REBUILD_WAIT_TRIES=2 APPLY_ENV_WAIT_SLEEP=0 run_cmd rebuild
+if [ "$(cat "$TMP/rc")" != 0 ] && grep -q '未在時限內 healthy' "$TMP/out.log"; then ok "rebuild: web 未 healthy -> 逾時非 0"; else bad "rebuild: 逾時未回非 0 (rc=$(cat "$TMP/rc"))"; fi
+
+for step in build COMPOSER_ALLOW_SUPERUSER fix-perms 'up -d --force-recreate' 'up -d --remove-orphans'; do
     FAKE_DOCKER_FAIL="$step" run_cmd rebuild
     if [ "$(cat "$TMP/rc")" != 0 ]; then ok "rebuild: $step 失敗 -> 非 0"; else bad "rebuild: $step 失敗卻回 0"; fi
 done
