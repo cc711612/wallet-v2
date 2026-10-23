@@ -2,6 +2,11 @@
 set -e
 
 cd /var/www/html
+
+# shellcheck source=preflight.sh
+source /var/www/html/deployment/production/preflight.sh
+preflight_check web
+
 export APP_BASE_PATH="${APP_BASE_PATH:-/var/www/html}"
 
 if [ ! -f vendor/autoload.php ]; then
