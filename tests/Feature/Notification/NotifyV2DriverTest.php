@@ -6,6 +6,7 @@ namespace Tests\Feature\Notification;
 
 use App\Domain\Notification\Exceptions\NotifyV2RetryableException;
 use App\Domain\Notification\Services\NotificationJobService;
+use App\Domain\Notification\Services\NotifyV2Service;
 use App\Jobs\NotificationFCM;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -207,7 +208,8 @@ class NotifyV2DriverTest extends TestCase
             '400 invalid_request' => [400, 'invalid_request', false],
             '403 app_disabled' => [403, 'app_disabled', false],
             '422 credentials_not_configured' => [422, 'credentials_not_configured', false],
-            '429 rate_limited' => [429, 'rate_limited', true],
+            '409 idempotency_unrecorded' => [409, 'idempotency_unrecorded', false],
+            '429 rate_limited without Retry-After' => [429, 'rate_limited', true],
             '502 provider_unavailable' => [502, 'provider_unavailable', true],
             '503 unavailable' => [503, 'unavailable', true],
         ];
@@ -228,11 +230,152 @@ class NotifyV2DriverTest extends TestCase
 
         $this->assertSame($retryable, $thrown);
         Http::assertSentCount(1);
-        if (! $retryable) {
+        if (! $retryable && $status !== 409) {
             Log::shouldHaveReceived('error')->with('NotifyV2Service request rejected', Mockery::on(
                 fn (array $context): bool => $context['status'] === $status && $context['code'] === $code
             ))->once();
         }
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidWebpushAppUrls(): array
+    {
+        return [
+            'http' => ['http://easysplit.example.test'],
+            'relative (app_url empty)' => [''],
+        ];
+    }
+
+    #[DataProvider('invalidWebpushAppUrls')]
+    public function test_non_https_webpush_urls_are_not_sent(string $appUrl): void
+    {
+        Log::spy();
+        config(['services.easysplit.app_url' => $appUrl]);
+        Http::fake([self::V2_URL => Http::response($this->okBody())]);
+
+        $this->runJob(new NotificationFCM(1001, 10, 'hello'));
+
+        Http::assertSentCount(1);
+        Http::assertSent(function (Request $request) use ($appUrl): bool {
+            $body = $request->data();
+            $this->assertArrayNotHasKey('webpush', $body);
+            // data 仍照傳（只是字串，不受 https 限制）
+            $this->assertSame($appUrl.'/ledger/W0000005/detail', $body['data']['link']);
+
+            return true;
+        });
+        Log::shouldHaveReceived('warning')->with('NotifyV2Service dropped invalid webpush url', Mockery::any())->twice();
+    }
+
+    public function test_https_link_is_kept_when_only_icon_is_invalid(): void
+    {
+        Http::fake([self::V2_URL => Http::response($this->okBody())]);
+
+        app(NotifyV2Service::class)->send('wallet-detail-1-wu-1', [$this->tokenA], 'Easysplit', 'hello', [
+            'link' => 'https://easysplit.example.test/ledger/X/detail',
+            'icon' => 'https:///no-host.svg',
+        ]);
+
+        Http::assertSent(fn (Request $request): bool => $request->data()['webpush'] === ['link' => 'https://easysplit.example.test/ledger/X/detail']);
+    }
+
+    public function test_long_body_and_title_are_truncated_to_valid_utf8(): void
+    {
+        Http::fake([self::V2_URL => Http::response($this->okBody())]);
+
+        app(NotifyV2Service::class)->send('wallet-detail-1-wu-1', [$this->tokenA], str_repeat('標', 500), 'a'.str_repeat('記', 2000), []);
+
+        Http::assertSent(function (Request $request): bool {
+            $notification = $request->data()['notification'];
+
+            $this->assertLessThanOrEqual(4000, strlen($notification['body']));
+            $this->assertGreaterThan(3900, strlen($notification['body']));
+            $this->assertTrue(mb_check_encoding($notification['body'], 'UTF-8'));
+            $this->assertStringStartsWith('a記記', $notification['body']);
+            $this->assertStringEndsWith('…', $notification['body']);
+
+            $this->assertLessThanOrEqual(1024, strlen($notification['title']));
+            $this->assertTrue(mb_check_encoding($notification['title'], 'UTF-8'));
+            $this->assertStringEndsWith('…', $notification['title']);
+
+            return true;
+        });
+    }
+
+    public function test_short_body_is_not_truncated(): void
+    {
+        Http::fake([self::V2_URL => Http::response($this->okBody())]);
+        $body = str_repeat('記', 1333); // 3999 bytes
+
+        app(NotifyV2Service::class)->send('wallet-detail-1-wu-1', [$this->tokenA], 'Easysplit', $body, []);
+
+        Http::assertSent(fn (Request $request): bool => $request->data()['notification']['body'] === $body);
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function retryAfterHeaders(): array
+    {
+        return [
+            'within cap' => ['42', 42],
+            'capped at 300s' => ['9999', 300],
+        ];
+    }
+
+    #[DataProvider('retryAfterHeaders')]
+    public function test_429_with_retry_after_releases_job(string $header, int $expectedDelay): void
+    {
+        Http::fake([self::V2_URL => Http::response(['error' => ['code' => 'rate_limited', 'message' => 'slow down']], 429, ['Retry-After' => $header])]);
+
+        $job = (new NotificationFCM(1001, 10, 'hello'))->withFakeQueueInteractions();
+        $this->runJob($job);
+
+        $job->assertReleased($expectedDelay);
+        $job->assertNotFailed();
+    }
+
+    public function test_409_in_progress_releases_and_retries_with_same_key(): void
+    {
+        Http::fake([self::V2_URL => Http::sequence()
+            ->push(['error' => ['code' => 'idempotency_in_progress', 'message' => 'in progress']], 409)
+            ->push($this->okBody(['replayed' => true]))]);
+
+        $job = (new NotificationFCM(1001, 10, 'hello'))->withFakeQueueInteractions();
+        $this->runJob($job);
+        $job->assertReleased(NotifyV2Service::IN_PROGRESS_RETRY_SECONDS);
+        $this->assertGreaterThanOrEqual(10, NotifyV2Service::IN_PROGRESS_RETRY_SECONDS);
+        $this->assertLessThanOrEqual(30, NotifyV2Service::IN_PROGRESS_RETRY_SECONDS);
+
+        $this->runJob(unserialize(serialize(new NotificationFCM(1001, 10, 'hello'))));
+
+        $keys = Http::recorded()->map(fn (array $pair): string => $pair[0]->data()['idempotency_key'])->all();
+        $this->assertSame(['wallet-detail-1001-wu-10', 'wallet-detail-1001-wu-10'], $keys);
+    }
+
+    public function test_driver_value_is_case_and_whitespace_insensitive(): void
+    {
+        config(['services.notification.driver' => ' V2 ']);
+        Http::fake([self::V2_URL => Http::response($this->okBody())]);
+
+        $this->runJob(new NotificationFCM(1001, 10, 'hello'));
+
+        Http::assertSentCount(1);
+        Http::assertSent(fn (Request $request): bool => $request->url() === self::V2_URL);
+    }
+
+    public function test_empty_url_logs_error_without_calling_notify(): void
+    {
+        Log::spy();
+        config(['services.notify_v2.url' => '']);
+        Http::fake();
+
+        $this->runJob(new NotificationFCM(1001, 10, 'hello'));
+
+        Http::assertNothingSent();
+        Log::shouldHaveReceived('error')->with('NotifyV2Service url not configured', Mockery::any())->once();
     }
 
     public function test_missing_token_logs_error_without_calling_notify(): void

@@ -9,9 +9,10 @@ interface NotifyV2RepositoryInterface
     /**
      * 呼叫 notify v2 POST /api/v2/messages。
      * 連線錯誤或逾時時 status 為 0、json 為 null、error 為例外訊息。
+     * retry_after 為回應 Retry-After header 的秒數（沒有或無法解析時為 null）。
      *
      * @param  array<string, mixed>  $payload
-     * @return array{status: int, json: array<string, mixed>|null, error: string}
+     * @return array{status: int, json: array<string, mixed>|null, error: string, retry_after: int|null}
      */
     public function sendMessage(array $payload): array;
 

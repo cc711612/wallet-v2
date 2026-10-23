@@ -76,7 +76,7 @@ class NotificationJobService
         $frameIconPath = (string) config('services.easysplit.frame_icon_path', '');
         $botId = (string) config('services.easysplit.bot_id', '');
 
-        if (config('services.notification.driver', 'v1') === 'v2') {
+        if (strtolower(trim((string) config('services.notification.driver', 'v1'))) === 'v2') {
             $this->notifyV2()->send(
                 $idempotencyKey ?? self::walletDetailIdempotencyKey($walletDetailId, $walletUserId),
                 array_map(static fn (array $device): string => (string) ($device['fcm_token'] ?? ''), $devices),
