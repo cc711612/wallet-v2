@@ -7,6 +7,7 @@ use App\Domain\Auth\Repositories\UserTokenRepositoryInterface;
 use App\Domain\Device\Repositories\DeviceServiceRepositoryInterface;
 use App\Domain\ExchangeRate\Repositories\ExchangeRateRepositoryInterface;
 use App\Domain\Notification\Repositories\NotificationJobRepositoryInterface;
+use App\Domain\Notification\Repositories\NotifyV2RepositoryInterface;
 use App\Domain\Option\Repositories\OptionServiceRepositoryInterface;
 use App\Domain\Social\Repositories\SocialServiceRepositoryInterface;
 use App\Domain\Wallet\Entities\WalletDetailEntity;
@@ -23,6 +24,7 @@ use App\Infrastructure\Persistence\Eloquent\Repositories\DeviceServiceRepository
 use App\Infrastructure\Persistence\Eloquent\Repositories\ExchangeRateRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\LineWebhookJobRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\NotificationJobRepository;
+use App\Infrastructure\Persistence\Eloquent\Repositories\NotifyV2Repository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\OptionServiceRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\SocialServiceRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\UserTokenRepository;
@@ -62,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WalletUserServiceRepositoryInterface::class, WalletUserServiceRepository::class);
         $this->app->bind(WalletJobRepositoryInterface::class, WalletJobRepository::class);
         $this->app->bind(NotificationJobRepositoryInterface::class, NotificationJobRepository::class);
+        $this->app->bind(NotifyV2RepositoryInterface::class, NotifyV2Repository::class);
         $this->app->bind(LineWebhookJobRepositoryInterface::class, LineWebhookJobRepository::class);
         $this->app->bind(ExchangeRateRepositoryInterface::class, ExchangeRateRepository::class);
 

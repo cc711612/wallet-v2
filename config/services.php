@@ -46,6 +46,17 @@ return [
         'key' => env('NOTIFICATION_SERVICE_KEY', ''),
         'retry_times' => env('NOTIFICATION_RETRY_TIMES', 3),
         'retry_delay_ms' => env('NOTIFICATION_RETRY_DELAY_MS', 500),
+        // 推播走哪個服務：v1 = 舊 notification（/api/v1/firebase/batch），v2 = notify（/api/v2/messages）
+        'driver' => env('NOTIFICATION_DRIVER', 'v1'),
+    ],
+
+    // notify v2（Go 推播服務）。金鑰已預先註冊在 notify 端，呼叫時不再傳 Firebase 私鑰
+    'notify_v2' => [
+        'url' => env('NOTIFY_V2_URL', 'https://notification.usongrat.tw'),
+        // app token（nk_...），只放在環境變數，不設預設值
+        'token' => env('NOTIFY_V2_TOKEN'),
+        // 需大於 notify 的請求總期限（NOTIFY_REQUEST_DEADLINE，35s），且小於 queue worker --timeout（120s）
+        'timeout' => (int) env('NOTIFY_V2_TIMEOUT', 40),
     ],
 
     'jwt' => [

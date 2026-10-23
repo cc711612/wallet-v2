@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\Notification\Services\NotificationJobService;
 use App\Domain\Wallet\Entities\WalletDetailEntity;
 use App\Domain\Wallet\Entities\WalletEntity;
 use App\Domain\Wallet\Entities\WalletUserEntity;
@@ -71,9 +72,16 @@ class AutoCalculateWalletCommand extends Command
         $message = implode("\r\n", $messages);
 
         $walletUsers = $walletUsers->where('notify_enable', 1)->values();
+        // notify v2 冪等批次：同一帳本同一天的結算推播只送一次（同日重跑會被 notify 以 409 擋下）
+        $batch = now()->format('Ymd');
 
         foreach ($walletUsers as $walletUser) {
-            NotificationFCM::dispatch((int) $wallet->id, (int) $walletUser->id, $message);
+            NotificationFCM::dispatch(
+                (int) $wallet->id,
+                (int) $walletUser->id,
+                $message,
+                NotificationJobService::autoCalculateIdempotencyKey((int) $wallet->id, $batch, (int) $walletUser->id),
+            );
         }
 
         $this->info('Auto calculate wallet executed.');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Notification\Services;
 
+use App\Domain\Notification\Exceptions\NotifyV2RetryableException;
 use App\Domain\Notification\Repositories\NotificationJobRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
@@ -23,12 +24,36 @@ class NotificationJobService
      *
      * @return void
      */
-    public function __construct(private NotificationJobRepositoryInterface $notificationJobRepository) {}
+    public function __construct(
+        private NotificationJobRepositoryInterface $notificationJobRepository,
+        private ?NotifyV2Service $notifyV2Service = null,
+    ) {}
+
+    /**
+     * 明細推播的 idempotency_key。job 是「每個帳本成員一個」，所以 key 要含 walletUserId，
+     * 否則同一筆明細的第二位成員會被 notify 判成同 key 不同內容（409）而收不到。
+     */
+    public static function walletDetailIdempotencyKey(int $walletDetailId, int $walletUserId): string
+    {
+        return "wallet-detail-{$walletDetailId}-wu-{$walletUserId}";
+    }
+
+    /**
+     * 每月自動結算推播的 idempotency_key（與明細推播不同命名空間，避免 wallet id 與 wallet detail id 撞號）。
+     */
+    public static function autoCalculateIdempotencyKey(int $walletId, string $batch, int $walletUserId): string
+    {
+        return "wallet-auto-calc-{$walletId}-{$batch}-wu-{$walletUserId}";
+    }
 
     /**
      * 送出 FCM 批次通知。
+     *
+     * $idempotencyKey 只有 v2 使用；未傳時視為明細推播（$walletDetailId 為 wallet detail id）。
+     *
+     * @throws NotifyV2RetryableException v2 遇到可重試錯誤時，交給 queue job 重試
      */
-    public function sendFcm(int $walletDetailId, int $walletUserId, string $message): void
+    public function sendFcm(int $walletDetailId, int $walletUserId, string $message, ?string $idempotencyKey = null): void
     {
         $walletUser = $this->notificationJobRepository->findWalletUserWithWallet($walletUserId);
         if ($walletUser === null) {
@@ -50,6 +75,24 @@ class NotificationJobService
         $logoPath = (string) config('services.easysplit.logo_path', '');
         $frameIconPath = (string) config('services.easysplit.frame_icon_path', '');
         $botId = (string) config('services.easysplit.bot_id', '');
+
+        if (config('services.notification.driver', 'v1') === 'v2') {
+            $this->notifyV2()->send(
+                $idempotencyKey ?? self::walletDetailIdempotencyKey($walletDetailId, $walletUserId),
+                array_map(static fn (array $device): string => (string) ($device['fcm_token'] ?? ''), $devices),
+                'Easysplit',
+                $message,
+                [
+                    'wallet_id' => $walletId,
+                    'ledger_code' => $ledgerCode,
+                    'type' => 'wallet_record_created',
+                    'link' => "{$appUrl}/ledger/{$ledgerCode}/detail",
+                    'icon' => $appUrl.$frameIconPath,
+                ],
+            );
+
+            return;
+        }
 
         $firebaseParams = $this->loadFirebaseParams();
 
@@ -84,6 +127,11 @@ class NotificationJobService
         ];
 
         $this->sendFcmBatchWithRetry($requestBody);
+    }
+
+    private function notifyV2(): NotifyV2Service
+    {
+        return $this->notifyV2Service ??= app(NotifyV2Service::class);
     }
 
     /**
