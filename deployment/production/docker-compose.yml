@@ -6,6 +6,9 @@ services:
       context: ../..
       dockerfile: deployment/production/Dockerfile
       provenance: false
+      args:
+        APP_UID: ${APP_UID:-10001}
+        APP_GID: ${APP_GID:-10001}
     image: ${PROJECT_NAME:-wallet-v2}:app
     container_name: ${PROJECT_NAME:-wallet-v2}-web
     extra_hosts:
@@ -15,9 +18,15 @@ services:
       TZ: ${TZ:-Asia/Taipei}
       CONTAINER_ROLE: web
       APP_BASE_PATH: /var/www/html
+    # 非 root（見 Dockerfile 的 wallet 使用者）；程式碼唯讀，只有 storage/、bootstrap/cache/ 可寫
+    user: "${APP_UID:-10001}:${APP_GID:-10001}"
+    security_opt:
+      - no-new-privileges:true
     volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
+      - ${PROJECT_PATH}:/var/www/html:${APP_CODE_MOUNT:-ro}
+      - ${PROJECT_PATH}/storage:/var/www/html/storage
+      - ${PROJECT_PATH}/bootstrap/cache:/var/www/html/bootstrap/cache
+      - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
     networks:
       - internal
     depends_on:
@@ -41,9 +50,15 @@ services:
       TZ: ${TZ:-Asia/Taipei}
       CONTAINER_ROLE: worker
       APP_BASE_PATH: /var/www/html
+    # 非 root（見 Dockerfile 的 wallet 使用者）；程式碼唯讀，只有 storage/、bootstrap/cache/ 可寫
+    user: "${APP_UID:-10001}:${APP_GID:-10001}"
+    security_opt:
+      - no-new-privileges:true
     volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
+      - ${PROJECT_PATH}:/var/www/html:${APP_CODE_MOUNT:-ro}
+      - ${PROJECT_PATH}/storage:/var/www/html/storage
+      - ${PROJECT_PATH}/bootstrap/cache:/var/www/html/bootstrap/cache
+      - ${PROJECT_PATH}/deployment/production/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
     networks:
       - internal
     depends_on:
@@ -78,7 +93,12 @@ services:
     restart: always
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    # 經由官方 docker-entrypoint.sh 啟動：它看到第一個參數是 redis-server 才會把 /data chown 給 redis
+    # 並降權成 redis（uid 999）；直接 sh -c "exec redis-server" 會一路以 root 執行。
+    # 密碼仍由 container 內的 $$REDIS_PASSWORD 展開，不寫進 Cmd（docker inspect 看不到明文）。
+    command: ["sh", "-c", "exec docker-entrypoint.sh redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     volumes:
