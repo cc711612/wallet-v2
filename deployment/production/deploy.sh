@@ -34,6 +34,14 @@ read_env_value() {
 PROJECT_NAME="$(read_env_value "$ENV_FILE" PROJECT_NAME)"
 PROJECT_NAME="${PROJECT_NAME:-wallet-v2}"
 
+# web / worker 以非 root 執行的 UID/GID（需與 docker-compose.yml、Dockerfile 的預設一致）
+APP_UID="$(read_env_value "$ENV_FILE" APP_UID)"
+APP_UID="${APP_UID:-10001}"
+APP_GID="$(read_env_value "$ENV_FILE" APP_GID)"
+APP_GID="${APP_GID:-10001}"
+PROJECT_PATH="$(read_env_value "$ENV_FILE" PROJECT_PATH)"
+APP_IMAGE="${PROJECT_NAME}:app"
+
 WEB_CONTAINER="${PROJECT_NAME}-web"
 WORKER_CONTAINER="${PROJECT_NAME}-worker"
 COMPOSE_CMD="docker compose --env-file $ENV_FILE -f $SCRIPT_DIR/docker-compose.yml"
@@ -114,6 +122,32 @@ do_worker_supervisor_reload() {
     info "Worker supervisor reload 完成"
 }
 
+# 冪等：只把 storage/、bootstrap/cache/ 內「擁有者不是 APP_UID:APP_GID」的項目改過來，
+# 並讓 .env 群組改為 APP_GID、權限 0640（擁有者不變；非 root 的 container 才讀得到）。不碰程式碼與其他目錄。
+# 透過 app image 以 root 跑一次性 container 執行，主機端只需 docker 權限、不需 sudo。
+do_fix_permissions() {
+    [[ "$APP_UID" =~ ^[0-9]+$ && "$APP_GID" =~ ^[0-9]+$ && "$APP_UID" != 0 ]] \
+        || error "APP_UID/APP_GID 必須是非 0 的數字（目前 ${APP_UID}:${APP_GID}）"
+    [ -n "$PROJECT_PATH" ] || error "$ENV_FILE 未設定 PROJECT_PATH"
+    local d
+    for d in "$PROJECT_PATH/storage" "$PROJECT_PATH/bootstrap/cache"; do
+        [ -d "$d" ] || error "找不到目錄 $d"
+    done
+    [ -f "$PROJECT_PATH/.env" ] || error "找不到 $PROJECT_PATH/.env"
+    info "修正 storage/、bootstrap/cache/ 擁有者為 ${APP_UID}:${APP_GID}，.env 群組改為 ${APP_GID}、0640..."
+    docker run --rm --network none --user 0:0 --entrypoint sh \
+        -v "$PROJECT_PATH/storage:/fix/storage" \
+        -v "$PROJECT_PATH/bootstrap/cache:/fix/bootstrap-cache" \
+        -v "$PROJECT_PATH/.env:/fix/app.env" \
+        "$APP_IMAGE" -c '
+            set -e
+            find /fix/storage /fix/bootstrap-cache \( ! -user "$1" -o ! -group "$2" \) -exec chown -h "$1:$2" {} +
+            chgrp "$2" /fix/app.env
+            chmod 0640 /fix/app.env
+        ' fix-perms "$APP_UID" "$APP_GID"
+    info "權限修正完成"
+}
+
 do_restart_containers() {
     warning "重開所有 container..."
     $COMPOSE_CMD restart
@@ -122,7 +156,9 @@ do_restart_containers() {
 
 do_rebuild_image() {
     warning "重建 Docker image..."
-    $COMPOSE_CMD up -d --build --remove-orphans
+    $COMPOSE_CMD build
+    do_fix_permissions
+    $COMPOSE_CMD up -d --remove-orphans
     info "Image 重建完成"
 }
 
@@ -140,7 +176,9 @@ do_full_redeploy() {
     $COMPOSE_CMD down --rmi local --remove-orphans || true
 
     info "重新 build 並啟動..."
-    $COMPOSE_CMD up -d --build --force-recreate --remove-orphans
+    $COMPOSE_CMD build
+    do_fix_permissions
+    $COMPOSE_CMD up -d --force-recreate --remove-orphans
 
     info "全清空重部署完成"
 }
@@ -225,7 +263,8 @@ usage_text() {
                        --recreate：先 docker compose up -d（只重建設定有變的 service），
                                    compose 層變數（REDIS_PASSWORD / NGINX_BIND_ADDR / port）才需要
   restart              重開所有 container
-  rebuild              重建 Docker image
+  rebuild              重建 Docker image（build -> fix-perms -> up -d）
+  fix-perms            storage/、bootstrap/cache/ chown 成 APP_UID:APP_GID，.env 群組改 APP_GID、0640（冪等）
   clean                全清空重部署
   不帶參數             互動選單
 EOF
@@ -246,9 +285,10 @@ show_menu() {
     echo "  6) 重建 Docker image"
     echo "  7) 全清空重部署 (down --volumes + rebuild)"
     echo "  8) 套用 env 變更   (config cache + reload + worker 重啟 + 健康檢查)"
+    echo "  9) 修正檔案權限    (storage / bootstrap/cache / .env，非 root 容器需要)"
     echo "  q) 離開"
     echo "=============================="
-    echo -n "請選擇 [1-8 / q]: "
+    echo -n "請選擇 [1-9 / q]: "
 }
 
 run_menu() {
@@ -265,6 +305,7 @@ run_menu() {
             6) do_rebuild_image ;;
             7) do_full_redeploy ;;
             8) do_apply_env ;;
+            9) do_fix_permissions ;;
             q|Q) info "離開"; exit 0 ;;
             *) warning "無效選項，請重新輸入" ;;
         esac
@@ -284,6 +325,7 @@ main() {
         apply-env) shift; do_apply_env "$@" ;;
         restart)   do_restart_containers ;;
         rebuild)   do_rebuild_image ;;
+        fix-perms) do_fix_permissions ;;
         clean)     do_full_redeploy ;;
         -h|--help|help) usage_text ;;
         "")        run_menu ;;

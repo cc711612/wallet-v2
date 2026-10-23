@@ -96,4 +96,36 @@ if [ "$rc" != 0 ] && [ "$(grep -c 'api/health' "$TMP/docker.log")" = 3 ]; then o
 run_apply --bogus
 if [ "$(cat "$TMP/rc")" != 0 ] && [ ! -s "$TMP/docker.log" ]; then ok "未知旗標: 非 0 且未呼叫 docker"; else bad "未知旗標"; fi
 
+# ── 3) fix-perms（假 docker）─────────────────────────────────
+run_fix() { # $1 .env 額外內容；輸出 exit code 到 $TMP/rc
+    local d="$TMP/fix" p="$TMP/fix/app"
+    rm -rf "$d"; mkdir -p "$d" "$p/storage" "$p/bootstrap/cache"
+    : > "$p/.env"
+    cp "$HERE/deploy.sh" "$d/deploy.sh"
+    printf 'PROJECT_NAME="wallet-v2"\nPROJECT_PATH=%s\n%b' "$p" "${1:-}" > "$d/.env"
+    : > "$TMP/docker.log"
+    PATH="$BIN:$PATH" FAKE_DOCKER_LOG="$TMP/docker.log" bash "$d/deploy.sh" fix-perms > "$TMP/out.log" 2>&1
+    echo $? > "$TMP/rc"
+}
+
+run_fix
+check_rc0 "fix-perms 預設"
+got="$(cat "$TMP/docker.log")"
+p="$TMP/fix/app"
+case "$got" in
+    "docker run --rm --network none --user 0:0 --entrypoint sh -v $p/storage:/fix/storage -v $p/bootstrap/cache:/fix/bootstrap-cache -v $p/.env:/fix/app.env wallet-v2:app -c "*" fix-perms 10001 10001")
+        ok "fix-perms 預設: 只掛 storage / bootstrap/cache / .env，UID:GID=10001:10001" ;;
+    *) bad "fix-perms 預設: 參數不符"; echo "$got" ;;
+esac
+if [ "$(grep -c '^docker ' "$TMP/docker.log")" = 1 ]; then ok "fix-perms: 只呼叫一次 docker"; else bad "fix-perms: docker 呼叫次數"; fi
+
+run_fix 'APP_UID=2000\nAPP_GID="2001"\n'
+case "$(cat "$TMP/docker.log")" in
+    *" fix-perms 2000 2001") ok "fix-perms: 讀 .env 的 APP_UID/APP_GID" ;;
+    *) bad "fix-perms: APP_UID/APP_GID 未生效"; cat "$TMP/docker.log" ;;
+esac
+
+run_fix 'APP_UID=0\n'
+if [ "$(cat "$TMP/rc")" != 0 ] && [ ! -s "$TMP/docker.log" ]; then ok "fix-perms: APP_UID=0 拒絕且未呼叫 docker"; else bad "fix-perms: APP_UID=0"; fi
+
 exit "$fail"
