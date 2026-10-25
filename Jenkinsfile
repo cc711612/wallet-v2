@@ -70,7 +70,7 @@ pipeline {
             options { timeout(time: 30, unit: 'MINUTES') }
             steps {
                 notifySlack('approval')
-                input message: "部署 ${env.DEPLOY_SHA.take(7)}「${env.COMMIT_MSG}」到 ${env.PROD_HOST}？", ok: '部署'
+                input message: "部署 ${env.DEPLOY_SHA.take(7)}「${env.COMMIT_MSG}」到 ${env.PROD_HOST}？", ok: '部署', submitter: 'cc711612@gmail.com'
             }
         }
 
