@@ -5,9 +5,10 @@
 
 -- 只能執行一次：重跑時 ops_markers 主鍵重複，mysql client 會在任何 UPDATE 前中止
 -- @until 設為執行當下的 UTC（須在新程式部署後 8 小時內執行）
-CREATE TABLE IF NOT EXISTS ops_markers (name VARCHAR(64) PRIMARY KEY, done_at DATETIME NOT NULL);
+-- until_utc NOT NULL：忘了 SET @until 時 INSERT 直接失敗（ERROR 1048），不會留下 marker 也不會空跑
+CREATE TABLE IF NOT EXISTS ops_markers (name VARCHAR(64) PRIMARY KEY, done_at DATETIME NOT NULL, until_utc DATETIME NOT NULL);
 START TRANSACTION;
-INSERT INTO ops_markers (name, done_at) VALUES ('shift-timestamps-to-taipei-20261101', NOW());
+INSERT INTO ops_markers (name, done_at, until_utc) VALUES ('shift-timestamps-to-taipei-20261101', NOW(), @until);
 UPDATE wallet_details SET created_at = created_at + INTERVAL 8 HOUR WHERE (created_at >= '2026-07-02 08:00:00' AND created_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND created_at <= @until);
 UPDATE wallet_details SET updated_at = updated_at + INTERVAL 8 HOUR WHERE (updated_at >= '2026-07-02 08:00:00' AND updated_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND updated_at <= @until);
 UPDATE wallet_details SET deleted_at = deleted_at + INTERVAL 8 HOUR WHERE (deleted_at >= '2026-07-02 08:00:00' AND deleted_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND deleted_at <= @until);
