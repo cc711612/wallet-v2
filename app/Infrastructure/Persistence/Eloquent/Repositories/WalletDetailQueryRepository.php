@@ -108,8 +108,8 @@ class WalletDetailQueryRepository implements WalletDetailQueryRepositoryInterfac
                 'name' => (string) $item->name,
                 'is_admin' => (bool) $item->is_admin,
                 'notify_enable' => (bool) ($item->notify_enable ?? 0),
-                'created_at' => Carbon::parse((string) $item->created_at, 'Asia/Taipei')->utc()->format('Y-m-d\TH:i:s.u\Z'),
-                'updated_at' => Carbon::parse((string) $item->updated_at, 'Asia/Taipei')->utc()->format('Y-m-d\TH:i:s.u\Z'),
+                'created_at' => Carbon::parse((string) $item->created_at, (string) config('app.timezone'))->utc()->format('Y-m-d\TH:i:s.u\Z'),
+                'updated_at' => Carbon::parse((string) $item->updated_at, (string) config('app.timezone'))->utc()->format('Y-m-d\TH:i:s.u\Z'),
             ])
             ->all();
     }
@@ -191,8 +191,8 @@ class WalletDetailQueryRepository implements WalletDetailQueryRepositoryInterfac
             'mode' => (string) $wallet->mode,
             'unit' => (string) $wallet->unit,
             'properties' => is_array($wallet->properties) ? $wallet->properties : [],
-            'created_at' => Carbon::parse((string) $wallet->created_at, 'Asia/Taipei')->utc()->format('Y-m-d\TH:i:s.u\Z'),
-            'updated_at' => Carbon::parse((string) $wallet->updated_at, 'Asia/Taipei')->utc()->format('Y-m-d\TH:i:s.u\Z'),
+            'created_at' => Carbon::parse((string) $wallet->created_at, (string) config('app.timezone'))->utc()->format('Y-m-d\TH:i:s.u\Z'),
+            'updated_at' => Carbon::parse((string) $wallet->updated_at, (string) config('app.timezone'))->utc()->format('Y-m-d\TH:i:s.u\Z'),
         ];
     }
 
