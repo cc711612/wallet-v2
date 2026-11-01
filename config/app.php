@@ -65,10 +65,10 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // 受眾在台灣、DB 存台灣時間、前端以本地時間解讀不帶時區的 "Y-m-d H:i:s" 字串
+    'timezone' => 'Asia/Taipei',
 
-    // 業務日期（明細「預設今天」）使用的時區。app.timezone 維持 UTC 不變，
-    // 避免影響既有 created_at 等時間欄位的寫入語意
+    // 業務日期（明細「預設今天」）使用的時區。
     'business_timezone' => env('APP_BUSINESS_TIMEZONE', 'Asia/Taipei'),
 
     /*

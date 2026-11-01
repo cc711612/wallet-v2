@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Device\Services;
 
 use App\Domain\Device\Repositories\DeviceServiceRepositoryInterface;
+use Illuminate\Support\Carbon;
 
 class DeviceService
 {
@@ -50,7 +51,7 @@ class DeviceService
             'device_name' => (string) ($payload['device_name'] ?? ''),
             'device_type' => (string) ($payload['device_type'] ?? ''),
             'fcm_token' => $fcmToken,
-            'expired_at' => $payload['expired_at'] ?? null,
+            'expired_at' => $this->normalizeExpiredAt($payload['expired_at'] ?? null),
             'updated_at' => now(),
         ];
 
@@ -61,6 +62,20 @@ class DeviceService
         }
 
         return ['stored' => true, 'fcm_token' => $fcmToken];
+    }
+
+    /**
+     * 前端送的 expired_at 是 UTC（不帶時區的 "Y-m-d H:i:s"），轉成 app.timezone 後才寫入 DB。
+     */
+    private function normalizeExpiredAt(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return Carbon::parse((string) $value, 'UTC')
+            ->setTimezone((string) config('app.timezone'))
+            ->format('Y-m-d H:i:s');
     }
 
     /**
