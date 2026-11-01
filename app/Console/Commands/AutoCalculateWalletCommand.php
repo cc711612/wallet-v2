@@ -27,7 +27,9 @@ class AutoCalculateWalletCommand extends Command
     public function handle(): int
     {
         $userId = (int) config('wallet.auto_wallet.user_id');
-        $title = now()->subMonth()->format('Y.m');
+        // 帳本月份、結算時間、冪等批次都以業務時區（台灣）計算
+        $now = now((string) config('app.business_timezone'));
+        $title = $now->copy()->startOfMonth()->subMonth()->format('Y.m');
 
         $wallet = WalletEntity::query()->where('user_id', $userId)->where('title', $title)->first(['id', 'title']);
         if ($wallet === null) {
@@ -67,13 +69,13 @@ class AutoCalculateWalletCommand extends Command
         }
 
         $messages[] = '總支出金額: '.$total;
-        $messages[] = '結算時間: '.now()->format('Y-m-d H:i:s');
+        $messages[] = '結算時間: '.$now->format('Y-m-d H:i:s');
 
         $message = implode("\r\n", $messages);
 
         $walletUsers = $walletUsers->where('notify_enable', 1)->values();
         // notify v2 冪等批次：同一帳本同一天的結算推播只送一次（同日重跑會被 notify 以 409 擋下）
-        $batch = now()->format('Ymd');
+        $batch = $now->format('Ymd');
 
         foreach ($walletUsers as $walletUser) {
             NotificationFCM::dispatch(
