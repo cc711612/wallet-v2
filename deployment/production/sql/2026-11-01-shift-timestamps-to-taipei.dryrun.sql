@@ -56,4 +56,4 @@ SELECT 'personal_access_tokens.last_used_at' col, COUNT(*) n FROM personal_acces
 UNION ALL
 SELECT 'failed_jobs.failed_at' col, COUNT(*) n FROM failed_jobs WHERE (failed_at >= '2026-07-02 08:00:00' AND failed_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND failed_at <= @until)
 UNION ALL
-SELECT 'devices(row by updated_at)' col, COUNT(*) n FROM devices WHERE (updated_at >= '2026-07-02 08:00:00' AND updated_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND updated_at <= @until);
+SELECT 'devices(rows touched)' col, COUNT(*) n FROM devices WHERE (updated_at >= '2026-07-02 08:00:00' AND updated_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND updated_at <= @until) OR (created_at >= '2026-07-02 08:00:00' AND created_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND created_at <= @until) OR (deleted_at >= '2026-07-02 08:00:00' AND deleted_at NOT BETWEEN '2026-07-02 13:48:00' AND '2026-07-02 13:55:00' AND deleted_at <= @until);
