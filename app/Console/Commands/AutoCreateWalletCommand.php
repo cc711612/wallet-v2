@@ -32,7 +32,9 @@ class AutoCreateWalletCommand extends Command
 
             return self::SUCCESS;
         }
-        $title = now()->format('Y.m');
+        // 帳本月份與種子明細日期以業務時區（台灣）計算
+        $now = now((string) config('app.business_timezone'));
+        $title = $now->format('Y.m');
         $exists = WalletEntity::query()->where('user_id', $userId)->where('title', $title)->exists();
         if ($exists) {
             $this->info("Wallet {$title} already exists.");
@@ -70,7 +72,7 @@ class AutoCreateWalletCommand extends Command
                 'title' => (string) config('wallet.auto_wallet.seed_title'),
                 'categoryId' => $seedCategoryId,
                 'unit' => 'TWD',
-                'date' => now()->format('Y-m-d'),
+                'date' => $now->format('Y-m-d'),
             ]);
         }
 

@@ -404,13 +404,13 @@ class NotifyV2DriverTest extends TestCase
     public function test_auto_calculate_uses_its_own_idempotency_namespace(): void
     {
         config(['wallet.auto_wallet.user_id' => 1]);
-        DB::table('wallets')->where('id', 5)->update(['title' => now()->subMonth()->format('Y.m')]);
+        DB::table('wallets')->where('id', 5)->update(['title' => now((string) config('app.business_timezone'))->startOfMonth()->subMonth()->format('Y.m')]);
         Http::fake([self::V2_URL => Http::response($this->okBody())]);
 
         $this->artisan('command:auto_calculate_wallet')->assertSuccessful();
 
         Http::assertSentCount(1);
-        Http::assertSent(fn (Request $request): bool => $request->data()['idempotency_key'] === 'wallet-auto-calc-5-'.now()->format('Ymd').'-wu-10');
+        Http::assertSent(fn (Request $request): bool => $request->data()['idempotency_key'] === 'wallet-auto-calc-5-'.now((string) config('app.business_timezone'))->format('Ymd').'-wu-10');
     }
 
     public function test_job_serialized_before_upgrade_falls_back_to_wallet_detail_key(): void
