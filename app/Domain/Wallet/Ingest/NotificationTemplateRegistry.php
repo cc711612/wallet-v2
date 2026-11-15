@@ -20,7 +20,7 @@ class NotificationTemplateRegistry
 
     private const DELIMITER = "\x01";
 
-    /** @var array<int, array{name:string, regex:string, currency:string, source:string|null}>|null */
+    /** @var array<int, array{name:string, regex:string, currency:string, source:string|null, merchant_default:string|null}>|null */
     private ?array $compiled = null;
 
     /**
@@ -42,7 +42,7 @@ class NotificationTemplateRegistry
     }
 
     /**
-     * @return array<int, array{name:string, regex:string, currency:string, source:string|null}>
+     * @return array<int, array{name:string, regex:string, currency:string, source:string|null, merchant_default:string|null}>
      */
     public function templates(): array
     {
@@ -87,7 +87,7 @@ class NotificationTemplateRegistry
                 continue;
             }
 
-            $parsed = $this->toExpense($template['name'], $m, $receivedAt);
+            $parsed = $this->toExpense($template['name'], $m, $receivedAt, $template['merchant_default']);
             if ($parsed === null) {
                 continue;
             }
@@ -102,7 +102,7 @@ class NotificationTemplateRegistry
     /**
      * @param  array<string, mixed>  $template
      * @param  array<int, string>  $names
-     * @return array{name:string, regex:string, currency:string, source:string|null}
+     * @return array{name:string, regex:string, currency:string, source:string|null, merchant_default:string|null}
      */
     private function compile(mixed $template, int $index, array &$names): array
     {
@@ -123,8 +123,9 @@ class NotificationTemplateRegistry
         if (! is_string($pattern) || $pattern === '') {
             throw new InvalidArgumentException("ingest template '{$name}' needs a pattern");
         }
-        if (! str_contains($pattern, '(?<amount>') || ! str_contains($pattern, '(?<merchant>')) {
-            throw new InvalidArgumentException("ingest template '{$name}' pattern must contain (?<amount>…) and (?<merchant>…)");
+        $merchantDefault = $this->compileMerchantDefault($template, $name);
+        if (! str_contains($pattern, '(?<amount>') || ($merchantDefault === null && ! str_contains($pattern, '(?<merchant>'))) {
+            throw new InvalidArgumentException("ingest template '{$name}' pattern must contain (?<amount>…) and (?<merchant>…) or set merchant_default");
         }
         if (str_contains($pattern, self::DELIMITER)) {
             throw new InvalidArgumentException("ingest template '{$name}' pattern contains an invalid character");
@@ -134,7 +135,7 @@ class NotificationTemplateRegistry
         if (@preg_match(self::DELIMITER.$pattern.self::DELIMITER.'u', '') === false) {
             throw new InvalidArgumentException("ingest template '{$name}' pattern is not a valid regex");
         }
-        NotificationTemplateLinter::lint($name, $pattern);
+        NotificationTemplateLinter::lint($name, $pattern, $merchantDefault !== null);
 
         $currency = strtoupper((string) ($template['currency'] ?? 'TWD'));
         if ($currency !== 'TWD') {
@@ -152,7 +153,32 @@ class NotificationTemplateRegistry
             throw new InvalidArgumentException("ingest template '{$name}' pattern is not a valid regex");
         }
 
-        return ['name' => $name, 'regex' => $regex, 'currency' => $currency, 'source' => $source];
+        return ['name' => $name, 'regex' => $regex, 'currency' => $currency, 'source' => $source, 'merchant_default' => $merchantDefault];
+    }
+
+    /**
+     * merchant_default：選填的固定商店名（推播沒有商店名時用），trim 後 1~60 字，不得含換行、控制或零寬字元。
+     *
+     * @param  array<string, mixed>  $template
+     */
+    private function compileMerchantDefault(array $template, string $name): ?string
+    {
+        if (! array_key_exists('merchant_default', $template) || $template['merchant_default'] === null) {
+            return null;
+        }
+
+        $value = $template['merchant_default'];
+        if (! is_string($value)) {
+            throw new InvalidArgumentException("ingest template '{$name}' merchant_default must be a string");
+        }
+
+        $value = trim($value);
+        $length = mb_strlen($value);
+        if ($length < 1 || $length > NotificationTemplateLinter::MERCHANT_MAX_LENGTH || preg_match('/[\p{Cc}\p{Cf}\x{2028}\x{2029}]/u', $value) !== 0) {
+            throw new InvalidArgumentException("ingest template '{$name}' merchant_default must be 1-60 characters without line breaks or control characters");
+        }
+
+        return $value;
     }
 
     /**
@@ -196,7 +222,7 @@ class NotificationTemplateRegistry
     /**
      * @param  array<int|string, string>  $m
      */
-    private function toExpense(string $name, array $m, CarbonImmutable $receivedAt): ?ParsedExpense
+    private function toExpense(string $name, array $m, CarbonImmutable $receivedAt, ?string $merchantDefault = null): ?ParsedExpense
     {
         // 千分位格式必須正確：1,23、1,2,3,4、,,85 都拒絕
         $rawAmount = (string) ($m['amount'] ?? '');
@@ -209,7 +235,8 @@ class NotificationTemplateRegistry
             return null;
         }
 
-        $merchant = NotificationTextMasker::singleLine((string) ($m['merchant'] ?? ''));
+        // 模板設定 merchant_default 時用固定商店名（pattern 沒有 merchant 群組）
+        $merchant = $merchantDefault ?? NotificationTextMasker::singleLine((string) ($m['merchant'] ?? ''));
         $merchantLength = mb_strlen($merchant);
         if ($merchantLength < 1 || $merchantLength > 255) {
             return null;

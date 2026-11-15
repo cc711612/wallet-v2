@@ -1,0 +1,101 @@
+{
+  "template": "esun-credit-purchase",
+  "note": "來源：使用者 2026-11-15 的 MacroDroid log（玉山銀行 App 與玉山 Wallet 各推一則相同原文；測試刷卡 600 元）。真實負樣本只有 OTP 一則，其餘負樣本為合成。推播沒有商店名，商店名取模板的 merchant_default。",
+  "positive": [
+    {
+      "text": "信用卡消費600元通知",
+      "amount": 600,
+      "merchant": "玉山信用卡消費",
+      "synthetic": false,
+      "variant": "只有 text（app=玉山銀行 與 app=玉山Wallet 原文相同）"
+    },
+    {
+      "text": "玉山銀行\n信用卡消費600元通知",
+      "amount": 600,
+      "merchant": "玉山信用卡消費",
+      "synthetic": false,
+      "variant": "title + 換行 + text"
+    },
+    {
+      "text": "信用卡消費1,280元通知",
+      "amount": 1280,
+      "merchant": "玉山信用卡消費",
+      "synthetic": true,
+      "variant": "千分位金額"
+    },
+    {
+      "text": "信用卡消費６００元通知",
+      "amount": 600,
+      "merchant": "玉山信用卡消費",
+      "synthetic": true,
+      "variant": "全形金額"
+    }
+  ],
+  "negative": [
+    {
+      "text": "信用卡３Ｄ網路認證密碼\n提防詐騙！勿輕易提供密碼，本次交易的網頁識別碼及交易驗證碼，請點擊訊息確認，並於十分鐘內認證。",
+      "synthetic": false,
+      "reason": "OTP 3D 網路認證密碼（真實，title 含全形「３Ｄ」）"
+    },
+    {
+      "text": "提防詐騙！勿輕易提供密碼，本次交易的網頁識別碼及交易驗證碼，請點擊訊息確認，並於十分鐘內認證。",
+      "synthetic": false,
+      "reason": "OTP 內文（真實，沒有 title）"
+    },
+    {
+      "text": "信用卡消費取消600元通知",
+      "synthetic": true,
+      "reason": "取消"
+    },
+    {
+      "text": "信用卡退款600元通知",
+      "synthetic": true,
+      "reason": "退款"
+    },
+    {
+      "text": "信用卡消費USD25.99元通知",
+      "synthetic": true,
+      "reason": "外幣"
+    },
+    {
+      "text": "信用卡消費1,23元通知",
+      "synthetic": true,
+      "reason": "千分位格式錯誤"
+    },
+    {
+      "text": "信用卡消費600元",
+      "synthetic": true,
+      "reason": "少了「通知」"
+    },
+    {
+      "text": "信用卡消費600元通知，詳情請洽客服",
+      "synthetic": true,
+      "reason": "尾端多字"
+    },
+    {
+      "text": "提醒：信用卡消費600元通知",
+      "synthetic": true,
+      "reason": "前綴多字"
+    },
+    {
+      "text": "信用卡消費元通知",
+      "synthetic": true,
+      "reason": "缺金額"
+    },
+    {
+      "text": "信用卡消費0元通知",
+      "synthetic": true,
+      "reason": "金額為 0"
+    },
+    {
+      "text": "信用卡消費600元通知，已取消",
+      "synthetic": true,
+      "reason": "後綴取消"
+    },
+    {
+      "text": "國泰世華銀行\n信用卡消費600元通知",
+      "synthetic": true,
+      "reason": "其他銀行 title"
+    }
+  ]
+}

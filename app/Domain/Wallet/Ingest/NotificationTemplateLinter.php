@@ -14,10 +14,10 @@ use InvalidArgumentException;
  * - 不得有 PCRE 控制動詞 (*…)、行內選項 (?s) (?x) (?i)…、註解 (?#…)、遞迴／子程序／條件／分支重設 (?R) (?1) (?&) (?() (?|、原子群組 (?>
  *   允許的群組開頭：( 、(?: 、(?= 、(?! 、(?<= 、(?<! 、(?<amount> (?<merchant> (?<date> (?<time>
  * - 括號必須平衡；頂層不得有 |（交替要用 (?:…|…) 包起來）
- * - amount 只能是 \d{1,3}(?:,\d{3})*(?:\.\d{1,2})? 或 \d+(?:\.\d{1,2})?
+ * - amount 只能是 \d{1,3}(?:,\d{3})*(?:\.\d{1,2})?、\d+(?:\.\d{1,2})? 或 (?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?（有無千分位皆可）
  * - merchant 只能是「一個字元類別＋有上界的量詞」，例如 [^，。\n$]{1,40}；上界 ≤ 60；
  *   不得用 \S \W \D 等大寫類別；否定類別 [^…] 必須排除換行（含 \n 或 \s）
- * - amount、merchant 各恰好一次；date、time 最多一次；不得有其他具名群組
+ * - amount 恰好一次；merchant 恰好一次，或改用模板的 merchant_default（兩者恰好擇一）；date、time 最多一次；不得有其他具名群組
  */
 final class NotificationTemplateLinter
 {
@@ -27,12 +27,16 @@ final class NotificationTemplateLinter
     private const AMOUNT_BODIES = [
         '\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?',
         '\d+(?:\.\d{1,2})?',
+        '(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?',
     ];
 
     /** @var array<int, string> */
     private const GROUP_NAMES = ['amount', 'merchant', 'date', 'time'];
 
-    public static function lint(string $name, string $pattern): void
+    /**
+     * @param  bool  $hasMerchantDefault  模板設定了 merchant_default 時，pattern 不得有 merchant 群組；否則必須恰好一個
+     */
+    public static function lint(string $name, string $pattern, bool $hasMerchantDefault = false): void
     {
         $fail = static fn (string $rule) => new InvalidArgumentException("ingest template '{$name}' pattern rejected by lint: {$rule}");
 
@@ -76,8 +80,14 @@ final class NotificationTemplateLinter
         }
 
         $counts = array_count_values(array_column($groups, 'name'));
-        if (($counts['amount'] ?? 0) !== 1 || ($counts['merchant'] ?? 0) !== 1) {
-            throw $fail('amount and merchant groups must appear exactly once');
+        if (($counts['amount'] ?? 0) !== 1) {
+            throw $fail('amount group must appear exactly once');
+        }
+        if ($hasMerchantDefault && ($counts['merchant'] ?? 0) !== 0) {
+            throw $fail('use either a merchant group or merchant_default, not both');
+        }
+        if (! $hasMerchantDefault && ($counts['merchant'] ?? 0) !== 1) {
+            throw $fail('merchant group must appear exactly once (or set merchant_default instead)');
         }
         if (($counts['date'] ?? 0) > 1 || ($counts['time'] ?? 0) > 1) {
             throw $fail('date/time groups may appear at most once');
@@ -86,7 +96,7 @@ final class NotificationTemplateLinter
         foreach ($groups as $group) {
             $body = substr($pattern, $group['start'], self::groupEnd($skeleton, $group['start']) - $group['start']);
             if ($group['name'] === 'amount' && ! in_array($body, self::AMOUNT_BODIES, true)) {
-                throw $fail('amount must be \d{1,3}(?:,\d{3})*(?:\.\d{1,2})? or \d+(?:\.\d{1,2})?');
+                throw $fail('amount must be \d{1,3}(?:,\d{3})*(?:\.\d{1,2})?, \d+(?:\.\d{1,2})? or (?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?');
             }
             if ($group['name'] === 'merchant') {
                 self::lintMerchant($body, $fail);

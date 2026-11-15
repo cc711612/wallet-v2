@@ -8,7 +8,7 @@
 
 解析順序：
 
-1. **模板白名單**（`NotificationTemplateRegistry`，`config/ingest_templates.php`）— 預設唯一啟用的方式。只收有真實推播樣本支撐的模板（不編造格式）；**目前內建 1 個：`cathay-credit-purchase`**（國泰世華信用卡刷卡通知，見「內建模板」）。不命中任何內建模板的推播一律回 400。
+1. **模板白名單**（`NotificationTemplateRegistry`，`config/ingest_templates.php`）— 預設唯一啟用的方式。只收有真實推播樣本支撐的模板（不編造格式）；**目前內建 2 個：`cathay-credit-purchase`（國泰世華信用卡刷卡通知）、`esun-credit-purchase`（玉山信用卡消費通知）**，見「內建模板」。不命中任何內建模板的推播一律回 400。
 2. **啟發式關鍵字規則**（`RuleBasedNotificationParser`）— 選用，`INGEST_HEURISTIC_ENABLED`，**預設關閉，不建議在正式環境開啟**（見「啟發式模式」）。
 3. **AI 備援**（Gemini，`AiNotificationParser`）— 選用，`INGEST_AI_ENABLED`，預設關閉。**實驗性，正式環境不建議開啟**（見「AI 備援」）。
 
@@ -141,10 +141,11 @@
 
 | 欄位 | 必填 | 說明 |
 |------|------|------|
-| `name` | 是 | 唯一、kebab-case，例如 `esun-credit-purchase`；回應的 `parser` 會是 `template:<name>` |
-| `pattern` | 是 | 正規表示式本體（**不含**分隔符號與 `^` `$`，系統自動錨定）。必須含 `(?<amount>…)` 與 `(?<merchant>…)`，可選 `(?<date>…)`、`(?<time>…)` |
+| `name` | 是 | 唯一、kebab-case，例如 `cathay-credit-purchase`；回應的 `parser` 會是 `template:<name>` |
+| `pattern` | 是 | 正規表示式本體（**不含**分隔符號與 `^` `$`，系統自動錨定）。必須含 `(?<amount>…)`；`(?<merchant>…)` 與 `merchant_default` 恰好擇一；可選 `(?<date>…)`、`(?<time>…)` |
+| `merchant_default` | 否 | 固定商店名，給「推播沒有商店名」的格式用（例如玉山）。trim 後 1～60 字，不得含換行、控制或零寬字元。**與 `merchant` 群組恰好擇一**：兩者都有或都沒有 → 載入失敗（500，回應不含 pattern）。寫入時 `title` 就是這個字串（仍會遮罩、檢查 1～255 字）；模板沒有 `date` 群組時日期用 `received_at` 的台北日期 |
 | `currency` | 否 | 預設 `TWD`；**本版只允許 `TWD`**，其他值會讓設定載入失敗 |
-| `source` | 否 | 限定 App package 前綴，例如 `com.esunbank`；建議每個模板都設定 |
+| `source` | 否 | 限定 App package 前綴，例如 `com.somebank`；建議每個模板都設定 |
 
 模板定義不合法（缺具名群組、名稱重複、非 TWD、regex 錯誤、沒通過 lint、`source` 為空字串或含空白／控制字元）時，第一次載入就丟 `InvalidArgumentException`，端點回 500「系統錯誤，請稍後再試」（回應不含 pattern），且單元測試會失敗。
 
@@ -159,13 +160,13 @@
 | 只允許這些群組開頭 | `(?s)`、`(?x)`、`(?i:…)`、`(?#…)`、`(?R)`、`(?1)`、`(?&…)`、`(?(…)`、`(?\|…)`、`(?>…)`、其他具名群組 | `(`、`(?:`、`(?=`、`(?!`、`(?<=`、`(?<!`、`(?<amount>`、`(?<merchant>`、`(?<date>`、`(?<time>` |
 | 括號必須平衡 | `x)\|…\|(?:y` | — |
 | 頂層不得有 `\|` | `foo\|…` | `(?:foo\|bar)…` |
-| `amount` 只能是兩種寫法之一 | `[\d,]+`、`\d+(?:\.\d{1,3})?` | `\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?` 或 `\d+(?:\.\d{1,2})?` |
+| `amount` 只能是三種寫法之一 | `[\d,]+`、`\d+(?:\.\d{1,3})?` | `\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?`（須千分位）、`\d+(?:\.\d{1,2})?`（不可千分位）、`(?:\d{1,3}(?:,\d{3})+\|\d+)(?:\.\d{1,2})?`（有無千分位皆可） |
 | `merchant` 必須是「一個字元類別＋有上界的量詞」，上界 ≤ 60 | `.+`、`\S+`、`[\p{L}]+`、`[\p{L}]{1,100}` | `[^，。
 $]{1,40}`、`[^\s，。：:;；]{1,40}`、`[\p{L}\p{N}\s\-_&'’・·./()（）]{1,40}` |
 | `merchant` 類別不得用大寫類別 | `[\S]`、`[\W]`、`[\D]`… | 明確列出允許或排除的字元 |
 | 否定的 `merchant` 類別必須排除換行 | `[^，]{1,10}` | `[^，
 ]{1,10}` 或 `[^\s，]{1,10}` |
-| `amount`、`merchant` 恰好各一次；`date`、`time` 最多一次 | 寫在字元類別或註解裡的 `(?<amount>` 不算 | — |
+| `amount` 恰好一次；`merchant` 恰好一次或改用 `merchant_default`（擇一）；`date`、`time` 最多一次 | 寫在字元類別或註解裡的 `(?<amount>` 不算 | — |
 
 lint 的取捨：規則刻意偏嚴，某些合法但寫法較自由的 pattern（例如商店名需要超過 60 字、需要行內大小寫不敏感）會被拒；遇到時請改寫成明確的字元類別，或在 PR 中說明後放寬 linter。
 
@@ -183,15 +184,15 @@ lint 的取捨：規則刻意偏嚴，某些合法但寫法較自由的 pattern�
 
    ```json
    {
-     "template": "esun-credit-purchase",
+     "template": "somebank-credit-purchase",
      "positive": [
-       {"text": "…", "source": "com.esunbank", "amount": 1350, "merchant": "…", "date": "2026-11-14", "synthetic": false},
-       {"text": "…", "source": "com.esunbank", "amount": 85, "merchant": "…", "synthetic": true}
+       {"text": "…", "source": "com.somebank", "amount": 1350, "merchant": "…", "date": "2026-11-14", "synthetic": false},
+       {"text": "…", "source": "com.somebank", "amount": 85, "merchant": "…", "synthetic": true}
      ],
      "negative": [
-       {"text": "…已取消…", "source": "com.esunbank", "reason": "取消", "synthetic": false},
-       {"text": "…退款…", "source": "com.esunbank", "reason": "退款", "synthetic": true},
-       {"text": "…預先授權…", "source": "com.esunbank", "reason": "預先授權", "synthetic": true}
+       {"text": "…已取消…", "source": "com.somebank", "reason": "取消", "synthetic": false},
+       {"text": "…退款…", "source": "com.somebank", "reason": "退款", "synthetic": true},
+       {"text": "…預先授權…", "source": "com.somebank", "reason": "預先授權", "synthetic": true}
      ]
    }
    ```
@@ -221,6 +222,21 @@ lint 的取捨：規則刻意偏嚴，某些合法但寫法較自由的 pattern�
 - **source**：暫不限定。確認 MacroDroid 送出的 `source` 後（例如 App 名稱 `國泰世華`，或套件名稱），可在模板加上 `'source' => '…'` 收窄範圍。
 - **國泰官方 LINE 推播**（「消費通知💡您有一筆刷卡交易」）沒有金額，會回 400，屬預期。
 - **同一筆消費可能收到兩則推播**（國泰 App 與官方 LINE）：去重 key 依原文計算，兩則原文不同，不會被當成重複。LINE 那則因為沒有金額本來就會 400；使用者已把 LINE 官方帳號從 MacroDroid 觸發條件移除。
+
+#### `esun-credit-purchase`（玉山信用卡消費通知）
+
+- **來源**：使用者 2026-11-15 的 MacroDroid log（測試刷卡 600 元）。同一筆消費由**玉山銀行 App** 與**玉山 Wallet** 各推一則，title 都是「玉山銀行」，text 都是 `信用卡消費600元通知`。樣本檔 `tests/Fixtures/ingest/esun-credit-purchase.json`。
+- **pattern**：
+
+  ```
+  (?:玉山銀行\s+)?信用卡消費(?<amount>(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)元通知
+  ```
+
+- **推播沒有商店名也沒有日期**：商店名用 `merchant_default` = `玉山信用卡消費`（使用者尚未決定名稱，可直接改 config 的這個字串）；日期用 `received_at` 轉台北時間的日期。
+- 金額有無千分位皆可（`600`、`1,280`、`1280`、全形 `６００`）。title「玉山銀行」可有可無；source 不限定。
+- **樣本**：成功 4 則（真實 2：只有 text、title + 換行 + text；合成 2：千分位、全形）；負樣本 13 則，其中 **2 則是真實的 OTP 推播**（玉山 Wallet，title 為全形「信用卡３Ｄ網路認證密碼」，內文「提防詐騙！勿輕易提供密碼，本次交易的網頁識別碼及交易驗證碼…」），其餘為合成（取消、退款、外幣、千分位錯誤、少了「通知」、尾端／前綴多字、缺金額、金額 0、後綴「已取消」、其他銀行 title）。OTP 推播走正常的「不命中」路徑回 400（全形先轉半形，不是因為例外才擋）。
+- **兩個 App 重複推播**：去重 key 不含 `source`（只看帳本、成員、原文、`received_at` 到分鐘），所以同一分鐘內兩個 App 送來的同一則會回 `duplicate: true`、只寫一筆。**但若兩則剛好跨過分鐘邊界（例如 20:53:59 與 20:54:01）會建兩筆**。建議 MacroDroid **只監聽其中一個 App**（玉山銀行或玉山 Wallet 擇一）。
+- 注意：玉山推播只有金額，無法分辨同一分鐘內兩筆**相同金額**的不同消費（第二筆會被當成重複）。
 
 ### 範例模板（example，虛構格式）
 
@@ -364,7 +380,8 @@ return [
 
 ## 已知限制
 
-- **目前只內建國泰世華一個模板**：其他銀行與國泰的其他通知格式一律 400；國泰模板的負樣本是合成的，尚未用真實的非成功通知驗證過。
+- **目前只內建國泰世華、玉山兩個模板**：其他銀行與這兩家的其他通知格式一律 400。國泰模板的負樣本全是合成；玉山只有 OTP 是真實負樣本，其餘合成。
+- **玉山推播沒有商店名**：title 一律是 `merchant_default`（`玉山信用卡消費`）；同一分鐘內兩筆相同金額的玉山消費會被當成同一則（去重）；玉山兩個 App 的重複推播跨過分鐘邊界時會建兩筆。
 - **MacroDroid 的 text 組法尚未確認**：國泰模板目前假設「title + 換行 + text」（title 可有可無）。
 - **模板非常嚴格**：銀行推播文字稍有改版（多一個空白、換一個標點、加一句尾句），模板就不命中而回 400，需要更新模板與樣本。這是刻意的取捨（漏記可以手動補，錯記難以察覺）。
 - **只支援新台幣**：模板不允許註冊非 TWD；外幣通知回 400。之後可擴充寫入實際 `unit` 與 `rates`。
@@ -381,7 +398,7 @@ return [
 
 ## MacroDroid 設定範例
 
-1. **觸發條件**：Notification Received → 選銀行 App（只選已有模板的 App，目前是國泰世華 App）。不要把銀行的官方 LINE 帳號加進觸發條件：LINE 推播通常沒有金額（例如國泰「消費通知💡您有一筆刷卡交易」），只會回 400，而且會和 App 推播重複。
+1. **觸發條件**：Notification Received → 選銀行 App（只選已有模板的 App，目前是國泰世華 App 與玉山；玉山銀行 App 與玉山 Wallet 會推相同內容，**兩者擇一監聽**）。不要把銀行的官方 LINE 帳號加進觸發條件：LINE 推播通常沒有金額（例如國泰「消費通知💡您有一筆刷卡交易」），只會回 400，而且會和 App 推播重複。
 2. **動作**：HTTP Request
    - Method：`POST`
    - URL：`https://wallet.usongrat.tw/api/wallet/<帳本 ID>/detail/ingest`

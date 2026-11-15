@@ -29,8 +29,8 @@ class NotificationTemplateRegistryTest extends TestCase
 
     public function test_default_config_contains_only_the_built_in_templates(): void
     {
-        // 預設 config 不再是空陣列：內建 cathay-credit-purchase（來自真實樣本），且通過載入與 lint
-        $this->assertSame(['cathay-credit-purchase'], array_column((new NotificationTemplateRegistry)->templates(), 'name'));
+        // 預設 config 內建 cathay-credit-purchase 與 esun-credit-purchase（都來自真實樣本），且通過載入與 lint
+        $this->assertSame(['cathay-credit-purchase', 'esun-credit-purchase'], array_column((new NotificationTemplateRegistry)->templates(), 'name'));
         $this->assertNull((new NotificationTemplateRegistry)->match(self::OK, 'com.example.bank', $this->receivedAt()), '範例銀行格式不命中內建模板');
     }
 
