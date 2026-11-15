@@ -195,6 +195,11 @@ class RecordingCreateJobWalletDetailRepository implements WalletDetailRepository
 
 class NullWalletDetailQueryRepository implements WalletDetailQueryRepositoryInterface
 {
+    public function findDetailSummary(int $walletId, int $detailId): ?array
+    {
+        return null;
+    }
+
     public function listDetails(int $walletId, ?bool $isPersonal, ?int $walletUserId = null): array
     {
         return [];

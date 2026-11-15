@@ -28,6 +28,13 @@ interface WalletDetailQueryRepositoryInterface
     public function findDetail(int $walletId, int $detailId): ?array;
 
     /**
+     * 取得單筆帳本明細摘要（id、title、value、date、category_id），供自動記帳重複請求回傳既有明細。
+     *
+     * @return array{id:int, title:string, value:float, date:string, category_id:int|null}|null
+     */
+    public function findDetailSummary(int $walletId, int $detailId): ?array;
+
+    /**
      * 取得帳本資訊。
      *
      * @return array<string, mixed>|null

@@ -91,6 +91,8 @@ Route::group(['as' => 'api.'], function (): void {
             Route::group(['prefix' => '{wallet}'], function (): void {
                 Route::group(['prefix' => 'detail', 'as' => 'detail.'], function (): void {
                     Route::post('/list', [WalletDetailController::class, 'index'])->name('list');
+                    // 須在 /{detail} 之前註冊，否則 POST detail/ingest 會被 show 吃掉
+                    Route::post('/ingest', [WalletDetailController::class, 'ingest'])->middleware('throttle:ingest')->name('ingest');
                     Route::get('/', [WalletDetailController::class, 'index'])->name('index');
                     Route::match(['get', 'post'], '/{detail}', [WalletDetailController::class, 'show'])->name('show');
                     Route::put('/checkout', [WalletDetailController::class, 'checkout'])->name('checkout');

@@ -6,6 +6,7 @@ use App\Http\Middleware\VerifyWalletMemberApi;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
@@ -32,6 +33,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'VerifyWalletMemberApi' => VerifyWalletMemberApi::class,
             'VerifyLineSignature' => VerifyLineSignature::class,
         ]);
+
+        // 限流 key 依賴 VerifyWalletMemberApi 解析出的帳本成員（throttle:ingest），
+        // 同一路由同時掛兩者時必須先驗證身分再限流，否則 client 可自帶 wallet_user 換 key 繞過
+        $middleware->prependToPriorityList(before: ThrottleRequests::class, prepend: VerifyWalletMemberApi::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

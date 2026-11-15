@@ -7,9 +7,11 @@ namespace App\Http\Controllers\Apis\Wallets;
 use App\Docs\OpenApiSchemas;
 use App\Domain\Wallet\Entities\WalletDetail;
 use App\Domain\Wallet\Exceptions\WalletDetailBusinessException;
+use App\Domain\Wallet\Services\WalletDetailIngestService;
 use App\Domain\Wallet\Services\WalletDetailService;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\WalletDetails\CheckoutWalletDetailRequest;
+use App\Http\Requests\WalletDetails\IngestWalletDetailRequest;
 use App\Http\Requests\WalletDetails\StoreWalletDetailRequest;
 use App\Http\Requests\WalletDetails\UncheckoutWalletDetailRequest;
 use App\Http\Requests\WalletDetails\UpdateWalletDetailRequest;
@@ -41,6 +43,33 @@ class WalletDetailController extends ApiController
             $this->walletDetailService->create($walletDetail);
 
             return $this->response()->success();
+        } catch (WalletDetailBusinessException $exception) {
+            return $this->response()->errorBadRequest($this->clientMessage($exception));
+        } catch (Throwable $exception) {
+            return $this->response()->errorInternal($this->clientMessage($exception));
+        }
+    }
+
+    /**
+     * 自動記帳：接收銀行刷卡推播原文，後端解析金額／商店／日期後建立一筆個人消費。
+     * 同一則推播重複送出時回傳既有明細（duplicate=true），不重複建立。
+     */
+    #[Response(200, '建立或回傳既有明細', type: 'array{status:true, code:200, message:string, data:array{id:int, title:string|null, value:float|null, date:string|null, category_id:int|null, parser:string|null, duplicate:bool}}')]
+    #[Response(400, '無法解析推播內容', type: 'array{status:false, code:400, message:string, data:array<string,mixed>|object}')]
+    #[Response(500, 'AI 服務或系統錯誤', type: 'array{status:false, code:500, message:string, data:array<string,mixed>|object}')]
+    public function ingest(int $wallet, IngestWalletDetailRequest $request, WalletDetailIngestService $walletDetailIngestService): JsonResponse
+    {
+        try {
+            /** @var array{text:string, received_at:string, source?:string|null} $validated */
+            $validated = $request->validated();
+
+            return $this->response()->success($walletDetailIngestService->ingest(
+                $wallet,
+                $request->walletUserId(),
+                $validated['text'],
+                $validated['received_at'],
+                isset($validated['source']) ? (string) $validated['source'] : null,
+            ));
         } catch (WalletDetailBusinessException $exception) {
             return $this->response()->errorBadRequest($this->clientMessage($exception));
         } catch (Throwable $exception) {
