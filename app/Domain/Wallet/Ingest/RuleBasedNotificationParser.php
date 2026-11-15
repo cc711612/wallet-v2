@@ -18,30 +18,66 @@ final class RuleBasedNotificationParser
 
     private const CURRENCY = '(?:NT\$|NTD|TWD|新台幣|新臺幣|台幣|臺幣|\$)';
 
-    /** @var array<int, string> 依序嘗試 */
+    /**
+     * 原文命中任一 pattern 即不是一筆消費（回饋入帳、繳款、取消／失敗／退款、驗證碼…），規則解析直接放棄。
+     *
+     * @var array<int, string>
+     */
+    private const EXCLUDE_PATTERNS = [
+        '/回饋|入帳|現金回饋|紅利/u',
+        '/繳款|還款|扣繳|自動扣款|已收到.{0,6}款/u',
+        '/取消|失敗|未成功|未完成|退刷|退款|退貨|沖銷|沖正|撤銷|拒絕/u',
+        '/驗證碼|認證碼|OTP|動態密碼|一次性密碼|簡訊密碼/iu',
+    ];
+
+    /**
+     * 金額前方（同一子句內）出現這些字，代表是累計／額度／帳單金額，不是本筆消費。
+     *
+     * @var array<int, string>
+     */
+    private const AMOUNT_CONTEXT_EXCLUDE_PATTERNS = [
+        '/累計|額度|帳單|應繳|最低|餘額|可用|上限|合計|總計/u',
+    ];
+
+    /**
+     * 依優先序分層嘗試；同一層取第一個不在排除語境的金額（第 1 個 capture group 為金額）。
+     *
+     * @var array<int, string>
+     */
     private const AMOUNT_PATTERNS = [
-        // 消費金額 NT$1,234／刷卡金額1,234元／交易金額：TWD 1,234.5
-        '/(?:消費|刷卡|交易|簽帳|授權)?金額\s*[:：為]?\s*'.self::CURRENCY.'?\s*'.self::NUMBER.'/u',
+        // 消費金額 NT$1,234／刷卡金額1,234元／授權金額：TWD 1,234.5
+        '/(?:消費|刷卡|交易|簽帳|授權)金額\s*[:：為]?\s*'.self::CURRENCY.'?\s*'.self::NUMBER.'/u',
+        // 刷卡 NT$1,234／消費新台幣85元／使用 NT$1,000
+        '/(?:消費|刷卡|簽帳|授權|使用)\s*'.self::CURRENCY.'\s*'.self::NUMBER.'/u',
+        // 金額:NT$100／金額 1,234 元
+        '/金額\s*[:：為]?\s*'.self::CURRENCY.'?\s*'.self::NUMBER.'/u',
         // NT$1,234／TWD 1,234／新台幣85元
         '/'.self::CURRENCY.'\s*'.self::NUMBER.'/u',
         // 1,234元
         '/'.self::NUMBER.'\s*元/u',
     ];
 
-    /** @var array<int, string> 依序嘗試 */
+    /**
+     * 商店名稱的開頭樣式（第 1 個 capture group 為候選商店，之後再以 MERCHANT_STOP_PATTERN 截斷）。
+     *
+     * @var array<int, string>
+     */
     private const MERCHANT_PATTERNS = [
-        // 商店：全家便利商店／特店名稱:ABC
-        '/(?:消費商店|交易商店|商店名稱|特店名稱|商店|特店|商家|消費地點)\s*[:：]\s*([^\n，,。;；]+)/u',
+        // 商店：全家便利商店／特店名稱:ABC（全形、半形冒號；千分位逗號不算分隔，交給截斷處理）
+        '/(?:消費商店|交易商店|商店名稱|特店名稱|商店|特店|商家|消費地點)\s*[:：]\s*((?:[^\n，,。;；]|(?<=\d),(?=\d))+)/u',
         // 在全家刷卡／在 全家 消費
         '/在\s*(.+?)\s*(?:刷卡|消費|交易|使用)/u',
         // 於全聯福利中心消費
         '/於\s*(.+?)\s*(?:刷卡|消費|交易|使用)/u',
     ];
 
+    /** 商店名遇到這些內容就截斷：金額／交易字樣、幣別、數字+元、卡號字樣、日期 */
+    private const MERCHANT_STOP_PATTERN = '/\s*(?:金額|消費|刷卡|授權|交易|NT\$|NTD|TWD|新台幣|新臺幣|台幣|臺幣|\$|卡號|末四碼|末4碼|後四碼|尾號|尾數|卡末|\d[\d,]*(?:\.\d+)?\s*元|\d{4}[\/\-.]\d{1,2}|(?<!\d)\d{1,2}\/\d{1,2}|\d{1,2}:\d{2})/u';
+
     public function parse(string $text, CarbonImmutable $receivedAt): ?ParsedExpense
     {
         $text = trim($text);
-        if ($text === '') {
+        if ($text === '' || $this->isExcluded($text)) {
             return null;
         }
 
@@ -54,20 +90,55 @@ final class RuleBasedNotificationParser
         return new ParsedExpense($amount, $merchant, $this->parseDate($text, $receivedAt), ParsedExpense::PARSER_RULE);
     }
 
+    private function isExcluded(string $text): bool
+    {
+        foreach (self::EXCLUDE_PATTERNS as $pattern) {
+            if (preg_match($pattern, $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function parseAmount(string $text): ?float
     {
         foreach (self::AMOUNT_PATTERNS as $pattern) {
-            if (preg_match($pattern, $text, $matches) !== 1) {
+            if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE) === 0) {
                 continue;
             }
 
-            $amount = (float) str_replace(',', '', $matches[1]);
-            if ($amount > 0 && $amount <= self::MAX_AMOUNT) {
-                return $amount;
+            foreach ($matches as $match) {
+                if ($this->inExcludedAmountContext($text, (int) $match[0][1])) {
+                    continue;
+                }
+
+                $amount = (float) str_replace(',', '', $match[1][0]);
+                if ($amount > 0 && $amount <= self::MAX_AMOUNT) {
+                    return $amount;
+                }
             }
         }
 
         return null;
+    }
+
+    /**
+     * 檢查金額前方同一子句（最多 10 字、不跨標點）是否為累計／額度語境。
+     */
+    private function inExcludedAmountContext(string $text, int $byteOffset): bool
+    {
+        $prefix = mb_substr(substr($text, 0, $byteOffset), -10);
+        $parts = preg_split('/[\n，,。;；!！]/u', $prefix);
+        $clause = is_array($parts) ? (string) end($parts) : $prefix;
+
+        foreach (self::AMOUNT_CONTEXT_EXCLUDE_PATTERNS as $pattern) {
+            if (preg_match($pattern, $clause) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function parseMerchant(string $text): ?string
@@ -92,11 +163,15 @@ final class RuleBasedNotificationParser
         // 「於11/15 13:15於全聯消費」這類寫法：去掉前置日期時間與重複的介系詞
         $merchant = (string) preg_replace('/^(?:\d{2,4}[\/\-.])?\d{1,2}[\/\-.]\d{1,2}\s*(?:\d{1,2}:\d{2}(?::\d{2})?)?\s*/u', '', $merchant);
         $merchant = (string) preg_replace('/^(?:於|在)\s*/u', '', $merchant);
-        $merchant = trim($merchant, " \t\n\r\0\x0B:：,，。;；");
+        // 同一行後面的金額、卡號、日期等內容不屬於商店名
+        $parts = preg_split(self::MERCHANT_STOP_PATTERN, $merchant, 2);
+        $merchant = is_array($parts) ? (string) $parts[0] : $merchant;
+        // trim() 的 charlist 以 byte 處理，含全形字會切壞 UTF-8，改用 /u 正規表示式
+        $merchant = (string) preg_replace('/^[\s:：,，。;；(（]+|[\s:：,，。;；(（]+$/u', '', $merchant);
 
         $length = mb_strlen($merchant);
-        // 太長多半是誤抓整段句子，寧可交給 AI；商店名稱不可含金額字樣
-        if ($length < 1 || $length > 60 || preg_match('/'.self::CURRENCY.'\s*\d/u', $merchant) === 1) {
+        // 太長多半是誤抓整段句子，寧可交給 AI
+        if ($length < 1 || $length > 60) {
             return null;
         }
 

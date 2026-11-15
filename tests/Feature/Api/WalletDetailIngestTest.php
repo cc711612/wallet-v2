@@ -269,6 +269,77 @@ class WalletDetailIngestTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /**
+     * @return array<string, array{0:string}>
+     */
+    public static function nonExpenseNotifications(): array
+    {
+        return [
+            '回饋入帳' => ['消費獲得回饋 NT$30 已入帳'],
+            '繳款' => ['繳款 NT$12,345，商店：信用卡中心'],
+            '取消' => ['您在全家刷卡 NT$120 交易已取消'],
+            '授權失敗' => ['於全家消費金額NT$120 授權失敗'],
+            '交易失敗' => ['您在全家刷卡 NT$120 交易失敗'],
+            '未成功' => ['您在全家刷卡 NT$120 未成功'],
+            '退刷' => ['您在全家退刷 NT$120'],
+            '退款' => ['您在全家消費 NT$120 已退款'],
+            '沖銷' => ['於全家消費 NT$120 已沖銷'],
+            '撤銷' => ['於全家消費 NT$120 已撤銷'],
+            '驗證碼' => ['在 Apple 使用 NT$1,000，驗證碼 123456'],
+            '只有累計與額度金額' => ['本期累計 NT$50,000，可用額度 NT$80,000，於全家消費'],
+        ];
+    }
+
+    #[DataProvider('nonExpenseNotifications')]
+    public function test_non_expense_notifications_return_400_without_writing(string $text): void
+    {
+        $this->ingest(['text' => $text])
+            ->assertOk()
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400)
+            ->assertJsonPath('message', '無法解析推播內容');
+
+        $this->assertSame(0, DB::table('wallet_details')->count());
+        $this->assertNull(Cache::get($this->dedupKey($text)));
+        Http::assertNothingSent();
+    }
+
+    /**
+     * @return array<string, array{0:string, 1:string, 2:int}>
+     */
+    public static function merchantTruncationCases(): array
+    {
+        return [
+            '商店後接消費金額與卡號' => ['商店：全家 消費金額 1500 元 卡號末四碼 1234', '全家', 1500],
+            '商店後接數字+元' => ['商店：全家 1,234元', '全家', 1234],
+            '半形冒號' => ['商店:全家 金額:NT$100', '全家', 100],
+            '累計金額在前' => ['本期累計消費金額 NT$50,000，本筆刷卡金額 NT$1,200，於全家消費', '全家', 1200],
+        ];
+    }
+
+    #[DataProvider('merchantTruncationCases')]
+    public function test_merchant_is_truncated_and_title_has_no_card_digits(string $text, string $title, int $value): void
+    {
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.title', $title)
+            ->assertJsonPath('data.value', $value);
+
+        $detail = DB::table('wallet_details')->first();
+        $this->assertSame($title, $detail->title);
+        $this->assertStringNotContainsString('1234 ', (string) $detail->note.' ');
+    }
+
+    public function test_title_is_masked_before_writing(): void
+    {
+        // 截斷規則沒擋到的號碼（例如商店名中夾帶長串帳號）寫入前也要遮罩
+        $this->ingest(['text' => '您於 ABC 1234567890123 商行消費 NT$80'])
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.title', 'ABC **** 商行');
+
+        $this->assertSame('ABC **** 商行', (string) DB::table('wallet_details')->value('title'));
+    }
+
     public function test_ai_fallback_creates_detail_with_masked_prompt(): void
     {
         config(['services.ingest.ai_enabled' => true]);

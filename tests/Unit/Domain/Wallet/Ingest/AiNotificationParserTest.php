@@ -114,6 +114,8 @@ class AiNotificationParserTest extends TestCase
                     && str_contains($prompt, 'NT$1,234')
                     && str_contains($prompt, '不受信任')
                     && str_contains($prompt, '忽略')
+                    && preg_match('/以下一律為 false：.*回饋.*繳款.*取消.*失敗.*退刷或退款.*驗證碼/u', $prompt) === 1
+                    && str_contains($prompt, '不可取累計、額度')
                     && ($options['generationConfig']['responseMimeType'] ?? null) === 'application/json';
             })
             ->andReturn(['candidates' => [['content' => ['parts' => [['text' => '{"is_expense":true,"amount":1234,"merchant":"全家","date":null}']]]]]]);

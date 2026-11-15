@@ -30,6 +30,8 @@ class WalletDetailIngestService
 
     private const NOTE_TEXT_LIMIT = 1000;
 
+    private const TITLE_LIMIT = 255;
+
     private const DEDUP_TTL_DAYS = 30;
 
     private const LOCK_SECONDS = 30;
@@ -83,7 +85,7 @@ class WalletDetailIngestService
 
                     return [
                         'id' => $detailId,
-                        'title' => $parsed->merchant,
+                        'title' => $this->title($parsed),
                         'value' => $parsed->amount,
                         'date' => $this->detailDate($parsed, $received),
                         'category_id' => null,
@@ -134,7 +136,7 @@ class WalletDetailIngestService
             'wallet_user_id' => $walletUserId,
             'type' => WalletDetailType::GENERAL_EXPENSE->value,
             'symbol_operation_type_id' => SymbolOperationType::DECREMENT->value,
-            'title' => $parsed->merchant,
+            'title' => $this->title($parsed),
             'value' => $parsed->amount,
             'select_all' => false,
             'is_personal' => true,
@@ -154,6 +156,14 @@ class WalletDetailIngestService
         }
 
         return $detailId;
+    }
+
+    /**
+     * 商店名寫入前同樣遮罩卡號，並限制長度。
+     */
+    private function title(ParsedExpense $parsed): string
+    {
+        return mb_substr(NotificationTextMasker::mask($parsed->merchant), 0, self::TITLE_LIMIT);
     }
 
     private function detailDate(ParsedExpense $parsed, CarbonImmutable $received): string

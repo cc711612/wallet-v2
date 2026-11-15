@@ -25,6 +25,13 @@ class NotificationTextMaskerTest extends TestCase
             '連續星號末碼' => ['卡片 ****1234', '卡片 ****'],
             '帳號長數字' => ['轉入帳戶 00123456789012', '轉入帳戶 ****'],
             '尾數' => ['尾數5678', '尾數****'],
+            '尾號' => ['尾號1234', '尾號****'],
+            '末四碼括號' => ['末四碼 (1234)', '末四碼 (****)'],
+            '卡號末四碼括號' => ['卡號末四碼(1234)', '卡號末四碼(****)'],
+            'Card ending' => ['Card ending 1234', 'Card ending ****'],
+            'card ending in 小寫' => ['your card ending in 9876 was charged', 'your card ending in **** was charged'],
+            '卡片 4 碼' => ['卡片 5678', '卡片 ****'],
+            '信用卡括號' => ['信用卡(5678)於全家消費', '信用卡(****)於全家消費'],
         ];
     }
 
@@ -32,6 +39,30 @@ class NotificationTextMaskerTest extends TestCase
     public function test_it_masks_card_and_account_numbers(string $input, string $expected): void
     {
         $this->assertSame($expected, NotificationTextMasker::mask($input));
+    }
+
+    /**
+     * @return array<string, array{0:string}>
+     */
+    public static function untouched(): array
+    {
+        return [
+            'NT$ 千分位' => ['NT$1,234'],
+            '數字+元' => ['1234元'],
+            '數字 空白 元' => ['5000 元'],
+            '西元日期' => ['2026/11/15'],
+            '月日' => ['11/15'],
+            '卡片消費金額' => ['卡片消費 5678 元'],
+            '卡片後接金額' => ['信用卡 1234元'],
+            '卡片後接日期' => ['信用卡 2026/11/15 消費'],
+            '卡片後接千分位' => ['卡片 5,678 元'],
+        ];
+    }
+
+    #[DataProvider('untouched')]
+    public function test_amounts_and_dates_are_not_masked(string $text): void
+    {
+        $this->assertSame($text, NotificationTextMasker::mask($text));
     }
 
     public function test_amounts_and_dates_are_kept(): void
