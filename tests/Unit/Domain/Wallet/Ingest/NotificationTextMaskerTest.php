@@ -32,6 +32,13 @@ class NotificationTextMaskerTest extends TestCase
             'card ending in 小寫' => ['your card ending in 9876 was charged', 'your card ending in **** was charged'],
             '卡片 4 碼' => ['卡片 5678', '卡片 ****'],
             '信用卡括號' => ['信用卡(5678)於全家消費', '信用卡(****)於全家消費'],
+            'Visa 4 碼' => ['Visa 1234 消費', 'Visa **** 消費'],
+            'VISA 星號' => ['VISA*1234', 'VISA****'],
+            'JCB 卡括號' => ['JCB卡(4321)', 'JCB卡(****)'],
+            'MasterCard' => ['MasterCard 8765', 'MasterCard ****'],
+            '末 4 碼 空白' => ['末 4 碼 4321', '末 4 碼 ****'],
+            '身分證' => ['持卡人 A123456789 您好', '持卡人 **** 您好'],
+            'xx 遮罩後接 4 碼' => ['卡號xx1234', '卡號****'],
         ];
     }
 
@@ -56,6 +63,11 @@ class NotificationTextMaskerTest extends TestCase
             '卡片後接金額' => ['信用卡 1234元'],
             '卡片後接日期' => ['信用卡 2026/11/15 消費'],
             '卡片後接千分位' => ['卡片 5,678 元'],
+            '卡片後接 NTD' => ['卡片 1500 NTD'],
+            '信用卡後接 TWD' => ['信用卡 1234 TWD'],
+            'Visa 後接金額' => ['Visa 1,234元'],
+            '店名含 XX+數字' => ['XX12 Burger'],
+            '店名 85度C' => ['85度C'],
         ];
     }
 
@@ -63,6 +75,13 @@ class NotificationTextMaskerTest extends TestCase
     public function test_amounts_and_dates_are_not_masked(string $text): void
     {
         $this->assertSame($text, NotificationTextMasker::mask($text));
+    }
+
+    public function test_sanitize_removes_null_byte_and_control_characters(): void
+    {
+        $this->assertSame("全家\n消費", NotificationTextMasker::sanitize("全\0家\x07\n消\x1B費\u{200B}"));
+        $this->assertSame('全家 消費', NotificationTextMasker::singleLine("全\0家\r\n消費\t"));
+        $this->assertSame('', NotificationTextMasker::sanitize("\xff\xfe"));
     }
 
     public function test_amounts_and_dates_are_kept(): void

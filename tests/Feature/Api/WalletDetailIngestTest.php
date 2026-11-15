@@ -248,7 +248,7 @@ class WalletDetailIngestTest extends TestCase
         Http::fake(function () use ($key) {
             Cache::put($key, 555, now()->addDay());
 
-            return Http::response(['candidates' => [['content' => ['parts' => [['text' => '{"is_expense":true,"amount":120,"merchant":"某某咖啡","date":null}']]]]]]);
+            return Http::response(['candidates' => [['content' => ['parts' => [['text' => '{"is_expense":true,"currency":"TWD","amount":120,"merchant":"某某咖啡","date":null}']]]]]]);
         });
 
         $this->ingest(['text' => self::AI_TEXT])->assertJsonPath('data.id', 555)->assertJsonPath('data.duplicate', true);
@@ -287,6 +287,23 @@ class WalletDetailIngestTest extends TestCase
             '撤銷' => ['於全家消費 NT$120 已撤銷'],
             '驗證碼' => ['在 Apple 使用 NT$1,000，驗證碼 123456'],
             '只有累計與額度金額' => ['本期累計 NT$50,000，可用額度 NT$80,000，於全家消費'],
+            '刷卡滿額送' => ['刷卡滿 NT$3,000 送 300 元禮券，於全家消費'],
+            '消費滿折' => ['消費滿 NT$1,111 折 111 元，在全家刷卡'],
+            '分期付款通知' => ['您於全國電子消費金額NT$36,000，分期付款 12 期，每期 NT$3,000'],
+            '分3期' => ['您於Apple消費金額NT$30,000 分3期'],
+            '年費' => ['於信用卡中心扣年費 NT$1,200'],
+            '遲繳' => ['您在本行刷卡 NT$300 遲繳費用'],
+            '預借現金' => ['您在 ATM 預借現金 NT$5,000'],
+            '利息' => ['於本行消費 利息 NT$88'],
+            '手續費' => ['在全家刷卡手續費 NT$15'],
+            '帳單提醒' => ['本期帳單 NT$12,000，於全家消費'],
+            'US$' => ['您在 Amazon 刷卡 US$25.99'],
+            '$ + (USD)' => ['您在 Netflix 刷卡 $25.99 (USD)'],
+            '日圓 元' => ['您於 唐吉訶德 消費 日圓 3,990 元'],
+            'JPY' => ['您在 唐吉訶德 刷卡 JPY 3990'],
+            'EUR' => ['您在 Zara 刷卡 EUR 49.9'],
+            '美金' => ['您於 Apple 消費美金 9.99 元'],
+            '€ 符號' => ['您在 Zara 刷卡 €49'],
         ];
     }
 
@@ -343,7 +360,7 @@ class WalletDetailIngestTest extends TestCase
     public function test_ai_fallback_creates_detail_with_masked_prompt(): void
     {
         config(['services.ingest.ai_enabled' => true]);
-        $this->geminiReturns(['is_expense' => true, 'amount' => 120, 'merchant' => '某某咖啡', 'date' => '2026-11-14']);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 120, 'merchant' => '某某咖啡', 'date' => '2026-11-14']);
 
         $response = $this->ingest(['text' => self::AI_TEXT]);
 
@@ -365,10 +382,101 @@ class WalletDetailIngestTest extends TestCase
         });
     }
 
+    public function test_ai_foreign_currency_returns_400_without_writing(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'USD', 'amount' => 25.99, 'merchant' => 'Amazon', 'date' => null]);
+
+        $this->ingest(['text' => self::AI_TEXT])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400)
+            ->assertJsonPath('message', '無法解析推播內容');
+
+        Http::assertSentCount(1);
+        $this->assertSame(0, DB::table('wallet_details')->count());
+        $this->assertNull(Cache::get($this->dedupKey(self::AI_TEXT)));
+    }
+
+    public function test_control_character_only_text_does_not_call_ai(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $text = "\x07\x1B\x7F";
+
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400)
+            ->assertJsonPath('message', '無法解析推播內容');
+
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('wallet_details')->count());
+    }
+
+    public function test_invalid_utf8_text_does_not_call_ai(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+
+        // JSON 無法攜帶非法 UTF-8，改用 form 送出
+        $this->withToken($this->userJwt($this->alice))
+            ->post('/api/wallet/1/detail/ingest', ['text' => "\xff\xfe 在全家刷卡", 'received_at' => self::RECEIVED_AT], ['Accept' => 'application/json'])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400)
+            ->assertJsonPath('message', '無法解析推播內容');
+
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('wallet_details')->count());
+    }
+
+    public function test_null_byte_and_control_characters_are_removed_from_title_and_note(): void
+    {
+        $this->ingest(['text' => "您在全\0家\x07刷卡 NT$80\r\n謝謝"])
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.title', '全家');
+
+        $detail = DB::table('wallet_details')->first();
+        $this->assertSame('全家', $detail->title);
+        $this->assertSame('[auto-ingest] 您在全家刷卡 NT$80 謝謝', $detail->note);
+        $this->assertStringNotContainsString("\0", (string) $detail->note);
+    }
+
+    public function test_ai_prompt_has_no_control_characters(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 120, 'merchant' => '某某咖啡', 'date' => null]);
+
+        $this->ingest(['text' => "EasyCard\0 一百二十元 @ 某某咖啡"])->assertJsonPath('status', true);
+
+        Http::assertSent(static fn (HttpRequest $request): bool => ! str_contains($request->body(), '\\u0000'));
+    }
+
+    /**
+     * @return array<string, array{0:string, 1:string, 2:int}>
+     */
+    public static function regularMerchants(): array
+    {
+        return [
+            '7-ELEVEN' => ['您於7-ELEVEN消費 NT$85', '7-ELEVEN', 85],
+            'PChome 24h購物' => ['您在PChome 24h購物刷卡 NT$1,299', 'PChome 24h購物', 1299],
+            '全聯福利中心 一店' => ['您於全聯福利中心 一店消費 NT$500', '全聯福利中心 一店', 500],
+            'Uniqlo-台北101' => ['您於Uniqlo-台北101消費 NT$990', 'Uniqlo-台北101', 990],
+            '85度C' => ['您於85度C消費 NT$120', '85度C', 120],
+            'XX12 Burger 不被遮罩' => ['您於XX12 Burger消費 NT$250', 'XX12 Burger', 250],
+        ];
+    }
+
+    #[DataProvider('regularMerchants')]
+    public function test_regular_merchants_still_succeed(string $text, string $title, int $value): void
+    {
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.title', $title)
+            ->assertJsonPath('data.value', $value)
+            ->assertJsonPath('data.parser', 'rule');
+    }
+
     public function test_ai_date_too_far_from_received_at_falls_back_to_received_date(): void
     {
         config(['services.ingest.ai_enabled' => true]);
-        $this->geminiReturns(['is_expense' => true, 'amount' => 120, 'merchant' => '某某咖啡', 'date' => '2025-01-01']);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 120, 'merchant' => '某某咖啡', 'date' => '2025-01-01']);
 
         $this->ingest(['text' => self::AI_TEXT])->assertJsonPath('data.date', '2026-11-15');
     }
@@ -379,11 +487,11 @@ class WalletDetailIngestTest extends TestCase
     public static function invalidAiOutputs(): array
     {
         return [
-            '負金額' => [['is_expense' => true, 'amount' => -120, 'merchant' => '某某咖啡', 'date' => null]],
-            '超過上限' => [['is_expense' => true, 'amount' => 1000001, 'merchant' => '某某咖啡', 'date' => null]],
-            'is_expense=false' => [['is_expense' => false, 'amount' => 120, 'merchant' => '某某咖啡', 'date' => null]],
+            '負金額' => [['is_expense' => true, 'currency' => 'TWD', 'amount' => -120, 'merchant' => '某某咖啡', 'date' => null]],
+            '超過上限' => [['is_expense' => true, 'currency' => 'TWD', 'amount' => 1000001, 'merchant' => '某某咖啡', 'date' => null]],
+            'is_expense=false' => [['is_expense' => false, 'currency' => 'TWD', 'amount' => 120, 'merchant' => '某某咖啡', 'date' => null]],
             '壞 JSON' => ['{"is_expense": true, "amount": 12'],
-            '缺欄位' => [['is_expense' => true, 'amount' => 120]],
+            '缺欄位' => [['is_expense' => true, 'currency' => 'TWD', 'amount' => 120]],
         ];
     }
 
@@ -411,7 +519,7 @@ class WalletDetailIngestTest extends TestCase
         config(['services.ingest.ai_enabled' => true]);
         Http::fakeSequence()
             ->push(['error' => ['message' => 'upstream exploded with secret detail']], 500)
-            ->push(['candidates' => [['content' => ['parts' => [['text' => '{"is_expense":true,"amount":120,"merchant":"某某咖啡","date":null}']]]]]]);
+            ->push(['candidates' => [['content' => ['parts' => [['text' => '{"is_expense":true,"currency":"TWD","amount":120,"merchant":"某某咖啡","date":null}']]]]]]);
 
         $this->ingest(['text' => self::AI_TEXT])
             ->assertStatus(500)

@@ -116,6 +116,16 @@ class WalletDetailIngestService
 
     private function parse(string $text, CarbonImmutable $received): ParsedExpense
     {
+        // 非法 UTF-8 無法可靠解析或遮罩，直接拒絕（也不送 AI）
+        if (! mb_check_encoding($text, 'UTF-8')) {
+            throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
+        }
+
+        $text = NotificationTextMasker::sanitize($text);
+        if (trim($text) === '') {
+            throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
+        }
+
         $parsed = $this->ruleParser->parse($text, $received);
         if ($parsed !== null) {
             return $parsed;
@@ -145,7 +155,7 @@ class WalletDetailIngestService
             'splits' => [],
             'unit' => 'TWD',
             'date' => $this->detailDate($parsed, $received),
-            'note' => self::NOTE_PREFIX.' '.mb_substr(NotificationTextMasker::mask(trim($text)), 0, self::NOTE_TEXT_LIMIT),
+            'note' => self::NOTE_PREFIX.' '.mb_substr(NotificationTextMasker::mask(NotificationTextMasker::singleLine($text)), 0, self::NOTE_TEXT_LIMIT),
             'category_id' => null,
         ]);
 
@@ -163,7 +173,7 @@ class WalletDetailIngestService
      */
     private function title(ParsedExpense $parsed): string
     {
-        return mb_substr(NotificationTextMasker::mask($parsed->merchant), 0, self::TITLE_LIMIT);
+        return mb_substr(NotificationTextMasker::mask(NotificationTextMasker::singleLine($parsed->merchant)), 0, self::TITLE_LIMIT);
     }
 
     private function detailDate(ParsedExpense $parsed, CarbonImmutable $received): string

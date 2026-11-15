@@ -28,6 +28,27 @@ final class RuleBasedNotificationParser
         '/繳款|還款|扣繳|自動扣款|已收到.{0,6}款/u',
         '/取消|失敗|未成功|未完成|退刷|退款|退貨|沖銷|沖正|撤銷|拒絕/u',
         '/驗證碼|認證碼|OTP|動態密碼|一次性密碼|簡訊密碼/iu',
+        // 行銷／促銷：刷卡滿 NT$3,000 送…、消費滿 NT$1,111 折 111 元
+        '/滿\s*'.self::CURRENCY.'?\s*\d|滿額|滿.{0,12}(?:送|折|抵|贈)|折\s*\d|現折|抵\s*\d|折抵|回饋活動|優惠|加碼|抽獎|限時|活動期間|登錄|好禮/u',
+        // 分期：即使是真實刷卡同時分期，也不自動記帳（金額與每期款項無法可靠判斷）
+        '/分期|期付款|每期|第\s*\d+\s*期|分\s*\d+\s*期|期數/u',
+        // 帳務類：年費、遲繳／逾期、預借現金／提領、利息、手續費、帳單／對帳單提醒
+        '/年費|遲繳|逾期|延滯|提領|預借現金|領現|利息|循環信用|手續費|帳單|對帳單/u',
+    ];
+
+    /**
+     * 原文出現非台幣的幣別標記即放棄（不猜匯率、不寫成 TWD）。
+     * NT$、新台幣、TWD、元視為台幣；裸 $ 沒有其他幣別線索時也視為台幣。
+     *
+     * @var array<int, string>
+     */
+    private const FOREIGN_CURRENCY_PATTERNS = [
+        // 幣別代碼（前後不接英文字母）與帶前綴的 $
+        '/(?<![A-Za-z])(?:USD|JPY|EUR|GBP|HKD|CNY|RMB|KRW|THB|SGD|AUD|CAD|MYR|VND|CHF|NZD|PHP|IDR|INR|MOP)(?![A-Za-z])|(?<![A-Za-z])(?:US|HK|S|A|C|NZ|AU)\$/iu',
+        // 中文幣別
+        '/美金|美元|日圓|日幣|日元|歐元|英鎊|港幣|港元|人民幣|韓元|韓圜|泰銖|新加坡幣|新幣|澳幣|澳元|加幣|加元|令吉|越南盾|披索|瑞士法郎|紐幣|印尼盾|盧比|澳門幣|外幣/u',
+        // 幣別符號
+        '/[￥¥€£₩฿円]/u',
     ];
 
     /**
@@ -77,7 +98,7 @@ final class RuleBasedNotificationParser
     public function parse(string $text, CarbonImmutable $receivedAt): ?ParsedExpense
     {
         $text = trim($text);
-        if ($text === '' || $this->isExcluded($text)) {
+        if ($text === '' || $this->isExcluded($text) || $this->hasForeignCurrency($text)) {
             return null;
         }
 
@@ -88,6 +109,17 @@ final class RuleBasedNotificationParser
         }
 
         return new ParsedExpense($amount, $merchant, $this->parseDate($text, $receivedAt), ParsedExpense::PARSER_RULE);
+    }
+
+    private function hasForeignCurrency(string $text): bool
+    {
+        foreach (self::FOREIGN_CURRENCY_PATTERNS as $pattern) {
+            if (preg_match($pattern, $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function isExcluded(string $text): bool
