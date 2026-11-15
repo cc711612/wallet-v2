@@ -8,7 +8,9 @@ use App\Domain\Wallet\Entities\WalletDetail;
 use App\Domain\Wallet\Enums\SymbolOperationType;
 use App\Domain\Wallet\Enums\WalletDetailType;
 use App\Domain\Wallet\Exceptions\WalletDetailBusinessException;
+use App\Domain\Wallet\Ingest\AiExpenseGuard;
 use App\Domain\Wallet\Ingest\AiNotificationParser;
+use App\Domain\Wallet\Ingest\NotificationTemplateRegistry;
 use App\Domain\Wallet\Ingest\NotificationTextMasker;
 use App\Domain\Wallet\Ingest\ParsedExpense;
 use App\Domain\Wallet\Ingest\RuleBasedNotificationParser;
@@ -39,8 +41,10 @@ class WalletDetailIngestService
     public function __construct(
         private WalletDetailService $walletDetailService,
         private WalletDetailQueryRepositoryInterface $walletDetailQueryRepository,
+        private NotificationTemplateRegistry $templateRegistry,
         private RuleBasedNotificationParser $ruleParser,
         private AiNotificationParser $aiParser,
+        private AiExpenseGuard $aiGuard,
     ) {}
 
     /**
@@ -49,7 +53,7 @@ class WalletDetailIngestService
      * @throws WalletDetailBusinessException 無法解析（不寫入）
      * @throws RuntimeException AI 服務失敗、同一則推播正在處理中
      */
-    public function ingest(int $walletId, int $walletUserId, string $text, string $receivedAt): array
+    public function ingest(int $walletId, int $walletUserId, string $text, string $receivedAt, ?string $source = null): array
     {
         $received = $this->receivedAt($receivedAt);
         $dedupKey = $this->dedupKey($walletId, $walletUserId, $text, $received);
@@ -61,7 +65,7 @@ class WalletDetailIngestService
         }
 
         // 解析沒有副作用，失敗直接丟例外，不會留下去重 key
-        $parsed = $this->parse($text, $received);
+        $parsed = $this->parse($text, $received, $source);
 
         try {
             return Cache::lock($dedupKey.':lock', self::LOCK_SECONDS)->block(
@@ -114,37 +118,48 @@ class WalletDetailIngestService
         return CarbonImmutable::parse($receivedAt)->setTimezone($this->timezone());
     }
 
-    private function parse(string $text, CarbonImmutable $received): ParsedExpense
+    /**
+     * 解析順序：模板白名單 → （選用）啟發式規則 → （選用）AI 備援；都沒有結果回 400。
+     */
+    private function parse(string $text, CarbonImmutable $received, ?string $source): ParsedExpense
     {
         // 非法 UTF-8 無法可靠解析或遮罩，直接拒絕（也不送 AI）
         if (! mb_check_encoding($text, 'UTF-8')) {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
-        // 先清理控制／格式字元，再全形轉半形（解析、遮罩、送 AI 都用這份）
+        // 先清理控制／格式字元，再全形轉半形（模板比對、遮罩、送 AI 都用這份）
         $text = trim(NotificationTextMasker::normalizeWidth(NotificationTextMasker::sanitize($text)));
         if ($text === '') {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
-        $parsed = $this->ruleParser->parse($text, $received);
+        $parsed = $this->templateRegistry->match($text, $source, $received);
         if ($parsed !== null) {
             return $parsed;
+        }
+
+        // 啟發式規則：held-out 驗收約 33% 非消費誤記，預設關閉
+        if ((bool) config('services.ingest.heuristic_enabled', false)) {
+            $parsed = $this->ruleParser->parse($text, $received);
+            if ($parsed !== null) {
+                return $parsed;
+            }
         }
 
         if (! (bool) config('services.ingest.ai_enabled', false)) {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
-        // 原文已命中強排除或外幣標記：不浪費 AI 呼叫
-        if ($this->ruleParser->rejectionReason($text, null, false) !== null) {
+        // AI 路徑保守把關：整段原文有排除字或外幣線索就不送 AI，直接拒絕
+        if ($this->aiGuard->rejectsBeforeAi($text)) {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
         $parsed = $this->aiParser->parse($text, $received);
 
-        // AI 結果交叉檢查：原文命中外幣或排除規則一律拒絕，即使 AI 回 TWD／is_expense=true
-        if ($this->ruleParser->rejectionReason($text, $parsed->merchant) !== null) {
+        // AI 給的金額必須真的出現在原文裡（防止幻覺或被原文中的指令誘導）
+        if (! $this->aiGuard->amountAppearsInText($parsed->amount, $text)) {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 

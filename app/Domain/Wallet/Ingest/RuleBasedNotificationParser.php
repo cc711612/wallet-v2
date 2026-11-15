@@ -157,6 +157,14 @@ final class RuleBasedNotificationParser
         return $this->rejectionIn($clauses, $transaction['index'], $merchant, $includeSoft);
     }
 
+    /**
+     * 對整段原文做強排除、軟排除與外幣檢查（不縮小範圍、不剔除商店名）；AI 路徑使用的保守檢查。
+     */
+    public function wholeTextRejectionReason(string $text): ?string
+    {
+        return $this->rejectionIn([$this->normalize($text)], 0, null);
+    }
+
     private function normalize(string $text): string
     {
         return trim(NotificationTextMasker::normalizeWidth(NotificationTextMasker::sanitize($text)));

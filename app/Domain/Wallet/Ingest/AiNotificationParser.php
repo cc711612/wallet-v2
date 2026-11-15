@@ -74,7 +74,13 @@ class AiNotificationParser
         }
 
         $amount = $parsed['amount'];
-        if ((! is_int($amount) && ! is_float($amount)) || $amount <= 0 || $amount > RuleBasedNotificationParser::MAX_AMOUNT) {
+        if (! is_int($amount) && ! is_float($amount)) {
+            throw $this->unparseable();
+        }
+
+        // 金額只保留 2 位小數，不原樣寫入 250.123456
+        $amount = round((float) $amount, 2);
+        if ($amount <= 0 || $amount > RuleBasedNotificationParser::MAX_AMOUNT) {
             throw $this->unparseable();
         }
 
@@ -84,7 +90,7 @@ class AiNotificationParser
             throw $this->unparseable();
         }
 
-        return new ParsedExpense((float) $amount, $merchant, $this->acceptableDate($parsed['date'] ?? null, $receivedAt), ParsedExpense::PARSER_AI);
+        return new ParsedExpense($amount, $merchant, $this->acceptableDate($parsed['date'] ?? null, $receivedAt), ParsedExpense::PARSER_AI);
     }
 
     /**

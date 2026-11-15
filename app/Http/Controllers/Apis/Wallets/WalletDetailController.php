@@ -68,6 +68,7 @@ class WalletDetailController extends ApiController
                 $request->walletUserId(),
                 $validated['text'],
                 $validated['received_at'],
+                isset($validated['source']) ? (string) $validated['source'] : null,
             ));
         } catch (WalletDetailBusinessException $exception) {
             return $this->response()->errorBadRequest($this->clientMessage($exception));

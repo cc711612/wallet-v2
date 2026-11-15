@@ -1,0 +1,94 @@
+{
+  "template": "example-bank-purchase",
+  "note": "範例（example）fixture：虛構的「範例銀行」格式，只用來測試模板機制，不是真實銀行推播。",
+  "positive": [
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,350。",
+      "source": "com.example.bank",
+      "amount": 1350,
+      "merchant": "鼎泰豐 信義店",
+      "date": "2026-11-14"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/15 08:05在全家便利商店消費NT$85。",
+      "source": "com.example.bank.app",
+      "amount": 85,
+      "merchant": "全家便利商店",
+      "date": "2026-11-15"
+    },
+    {
+      "text": "  【範例銀行】您的信用卡於１１/１５ ０８:０５在全家消費ＮＴ＄９９．５。\n",
+      "source": "com.example.bank",
+      "amount": 99.5,
+      "merchant": "全家",
+      "date": "2026-11-15"
+    }
+  ],
+  "negative": [
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,350已取消。",
+      "source": "com.example.bank",
+      "reason": "取消"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店退款NT$1,350。",
+      "source": "com.example.bank",
+      "reason": "退款"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在台塑石化預先授權NT$1,500。",
+      "source": "com.example.bank",
+      "reason": "預先授權"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在燦坤消費NT$30,000。本筆已轉分期12期。",
+      "source": "com.example.bank",
+      "reason": "分期（尾句）"
+    },
+    {
+      "text": "【範例銀行】您於鼎泰豐 信義店消費NT$1,350之驗證碼為123456，請勿告訴他人。",
+      "source": "com.example.bank",
+      "reason": "OTP"
+    },
+    {
+      "text": "【範例銀行】刷卡滿NT$3,000送300元，活動期間至12/31。",
+      "source": "com.example.bank",
+      "reason": "行銷"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,350。如有疑問請洽客服。",
+      "source": "com.example.bank",
+      "reason": "多出免責尾句（全匹配失敗）"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在AMAZON消費USD 25.99。",
+      "source": "com.example.bank",
+      "reason": "外幣"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在全家消費NT$100消費NT$200。",
+      "source": "com.example.bank",
+      "reason": "商店群組不得吞進金額"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,350。",
+      "source": "com.other.bank",
+      "reason": "source 不符"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,350。",
+      "source": null,
+      "reason": "沒有 source"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於13/45 19:20在鼎泰豐 信義店消費NT$1,350。",
+      "source": "com.example.bank",
+      "reason": "日期不合法"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$0。",
+      "source": "com.example.bank",
+      "reason": "金額為 0"
+    }
+  ]
+}

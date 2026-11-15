@@ -93,6 +93,8 @@ return [
     'ingest' => [
         // 規則解析失敗時是否改用 Gemini 備援（預設關閉；開啟後遮罩過的推播原文會送到 Gemini）
         'ai_enabled' => (bool) env('INGEST_AI_ENABLED', false),
+        // 模板都不命中時是否改用啟發式關鍵字規則（預設關閉；held-out 驗收約 33% 非消費誤記，不建議正式環境開啟）
+        'heuristic_enabled' => (bool) env('INGEST_HEURISTIC_ENABLED', false),
         // 同一則推播併發時，等待前一個請求完成的秒數
         'lock_wait_seconds' => (int) env('INGEST_LOCK_WAIT_SECONDS', 10),
     ],

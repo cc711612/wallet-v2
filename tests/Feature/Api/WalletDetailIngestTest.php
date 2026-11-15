@@ -18,7 +18,9 @@ use Tests\Concerns\BuildsAuthFixtures;
 use Tests\TestCase;
 
 /**
- * POST /api/wallet/{wallet}/detail/ingest：銀行刷卡推播自動記帳。
+ * POST /api/wallet/{wallet}/detail/ingest：銀行刷卡推播自動記帳（啟發式規則模式＋AI 備援）。
+ * 預設的模板白名單模式見 WalletDetailIngestTemplateTest；這裡在 setUp 明確開啟 heuristic_enabled，
+ * 持續覆蓋選用的啟發式模式與共用流程（去重、鎖、遮罩、限流、AI 備援）。
  */
 class WalletDetailIngestTest extends TestCase
 {
@@ -30,7 +32,7 @@ class WalletDetailIngestTest extends TestCase
     private const RULE_TEXT = '【玉山銀行】您末四碼5678的信用卡於全家便利商店消費金額NT$1,234，謝謝。';
 
     // 規則解析不到（中文數字金額、沒有商店語法），且不含排除字與外幣標記，會走 AI 備援
-    private const AI_TEXT = '某某咖啡 一百二十元 卡號末四碼 5678 感謝光臨';
+    private const AI_TEXT = '某某咖啡 120 卡號末四碼 5678 感謝光臨';
 
     /** @var array<string, mixed> */
     private array $alice;
@@ -48,6 +50,7 @@ class WalletDetailIngestTest extends TestCase
         Http::preventStrayRequests();
         config([
             'services.ingest.ai_enabled' => false,
+            'services.ingest.heuristic_enabled' => true,
             'services.ingest.lock_wait_seconds' => 0,
             'services.gemini.api_key' => 'test-gemini-key',
             'services.gemini.retry_delay_ms' => 0,
@@ -449,7 +452,7 @@ class WalletDetailIngestTest extends TestCase
         config(['services.ingest.ai_enabled' => true]);
         $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 120, 'merchant' => '某某咖啡', 'date' => null]);
 
-        $this->ingest(['text' => "EasyCard\0 一百二十元 @ 某某咖啡"])->assertJsonPath('status', true);
+        $this->ingest(['text' => "EasyCard\0 120 @ 某某咖啡"])->assertJsonPath('status', true);
 
         Http::assertSent(static fn (HttpRequest $request): bool => ! str_contains($request->body(), '\\u0000'));
     }
@@ -506,7 +509,8 @@ class WalletDetailIngestTest extends TestCase
             ->assertJsonPath('status', false)
             ->assertJsonPath('code', 400);
 
-        Http::assertSentCount(1);
+        // 整段原文檢查改在呼叫 AI 之前，命中就不送 AI
+        Http::assertNothingSent();
         $this->assertSame(0, DB::table('wallet_details')->count());
         $this->assertNull(Cache::get($this->dedupKey($text)));
     }
@@ -543,6 +547,120 @@ class WalletDetailIngestTest extends TestCase
 
         $note = (string) DB::table('wallet_details')->value('note');
         $this->assertSame('[auto-ingest] 您的信用卡末4碼****於全家消費NT$100', $note);
+    }
+
+    /**
+     * @return array<string, array{0:string, 1:int|float}>
+     */
+    public static function aiAmountNotInText(): array
+    {
+        return [
+            '原文 250、AI 回 2500' => ['某某咖啡 250 感謝光臨', 2500],
+            '原文中文數字、AI 回 2500' => ['某某咖啡 二百五十 感謝光臨', 2500],
+            '原文中文數字、AI 回 250' => ['某某咖啡 二百五十 感謝光臨', 250],
+        ];
+    }
+
+    #[DataProvider('aiAmountNotInText')]
+    public function test_ai_amount_must_appear_in_original_text(string $text, int|float $amount): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => $amount, 'merchant' => '某某咖啡', 'date' => null]);
+
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400)
+            ->assertJsonPath('message', '無法解析推播內容');
+
+        Http::assertSentCount(1);
+        $this->assertSame(0, DB::table('wallet_details')->count());
+        $this->assertNull(Cache::get($this->dedupKey($text)));
+    }
+
+    public function test_ai_amount_matches_text_with_thousands_separator_and_trailing_zeros(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 1350, 'merchant' => '某某咖啡', 'date' => null]);
+
+        $this->ingest(['text' => '某某咖啡 1,350.00 感謝光臨'])->assertJsonPath('status', true)->assertJsonPath('data.value', 1350);
+    }
+
+    public function test_ai_amount_is_rounded_to_two_decimals(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 250.123456, 'merchant' => '某某咖啡', 'date' => null]);
+
+        $this->ingest(['text' => '某某咖啡 250.12 感謝光臨'])
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.value', 250.12);
+
+        $this->assertEquals(250.12, DB::table('wallet_details')->value('value'));
+    }
+
+    public function test_ai_merchant_equal_to_whole_text_cannot_hide_exclusions(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $text = '小林拉麵 250 滿額贈好禮';
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 250, 'merchant' => $text, 'date' => null]);
+
+        $this->ingest(['text' => $text])->assertJsonPath('status', false)->assertJsonPath('code', 400);
+
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('wallet_details')->count());
+    }
+
+    /**
+     * @return array<string, array{0:string}>
+     */
+    public static function aiConservativeRejections(): array
+    {
+        return [
+            '爭議' => ['小林拉麵 250 消費爭議已受理'],
+            '掛失' => ['小林拉麵 250 卡片已掛失'],
+            '攔截' => ['小林拉麵 250 交易已攔截'],
+            '暫緩' => ['小林拉麵 250 暫緩扣款'],
+            '退還' => ['小林拉麵 250 已退還'],
+            '預約' => ['預約 小林拉麵 250'],
+            '調整' => ['小林拉麵 250 金額調整'],
+            '尚未付款' => ['小林拉麵 250 尚未付款'],
+            '解除圈存' => ['小林拉麵 250 解除圈存'],
+            '發票' => ['小林拉麵 250 電子發票'],
+            '帳單' => ['小林拉麵 250 已列入帳單'],
+            '請款' => ['小林拉麵 250 請款通知'],
+            '轉帳' => ['小林拉麵 250 轉帳成功'],
+            '轉出' => ['小林拉麵 250 轉出'],
+            'CA$' => ['Airbnb CA$150'],
+            'US $（空白）' => ['eBay US $49.99'],
+            'NZ$' => ['某某店 NZ$30'],
+            'A$' => ['某某店 A$40'],
+            '美國 + 裸 $' => ['美國 Amazon $25.99'],
+            '海外 + 裸 $（金額在前）' => ['$25.99 Amazon 海外交易'],
+            '國外 + 裸 $' => ['國外網站 $9.99'],
+            '日圓' => ['小林拉麵 2500 日圓'],
+        ];
+    }
+
+    #[DataProvider('aiConservativeRejections')]
+    public function test_ai_path_rejects_whole_text_exclusions_and_foreign_clues_without_calling_ai(string $text): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 250, 'merchant' => '小林拉麵', 'date' => null]);
+
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400);
+
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('wallet_details')->count());
+        $this->assertNull(Cache::get($this->dedupKey($text)));
+    }
+
+    public function test_ai_path_allows_bare_dollar_without_overseas_clue(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 75, 'merchant' => '某某咖啡', 'date' => null]);
+
+        $this->ingest(['text' => '某某咖啡 $75'])->assertJsonPath('status', true)->assertJsonPath('data.parser', 'ai');
     }
 
     public function test_ai_date_too_far_from_received_at_falls_back_to_received_date(): void
