@@ -15,10 +15,12 @@
 | 欄位：
 | - name     必填，唯一，例如 'esun-credit-purchase'
 | - pattern  必填，正規表示式本體（不含分隔符號與 ^ $），系統會自動加上首尾錨定（允許首尾空白）並以 /u 比對；
-|            必須含具名群組 (?<amount>…) 與 (?<merchant>…)，可選 (?<date>…)、(?<time>…)。
+|            必須含具名群組 (?<amount>…)；商店名請擇一提供：具名群組 (?<merchant>…)，或改用下面的 merchant_default；
+|            可選 (?<date>…)、(?<time>…)。
 |            比對對象是「已清理控制字元＋全形轉半形」後的原文。
 | - currency 選填，預設 'TWD'；本版只允許 TWD。
-| - source   選填，MacroDroid 送來的 source（App package）必須以此字串開頭（相等也算）才會嘗試此模板。
+| - merchant_default  選填（與 merchant 群組擇一）：推播沒有商店名時使用的固定商店名（1~60 字、不得含換行或控制字元）。
+| - source   選填，MacroDroid 送來的 source 必須「完全相等」，或以此字串為前綴且下一個字元是 . 或 /（例如 com.bank 可命中 com.bank.lite，不可命中 com.bankfake）才會嘗試此模板。
 |
 */
 
