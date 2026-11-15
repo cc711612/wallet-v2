@@ -121,8 +121,9 @@ class WalletDetailIngestService
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
-        $text = NotificationTextMasker::sanitize($text);
-        if (trim($text) === '') {
+        // 先清理控制／格式字元，再全形轉半形（解析、遮罩、送 AI 都用這份）
+        $text = trim(NotificationTextMasker::normalizeWidth(NotificationTextMasker::sanitize($text)));
+        if ($text === '') {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
@@ -135,7 +136,19 @@ class WalletDetailIngestService
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
-        return $this->aiParser->parse($text, $received);
+        // 原文已命中強排除或外幣標記：不浪費 AI 呼叫
+        if ($this->ruleParser->rejectionReason($text, null, false) !== null) {
+            throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
+        }
+
+        $parsed = $this->aiParser->parse($text, $received);
+
+        // AI 結果交叉檢查：原文命中外幣或排除規則一律拒絕，即使 AI 回 TWD／is_expense=true
+        if ($this->ruleParser->rejectionReason($text, $parsed->merchant) !== null) {
+            throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
+        }
+
+        return $parsed;
     }
 
     private function createDetail(int $walletId, int $walletUserId, string $text, CarbonImmutable $received, ParsedExpense $parsed): int

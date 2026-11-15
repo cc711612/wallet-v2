@@ -84,6 +84,47 @@ class NotificationTextMaskerTest extends TestCase
         $this->assertSame('', NotificationTextMasker::sanitize("\xff\xfe"));
     }
 
+    public function test_sanitize_removes_format_characters(): void
+    {
+        $text = "全\u{202E}家\u{202C}\u{2066}消\u{2069}費\u{2060}N\u{00AD}T\u{061C}$\u{FEFF}100\u{200D}";
+
+        $this->assertSame('全家消費NT$100', NotificationTextMasker::sanitize($text));
+    }
+
+    public function test_card_split_by_word_joiner_is_masked(): void
+    {
+        $this->assertSame('卡號****', NotificationTextMasker::mask("卡號1234\u{2060}5678\u{2060}9012\u{2060}3456"));
+        $this->assertSame('卡號 ****', NotificationTextMasker::mask("卡號 1234\u{202C}5678\u{202C}90123456"));
+    }
+
+    /**
+     * @return array<string, array{0:string, 1:string}>
+     */
+    public static function widthCases(): array
+    {
+        return [
+            '全形千分位金額' => ['NT$１，２３４', 'NT$1,234'],
+            '全形小數' => ['１２．５元', '12.5元'],
+            '全形幣別' => ['ＵＳＤ ２５', 'USD 25'],
+            '全形身分證' => ['Ａ１２３４５６７８９', 'A123456789'],
+            '全形符號' => ['＄１００＊－／', '$100*-/'],
+            '中文標點保留' => ['您於全家消費，謝謝：（測試）。', '您於全家消費，謝謝：（測試）。'],
+            '非數字間的全形逗號保留' => ['全家，１２３', '全家，123'],
+        ];
+    }
+
+    #[DataProvider('widthCases')]
+    public function test_normalize_width(string $input, string $expected): void
+    {
+        $this->assertSame($expected, NotificationTextMasker::normalizeWidth($input));
+    }
+
+    public function test_full_width_card_and_id_are_masked(): void
+    {
+        $this->assertSame('****', NotificationTextMasker::mask('１２３４－５６７８－９０１２－３４５６'));
+        $this->assertSame('身分證****', NotificationTextMasker::mask('身分證Ａ１２３４５６７８９'));
+    }
+
     public function test_amounts_and_dates_are_kept(): void
     {
         $text = '您末四碼1234之信用卡於2026/11/15 13:15於全家消費NT$1,234.50，另 2026-11-14 刷卡 TWD 987 元，11/13 消費 85元';

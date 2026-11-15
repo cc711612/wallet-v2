@@ -77,6 +77,58 @@ class RuleBasedNotificationParserTest extends TestCase
         $this->assertSame('全家便利商店', $parsed->merchant);
     }
 
+    /**
+     * @return array<string, array{0:string, 1:string|null}>
+     */
+    public static function rejectionReasons(): array
+    {
+        return [
+            '結尾免責句不影響' => ['您於麥當勞消費NT$200。本訊息僅供通知，非帳單', null],
+            '結尾行銷句不影響' => ['您於星巴克消費NT$150。如有疑問請洽客服，登錄 App 查看優惠', null],
+            '外幣' => ['您於東京Lawson消費JPY 1,200', 'foreign_currency'],
+            '外幣在相鄰子句' => ['您於AMAZON消費金額NT$810，外幣金額25.99美金', 'foreign_currency'],
+            'Dollars' => ['您於AMAZON消費金額 25.99 Dollars', 'foreign_currency'],
+            '海外 + 裸 $' => ['您於AMAZON海外消費$25.99', 'foreign_currency'],
+            '強排除在相鄰子句' => ['您於全家消費NT$100，此筆為預先授權', 'excluded'],
+            '軟排除在交易子句' => ['於全家消費享9折優待NT$100', 'excluded'],
+            '沒有交易子句時看整段' => ['某某咖啡 一百元 享優惠', 'excluded'],
+        ];
+    }
+
+    #[DataProvider('rejectionReasons')]
+    public function test_rejection_reason(string $text, ?string $reason): void
+    {
+        $this->assertSame($reason, (new RuleBasedNotificationParser)->rejectionReason($text));
+    }
+
+    public function test_rejection_reason_ignores_merchant_name_and_soft_words_when_requested(): void
+    {
+        $parser = new RuleBasedNotificationParser;
+
+        $this->assertSame('excluded', $parser->rejectionReason('某某優惠廚房 一百元'));
+        $this->assertNull($parser->rejectionReason('某某優惠廚房 一百元', '某某優惠廚房'));
+        $this->assertNull($parser->rejectionReason('某某咖啡 一百元 享優惠', null, false));
+        $this->assertSame('excluded', $parser->rejectionReason('某某咖啡 一百元 交易失敗', null, false));
+    }
+
+    public function test_positive_gate_requires_consumption_word_with_amount(): void
+    {
+        $parser = new RuleBasedNotificationParser;
+
+        $this->assertNull($parser->parse('您於全家 NT$100', $this->receivedAt()));
+        $this->assertNull($parser->parse('您於全家消費。金額 NT$100', $this->receivedAt()), '消費語境詞與金額在不同子句');
+        $this->assertSame(100.0, $parser->parse('您於全家消費 NT$100', $this->receivedAt())?->amount);
+    }
+
+    public function test_line_pay_payment_and_full_width_amount(): void
+    {
+        $parser = new RuleBasedNotificationParser;
+
+        $linePay = $parser->parse('LINE Pay 付款通知：您於路易莎咖啡付款 NT$45', $this->receivedAt());
+        $this->assertSame([45.0, '路易莎咖啡'], [$linePay?->amount, $linePay?->merchant]);
+        $this->assertSame(1234.0, $parser->parse('您於全家消費NT$１，２３４', $this->receivedAt())?->amount);
+    }
+
     public function test_month_day_in_future_falls_back_to_previous_year(): void
     {
         $parsed = (new RuleBasedNotificationParser)->parse('12/31 您在全家刷卡 NT$50', $this->receivedAt('2027-01-01 00:10:00'));

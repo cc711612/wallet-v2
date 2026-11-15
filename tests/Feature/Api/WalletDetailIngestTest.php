@@ -29,7 +29,8 @@ class WalletDetailIngestTest extends TestCase
 
     private const RULE_TEXT = '【玉山銀行】您末四碼5678的信用卡於全家便利商店消費金額NT$1,234，謝謝。';
 
-    private const AI_TEXT = 'EasyCard 自動加值 一百二十元 @ 某某咖啡 卡號末四碼 5678';
+    // 規則解析不到（中文數字金額、沒有商店語法），且不含排除字與外幣標記，會走 AI 備援
+    private const AI_TEXT = '某某咖啡 一百二十元 卡號末四碼 5678 感謝光臨';
 
     /** @var array<string, mixed> */
     private array $alice;
@@ -304,6 +305,11 @@ class WalletDetailIngestTest extends TestCase
             'EUR' => ['您在 Zara 刷卡 EUR 49.9'],
             '美金' => ['您於 Apple 消費美金 9.99 元'],
             '€ 符號' => ['您在 Zara 刷卡 €49'],
+            'ATM 提款' => ['您於11/15在台北車站ATM提款交易NT$3,000'],
+            '未核准' => ['您於全家消費NT$100未核准'],
+            '預先授權' => ['您於全家消費NT$100，此筆為預先授權'],
+            '9折' => ['於全家消費享9折優待NT$100'],
+            'Dollars' => ['您於AMAZON消費金額 25.99 Dollars'],
         ];
     }
 
@@ -471,6 +477,72 @@ class WalletDetailIngestTest extends TestCase
             ->assertJsonPath('data.title', $title)
             ->assertJsonPath('data.value', $value)
             ->assertJsonPath('data.parser', 'rule');
+    }
+
+    public function test_ai_path_rejects_foreign_currency_in_original_text_even_if_ai_says_twd(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        // 原文是日圓，AI 若回 TWD 1200 也不能寫入；原文命中外幣標記時根本不呼叫 AI
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 1200, 'merchant' => '東京Lawson', 'date' => null]);
+        $text = '東京Lawson JPY 一千二百';
+
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400)
+            ->assertJsonPath('message', '無法解析推播內容');
+
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('wallet_details')->count());
+        $this->assertNull(Cache::get($this->dedupKey($text)));
+    }
+
+    public function test_ai_result_is_cross_checked_against_exclusions(): void
+    {
+        config(['services.ingest.ai_enabled' => true]);
+        $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 100, 'merchant' => '某某咖啡', 'date' => null]);
+        $text = '某某咖啡 一百元 消費享9折優惠';
+
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('code', 400);
+
+        Http::assertSentCount(1);
+        $this->assertSame(0, DB::table('wallet_details')->count());
+        $this->assertNull(Cache::get($this->dedupKey($text)));
+    }
+
+    /**
+     * @return array<string, array{0:string, 1:string, 2:int|float}>
+     */
+    public static function notificationsWithFooters(): array
+    {
+        return [
+            '客服與登錄優惠' => ['【中信】您的信用卡於星巴克消費NT$150。如有疑問請洽客服，登錄 App 查看優惠', '星巴克', 150],
+            '非帳單' => ['您於麥當勞消費NT$200。本訊息僅供通知，非帳單', '麥當勞', 200],
+            '帳單查詢' => ['您於誠品書店消費NT$300，本筆消費可於帳單查詢', '誠品書店', 300],
+            '括號優惠折抵' => ['您於屈臣氏消費NT$560(含優惠折抵)', '屈臣氏', 560],
+            '活動期間' => ['您於SOGO百貨消費NT$1,500。活動期間刷卡享好禮', 'SOGO百貨', 1500],
+            'LINE Pay 付款' => ['LINE Pay 付款通知：您於路易莎咖啡付款 NT$45', '路易莎咖啡', 45],
+            '全形金額' => ['您於全家消費NT$１，２３４', '全家', 1234],
+        ];
+    }
+
+    #[DataProvider('notificationsWithFooters')]
+    public function test_footer_and_format_variants_still_succeed(string $text, string $title, int|float $value): void
+    {
+        $this->ingest(['text' => $text])
+            ->assertJsonPath('status', true)
+            ->assertJsonPath('data.title', $title)
+            ->assertJsonPath('data.value', $value)
+            ->assertJsonPath('data.parser', 'rule');
+    }
+
+    public function test_note_has_no_format_characters_and_card_is_masked(): void
+    {
+        $this->ingest(['text' => "您的信用卡末4碼1234於全\u{2060}家消費NT$100\u{202E}"])->assertJsonPath('status', true);
+
+        $note = (string) DB::table('wallet_details')->value('note');
+        $this->assertSame('[auto-ingest] 您的信用卡末4碼****於全家消費NT$100', $note);
     }
 
     public function test_ai_date_too_far_from_received_at_falls_back_to_received_date(): void
