@@ -85,8 +85,8 @@ class WalletDetailIngestTemplateTest extends TestCase
 
     public function test_defaults_are_templates_only(): void
     {
-        // 預設只有內建模板（目前國泰、玉山兩個），啟發式與 AI 都關閉
-        $this->assertSame(['cathay-credit-purchase', 'esun-credit-purchase'], array_column((array) config('ingest_templates.templates'), 'name'));
+        // 預設只有內建模板（目前國泰、玉山、台新 Richart 三個），啟發式與 AI 都關閉
+        $this->assertSame(['cathay-credit-purchase', 'esun-credit-purchase', 'richart-credit-purchase'], array_column((array) config('ingest_templates.templates'), 'name'));
         $this->assertFalse(config('services.ingest.heuristic_enabled'));
         $this->assertFalse(config('services.ingest.ai_enabled'));
     }
@@ -100,6 +100,7 @@ class WalletDetailIngestTemplateTest extends TestCase
     {
         return array_merge(self::anyText(), [
             '玉山真實樣本' => ['信用卡消費600元通知'],
+            '台新 Richart 真實樣本' => ['【信用卡消費通知】您的Richart卡(末四碼1234)於11/15-21:05刷卡消費約新臺幣600元，實際消費資訊以帳單為準，如有疑問請洽客服'],
             '國泰真實樣本' => ["【刷卡通知】金額NT$600元 \n卡號末四碼1234於 2026/11/15 20:52在樂購蝦皮股份有限公司 刷卡。立即以點數即時折抵，最高可折抵消費金額30%，點擊查看消費明細"],
         ]);
     }

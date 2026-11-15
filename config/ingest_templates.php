@@ -44,5 +44,16 @@ return [
             'pattern' => '(?:玉山銀行\s+)?信用卡消費(?<amount>(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)元通知',
             'merchant_default' => '玉山信用卡消費',
         ],
+
+        // 台新 Richart 信用卡消費通知（Richart Life 與 Richart 都會推，原文相同，title 為空）。來源：使用者 2026-11-15 的真實推播（測試刷卡 600 元，樣本末四碼已換成 1234）。
+        // 沒有商店名：用 merchant_default（使用者可改名）。日期為 MM/DD-HH:MM，年份由 received_at 推算。
+        // 金額必須是正數；沖正通知（約新臺幣-600元）不命中 → 400。固定尾句逐字比對。source 不限定。
+        [
+            'name' => 'richart-credit-purchase',
+            'pattern' => '【信用卡消費通知】您的Richart卡\(末四碼\d{4}\)於(?<date>\d{1,2}/\d{1,2})-(?<time>\d{1,2}:\d{2})'
+                .'刷卡消費約新臺幣(?<amount>(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)元，'
+                .'實際消費資訊以帳單為準，如有疑問請洽客服',
+            'merchant_default' => '台新Richart信用卡消費',
+        ],
     ],
 ];

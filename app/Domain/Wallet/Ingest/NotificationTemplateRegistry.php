@@ -20,6 +20,9 @@ class NotificationTemplateRegistry
 
     private const DELIMITER = "\x01";
 
+    /** 沒有年份的日期（MM/DD）推算後，最多可早於 received_at 幾天 */
+    private const YEARLESS_MAX_DAYS_BEFORE = 31;
+
     /** @var array<int, array{name:string, regex:string, currency:string, source:string|null, merchant_default:string|null}>|null */
     private ?array $compiled = null;
 
@@ -268,10 +271,15 @@ class NotificationTemplateRegistry
         }
 
         if (preg_match('/^(\d{1,2})(?:\/|月)(\d{1,2})日?$/u', $raw, $d) === 1) {
-            // 沒有年份：取 received_at 的年份；若因此落在未來（1 月收到 12/31 的通知）改用前一年
+            // 沒有年份：取 received_at 的年份；若因此晚於 received_at 後 1 天（1 月收到 12/31 的通知）改用前一年
             $date = $this->formatDate($receivedAt->year, (int) $d[1], (int) $d[2]);
             if ($date !== null && $date > $receivedAt->addDay()->toDateString()) {
                 $date = $this->formatDate($receivedAt->year - 1, (int) $d[1], (int) $d[2]);
+            }
+
+            // 推播是即時通知：推算出的日期必須在 received_at 前 YEARLESS_MAX_DAYS_BEFORE 天內（例如 11/15 收到「11/20」→ 推成去年 → 拒絕）
+            if ($date !== null && $date < $receivedAt->subDays(self::YEARLESS_MAX_DAYS_BEFORE)->toDateString()) {
+                return null;
             }
 
             return $date;

@@ -29,8 +29,8 @@ class NotificationTemplateRegistryTest extends TestCase
 
     public function test_default_config_contains_only_the_built_in_templates(): void
     {
-        // 預設 config 內建 cathay-credit-purchase 與 esun-credit-purchase（都來自真實樣本），且通過載入與 lint
-        $this->assertSame(['cathay-credit-purchase', 'esun-credit-purchase'], array_column((new NotificationTemplateRegistry)->templates(), 'name'));
+        // 預設 config 內建 cathay、esun、richart 三個模板（都來自真實樣本），且通過載入與 lint
+        $this->assertSame(['cathay-credit-purchase', 'esun-credit-purchase', 'richart-credit-purchase'], array_column((new NotificationTemplateRegistry)->templates(), 'name'));
         $this->assertNull((new NotificationTemplateRegistry)->match(self::OK, 'com.example.bank', $this->receivedAt()), '範例銀行格式不命中內建模板');
     }
 
@@ -87,6 +87,30 @@ class NotificationTemplateRegistryTest extends TestCase
         $parsed = $this->registry()->match(str_replace('11/14', '12/31', self::OK), 'com.example.bank', $this->receivedAt('2027-01-01 00:10:00'));
 
         $this->assertSame('2026-12-31', $parsed?->date);
+    }
+
+    /**
+     * received_at = 2026-11-15 13:00（台北）；沒有年份的 MM/DD 推算後須在 received_at 前 31 天內、後 1 天內。
+     *
+     * @return array<string, array{0:string, 1:string|null}>
+     */
+    public static function yearlessDates(): array
+    {
+        return [
+            '當天' => ['11/15', '2026-11-15'],
+            '隔天' => ['11/16', '2026-11-16'],
+            '超過 +1 天（推成去年，太舊）' => ['11/20', null],
+            '31 天前' => ['10/15', '2026-10-15'],
+            '超過 31 天前' => ['10/14', null],
+        ];
+    }
+
+    #[DataProvider('yearlessDates')]
+    public function test_yearless_dates_must_be_recent(string $monthDay, ?string $expected): void
+    {
+        $parsed = $this->registry()->match(str_replace('11/14', $monthDay, self::OK), 'com.example.bank', $this->receivedAt());
+
+        $this->assertSame($expected, $parsed?->date);
     }
 
     /**
