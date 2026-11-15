@@ -8,7 +8,7 @@
 
 解析順序：
 
-1. **模板白名單**（`NotificationTemplateRegistry`，`config/ingest_templates.php`）— 預設唯一啟用的方式。**目前預設不內建任何模板**（還沒有真實銀行樣本，不編造格式），所以不加模板時任何推播都會回 400。
+1. **模板白名單**（`NotificationTemplateRegistry`，`config/ingest_templates.php`）— 預設唯一啟用的方式。只收有真實推播樣本支撐的模板（不編造格式）；**目前內建 1 個：`cathay-credit-purchase`**（國泰世華信用卡刷卡通知，見「內建模板」）。不命中任何內建模板的推播一律回 400。
 2. **啟發式關鍵字規則**（`RuleBasedNotificationParser`）— 選用，`INGEST_HEURISTIC_ENABLED`，**預設關閉，不建議在正式環境開啟**（見「啟發式模式」）。
 3. **AI 備援**（Gemini，`AiNotificationParser`）— 選用，`INGEST_AI_ENABLED`，預設關閉。**實驗性，正式環境不建議開啟**（見「AI 備援」）。
 
@@ -185,22 +185,42 @@ lint 的取捨：規則刻意偏嚴，某些合法但寫法較自由的 pattern�
    {
      "template": "esun-credit-purchase",
      "positive": [
-       {"text": "…", "source": "com.esunbank", "amount": 1350, "merchant": "…", "date": "2026-11-14"},
-       {"text": "…", "source": "com.esunbank", "amount": 85, "merchant": "…"}
+       {"text": "…", "source": "com.esunbank", "amount": 1350, "merchant": "…", "date": "2026-11-14", "synthetic": false},
+       {"text": "…", "source": "com.esunbank", "amount": 85, "merchant": "…", "synthetic": true}
      ],
      "negative": [
-       {"text": "…已取消…", "source": "com.esunbank", "reason": "取消"},
-       {"text": "…退款…", "source": "com.esunbank", "reason": "退款"},
-       {"text": "…預先授權…", "source": "com.esunbank", "reason": "預先授權"}
+       {"text": "…已取消…", "source": "com.esunbank", "reason": "取消", "synthetic": false},
+       {"text": "…退款…", "source": "com.esunbank", "reason": "退款", "synthetic": true},
+       {"text": "…預先授權…", "source": "com.esunbank", "reason": "預先授權", "synthetic": true}
      ]
    }
    ```
 
-   - `positive` ≥ 2 則：必須命中**這個**模板，且 `amount`、`merchant`（以及有填的 `date`）完全相符。`received_at` 固定以 `2026-11-15 13:00:00`（台北）計算。
+   - `positive` ≥ 2 則：必須命中**這個**模板，且 `amount`、`merchant`（以及有填的 `date`）完全相符。`received_at` 固定以 `2026-11-15 13:00:00`（台北）計算。**至少 1 則必須是真實推播**（`"synthetic": false`）。
+   - 每則樣本以 `"synthetic"` 標記是否為合成資料：`false` = 使用者手機上的真實推播（個資已換成假資料，例如卡號末四碼一律改成 `1234`），`true` = 由真實樣本改寫或自行構造。只收推播原文，不要收 LINE 對話等其他私人內容。
    - `negative` ≥ 3 則：不得命中**任何**模板。至少涵蓋取消／退款／預先授權／分期／OTP／行銷中的三種，建議全部都放；另外建議放「前綴取消」（`取消交易：` + 成功原文）、「後綴取消」、「外幣」三類，確認第二道防線有效。
    - 樣本的 `source` 省略時沿用模板的 `source`。
-4. **在 `config/ingest_templates.php` 加模板**，跑 `vendor/bin/phpunit`。`tests/Unit/Domain/Wallet/Ingest/TemplateFixtureCoverageTest` 會遍歷 config 內所有模板：缺樣本檔、成功樣本少於 2 則、負樣本少於 3 則、成功樣本沒命中或欄位不符、負樣本命中，任一情況都會讓測試失敗。
+4. **在 `config/ingest_templates.php` 加模板**，跑 `vendor/bin/phpunit`。`tests/Unit/Domain/Wallet/Ingest/TemplateFixtureCoverageTest` 會遍歷 config 內所有模板：缺樣本檔、成功樣本少於 2 則、負樣本少於 3 則、沒有任何 `"synthetic": false` 的成功樣本、成功樣本沒命中或欄位不符、負樣本命中，任一情況都會讓測試失敗。（虛構的範例模板在測試中豁免「真實樣本」規則。）
 5. 部署後，請使用者在手機上送一則真實推播確認回應的 `parser` 為 `template:<name>`。
+
+### 內建模板
+
+#### `cathay-credit-purchase`（國泰世華信用卡刷卡通知）
+
+- **來源**：使用者 2026-11-15 的真實推播（國泰世華 App；MacroDroid log 中 title 為「國泰世華銀行」，text 兩行、第一行行尾有一個空白）。樣本檔 `tests/Fixtures/ingest/cathay-credit-purchase.json`，卡號末四碼已換成 `1234`。
+- **樣本**：成功 3 則（真實原文、真實原文加 title 前綴、1 則合成：不同商店與千分位金額）；負樣本 15 則**全部是合成**（由真實樣本改寫：取消、退款、刷卡失敗、分期、外幣、尾句改動或缺少、前綴多字、其他銀行 title、千分位錯誤、LINE 推播…）。**使用者提供真實的國泰取消／退款／分期等通知後，應替換成真實負樣本。**
+- **pattern**（`config/ingest_templates.php`）：
+
+  ```
+  (?:國泰世華銀行\s+)?【刷卡通知】金額NT\$(?<amount>\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)元\s*卡號末四碼\d{4}於\s?(?<date>\d{4}/\d{1,2}/\d{1,2})\s(?<time>\d{1,2}:\d{2})在(?<merchant>[^\n，。：:;；$]{1,60}?)\s?刷卡。立即以點數即時折抵，最高可折抵消費金額30%，點擊查看消費明細
+  ```
+
+- **解析結果**：`【刷卡通知】金額NT$600元 ⏎卡號末四碼1234於 2026/11/15 20:52在樂購蝦皮股份有限公司 刷卡。立即以點數…` → 600／樂購蝦皮股份有限公司／2026-11-15（`time` 20:52 不寫入）。
+- **text 組法假設**：使用者尚未確認 MacroDroid 送出的 `text` 怎麼組，目前假設是「title + 換行 + text」。模板以 `(?:國泰世華銀行\s+)?` 讓 title 前綴可有可無，所以「只有 text」「title + 換行 + text」「title + 空白 + text」都會命中。若實際組法不同（例如 title 與 text 之間用「：」或「 - 」），把這段前綴改成實際的分隔方式，並把實際送出的原文加進樣本。
+- **固定尾句**：結尾「立即以點數即時折抵，最高可折抵消費金額30%，點擊查看消費明細」逐字比對（尾端空白可有可無）。國泰改文案時模板會失效（回 400），需更新模板與樣本。這句含「折抵」「消費金額」，屬於軟排除字，而模板命中後的第二道防線只檢查強排除與外幣，所以不會被誤殺；尾句以外的地方若出現強排除字或外幣（例如商店欄位被塞進「交易未成功」「USD」）仍會擋下（有測試）。
+- **source**：暫不限定。確認 MacroDroid 送出的 `source` 後（例如 App 名稱 `國泰世華`，或套件名稱），可在模板加上 `'source' => '…'` 收窄範圍。
+- **國泰官方 LINE 推播**（「消費通知💡您有一筆刷卡交易」）沒有金額，會回 400，屬預期。
+- **同一筆消費可能收到兩則推播**（國泰 App 與官方 LINE）：去重 key 依原文計算，兩則原文不同，不會被當成重複。LINE 那則因為沒有金額本來就會 400；使用者已把 LINE 官方帳號從 MacroDroid 觸發條件移除。
 
 ### 範例模板（example，虛構格式）
 
@@ -344,7 +364,8 @@ return [
 
 ## 已知限制
 
-- **預設沒有任何模板**：在加入真實銀行樣本與模板之前，端點對所有推播都回 400。
+- **目前只內建國泰世華一個模板**：其他銀行與國泰的其他通知格式一律 400；國泰模板的負樣本是合成的，尚未用真實的非成功通知驗證過。
+- **MacroDroid 的 text 組法尚未確認**：國泰模板目前假設「title + 換行 + text」（title 可有可無）。
 - **模板非常嚴格**：銀行推播文字稍有改版（多一個空白、換一個標點、加一句尾句），模板就不命中而回 400，需要更新模板與樣本。這是刻意的取捨（漏記可以手動補，錯記難以察覺）。
 - **只支援新台幣**：模板不允許註冊非 TWD；外幣通知回 400。之後可擴充寫入實際 `unit` 與 `rates`。
 - **去重只靠 Cache**，沒有 DB unique 欄位：Cache 被清空或超過 30 天後，重送同一則會再建立一筆；明細建立成功但 `Cache::put` 失敗時，重送也會重複建立。
@@ -360,7 +381,7 @@ return [
 
 ## MacroDroid 設定範例
 
-1. **觸發條件**：Notification Received → 選銀行 App（只選已有模板的 App）。
+1. **觸發條件**：Notification Received → 選銀行 App（只選已有模板的 App，目前是國泰世華 App）。不要把銀行的官方 LINE 帳號加進觸發條件：LINE 推播通常沒有金額（例如國泰「消費通知💡您有一筆刷卡交易」），只會回 400，而且會和 App 推播重複。
 2. **動作**：HTTP Request
    - Method：`POST`
    - URL：`https://wallet.usongrat.tw/api/wallet/<帳本 ID>/detail/ingest`
@@ -372,7 +393,7 @@ return [
 
      ```json
      {
-       "text": "[notification_title][notification]",
+       "text": "[notification_title]\n[notification]",
        "received_at": "[year]-[month_digit]-[dayofmonth]T[hour]:[minute]:[second]+08:00",
        "source": "[app_package]"
      }
@@ -380,7 +401,8 @@ return [
 
      - 方括號為 MacroDroid 的 magic text，名稱以實際版本的選單為準；月份、日期、時分秒需補零成兩位數。
      - **`source` 一定要帶 App package**（例如 `[app_package]` 會展開成 `com.example.bank`），模板靠它決定要不要嘗試；沒帶 `source` 就只會嘗試沒有限定 `source` 的模板。
-     - `text` 的組法（標題與內文之間是否有空白或換行）必須和模板一致；新增模板前先用實際送出的 `text` 收樣本。
+     - **建議組法：title + 換行 + text**（上例的 `\n` 在 MacroDroid 中輸入為實際換行）。內建的國泰模板接受有或沒有 title 前綴，title 與內文之間可以是換行或空白。
+     - `text` 的組法必須和模板一致；新增模板前先用實際送出的 `text` 收樣本。
 3. **（選用）結果處理**：把 response 存到變數，`status` 為 `false` 時發一則本機通知提醒手動記帳。HTTP 500 可稍後重送，去重機制會避免重複建立。
 4. **測試**：
 

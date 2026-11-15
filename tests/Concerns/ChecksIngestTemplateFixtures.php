@@ -10,7 +10,8 @@ use Carbon\CarbonImmutable;
 
 /**
  * 模板樣本檢查：每個模板都必須有 tests/Fixtures/ingest/<name>.json，
- * 內含 ≥2 則會命中「該模板」且欄位正確的成功樣本，以及 ≥3 則不得命中任何模板的負樣本。
+ * 內含 ≥2 則會命中「該模板」且欄位正確的成功樣本（至少 1 則是真實推播，"synthetic": false），
+ * 以及 ≥3 則不得命中任何模板的負樣本。每則樣本以 "synthetic" 標記是否為合成資料。
  */
 trait ChecksIngestTemplateFixtures
 {
@@ -34,9 +35,10 @@ trait ChecksIngestTemplateFixtures
 
     /**
      * @param  array<int, array<string, mixed>>  $templates
+     * @param  bool  $requireRealPositive  至少 1 則成功樣本必須是真實推播（"synthetic": false）；虛構的範例模板傳 false
      * @return array<int, string> 錯誤清單；空陣列代表全部通過
      */
-    protected function templateFixtureErrors(array $templates, string $fixtureDir): array
+    protected function templateFixtureErrors(array $templates, string $fixtureDir, bool $requireRealPositive = true): array
     {
         $registry = NotificationTemplateRegistry::fromArray($templates);
         $receivedAt = CarbonImmutable::parse(self::$fixtureReceivedAt, 'Asia/Taipei');
@@ -65,6 +67,9 @@ trait ChecksIngestTemplateFixtures
             }
             if (count($negatives) < 3) {
                 $errors[] = "{$name}: 負樣本少於 3 則";
+            }
+            if ($requireRealPositive && array_filter($positives, static fn ($sample): bool => is_array($sample) && ($sample['synthetic'] ?? null) === false) === []) {
+                $errors[] = "{$name}: 沒有真實的成功樣本（至少 1 則要標記 \"synthetic\": false）";
             }
 
             foreach ($positives as $i => $sample) {

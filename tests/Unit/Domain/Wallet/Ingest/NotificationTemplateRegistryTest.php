@@ -27,11 +27,17 @@ class NotificationTemplateRegistryTest extends TestCase
         return NotificationTemplateRegistry::fromArray([array_merge(self::exampleTemplate(), $override)]);
     }
 
-    public function test_default_config_has_no_templates(): void
+    public function test_default_config_contains_only_the_built_in_templates(): void
     {
-        $this->assertSame([], config('ingest_templates.templates'));
-        $this->assertSame([], (new NotificationTemplateRegistry)->templates());
-        $this->assertNull((new NotificationTemplateRegistry)->match(self::OK, 'com.example.bank', $this->receivedAt()));
+        // 預設 config 不再是空陣列：內建 cathay-credit-purchase（來自真實樣本），且通過載入與 lint
+        $this->assertSame(['cathay-credit-purchase'], array_column((new NotificationTemplateRegistry)->templates(), 'name'));
+        $this->assertNull((new NotificationTemplateRegistry)->match(self::OK, 'com.example.bank', $this->receivedAt()), '範例銀行格式不命中內建模板');
+    }
+
+    public function test_empty_template_list_matches_nothing(): void
+    {
+        $this->assertSame([], NotificationTemplateRegistry::fromArray([])->templates());
+        $this->assertNull(NotificationTemplateRegistry::fromArray([])->match(self::OK, 'com.example.bank', $this->receivedAt()));
     }
 
     public function test_full_match_extracts_fields(): void

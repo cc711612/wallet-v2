@@ -85,9 +85,30 @@ class WalletDetailIngestTemplateTest extends TestCase
 
     public function test_defaults_are_templates_only(): void
     {
-        $this->assertSame([], config('ingest_templates.templates'));
+        // 預設只有內建模板（目前一個），啟發式與 AI 都關閉
+        $this->assertSame(['cathay-credit-purchase'], array_column((array) config('ingest_templates.templates'), 'name'));
         $this->assertFalse(config('services.ingest.heuristic_enabled'));
         $this->assertFalse(config('services.ingest.ai_enabled'));
+    }
+
+    /**
+     * 框架本身：模板清單為空時，任何原文（包含國泰真實樣本）都 400。
+     *
+     * @return array<string, array{0:string}>
+     */
+    public static function anyTextIncludingBuiltInFormat(): array
+    {
+        return array_merge(self::anyText(), [
+            '國泰真實樣本' => ["【刷卡通知】金額NT$600元 \n卡號末四碼1234於 2026/11/15 20:52在樂購蝦皮股份有限公司 刷卡。立即以點數即時折抵，最高可折抵消費金額30%，點擊查看消費明細"],
+        ]);
+    }
+
+    #[DataProvider('anyTextIncludingBuiltInFormat')]
+    public function test_empty_template_config_rejects_everything(string $text): void
+    {
+        config(['ingest_templates.templates' => []]);
+
+        $this->assertRejected($this->ingest(['text' => $text]), $text);
     }
 
     /**
@@ -103,6 +124,7 @@ class WalletDetailIngestTemplateTest extends TestCase
         ];
     }
 
+    /** 預設 config（含內建模板）下，不命中任何內建模板的原文仍 400 */
     #[DataProvider('anyText')]
     public function test_default_config_rejects_everything_without_writing(string $text): void
     {

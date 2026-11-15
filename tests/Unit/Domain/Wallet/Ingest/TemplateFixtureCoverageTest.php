@@ -42,12 +42,12 @@ class TemplateFixtureCoverageTest extends TestCase
 
     public function test_example_template_with_complete_fixture_passes(): void
     {
-        $this->assertSame([], $this->templateFixtureErrors([self::exampleTemplate()], base_path('tests/Fixtures/ingest/examples')));
+        $this->assertSame([], $this->templateFixtureErrors([self::exampleTemplate()], base_path('tests/Fixtures/ingest/examples'), false));
     }
 
     public function test_missing_fixture_file_fails(): void
     {
-        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir);
+        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir, false);
 
         $this->assertCount(1, $errors);
         $this->assertStringContainsString('缺少樣本檔', $errors[0]);
@@ -60,7 +60,7 @@ class TemplateFixtureCoverageTest extends TestCase
             'negative' => [['text' => '隨便一句話', 'reason' => 'x']],
         ]);
 
-        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir);
+        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir, false);
 
         $this->assertContains('example-bank-purchase: 成功樣本少於 2 則', $errors);
         $this->assertContains('example-bank-purchase: 負樣本少於 3 則', $errors);
@@ -81,7 +81,7 @@ class TemplateFixtureCoverageTest extends TestCase
             ],
         ]);
 
-        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir);
+        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir, false);
 
         $this->assertSame(['example-bank-purchase: 負樣本 #0（其實會命中）不應命中任何模板'], $errors);
     }
@@ -96,7 +96,7 @@ class TemplateFixtureCoverageTest extends TestCase
             'negative' => [['text' => 'a', 'reason' => 'a'], ['text' => 'b', 'reason' => 'b'], ['text' => 'c', 'reason' => 'c']],
         ]);
 
-        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir);
+        $errors = $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir, false);
 
         $this->assertSame([
             'example-bank-purchase: 成功樣本 #0 解析結果與預期不符',
@@ -110,5 +110,36 @@ class TemplateFixtureCoverageTest extends TestCase
     private function writeFixture(array $fixture): void
     {
         file_put_contents($this->tempDir.'/example-bank-purchase.json', (string) json_encode($fixture, JSON_UNESCAPED_UNICODE));
+    }
+
+    public function test_configured_templates_are_not_empty(): void
+    {
+        $this->assertContains('cathay-credit-purchase', array_column((array) config('ingest_templates.templates'), 'name'));
+    }
+
+    public function test_fixture_without_real_positive_sample_fails(): void
+    {
+        $this->writeFixture([
+            'positive' => [
+                ['text' => '【範例銀行】您的信用卡於11/14 19:20在全家消費NT$85。', 'amount' => 85, 'merchant' => '全家', 'synthetic' => true],
+                ['text' => '【範例銀行】您的信用卡於11/14 19:20在萊爾富消費NT$40。', 'amount' => 40, 'merchant' => '萊爾富'],
+            ],
+            'negative' => [['text' => 'a', 'reason' => 'a'], ['text' => 'b', 'reason' => 'b'], ['text' => 'c', 'reason' => 'c']],
+        ]);
+
+        $this->assertSame(
+            ['example-bank-purchase: 沒有真實的成功樣本（至少 1 則要標記 "synthetic": false）'],
+            $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir)
+        );
+
+        $this->writeFixture([
+            'positive' => [
+                ['text' => '【範例銀行】您的信用卡於11/14 19:20在全家消費NT$85。', 'amount' => 85, 'merchant' => '全家', 'synthetic' => false],
+                ['text' => '【範例銀行】您的信用卡於11/14 19:20在萊爾富消費NT$40。', 'amount' => 40, 'merchant' => '萊爾富', 'synthetic' => true],
+            ],
+            'negative' => [['text' => 'a', 'reason' => 'a'], ['text' => 'b', 'reason' => 'b'], ['text' => 'c', 'reason' => 'c']],
+        ]);
+
+        $this->assertSame([], $this->templateFixtureErrors([self::exampleTemplate()], $this->tempDir));
     }
 }
