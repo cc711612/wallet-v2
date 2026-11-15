@@ -158,11 +158,11 @@ final class RuleBasedNotificationParser
     }
 
     /**
-     * 對整段原文做強排除、軟排除與外幣檢查（不縮小範圍、不剔除商店名）；AI 路徑使用的保守檢查。
+     * 對整段原文做強排除、（選擇性）軟排除與外幣檢查（不縮小範圍、不剔除商店名）；AI 路徑與模板二次檢查使用。
      */
-    public function wholeTextRejectionReason(string $text): ?string
+    public function wholeTextRejectionReason(string $text, bool $includeSoft = true): ?string
     {
-        return $this->rejectionIn([$this->normalize($text)], 0, null);
+        return $this->rejectionIn([$this->normalize($text)], 0, null, $includeSoft);
     }
 
     private function normalize(string $text): string

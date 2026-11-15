@@ -89,6 +89,26 @@
       "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$0。",
       "source": "com.example.bank",
       "reason": "金額為 0"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在取消交易：全家消費NT$85。",
+      "source": "com.example.bank",
+      "reason": "商店群組吞進「取消交易：」→ 由整段二次排除擋下"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在USD AMAZON消費NT$30。",
+      "source": "com.example.bank",
+      "reason": "外幣線索 → 二次排除"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,350。",
+      "source": "com.example.bankfake",
+      "reason": "source 前綴但沒有邊界"
+    },
+    {
+      "text": "【範例銀行】您的信用卡於11/14 19:20在鼎泰豐 信義店消費NT$1,23。",
+      "source": "com.example.bank",
+      "reason": "千分位格式錯誤"
     }
   ]
 }

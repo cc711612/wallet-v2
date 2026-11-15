@@ -178,4 +178,30 @@ class WalletDetailIngestTemplateTest extends TestCase
             ->assertJsonPath('message', '系統錯誤，請稍後再試');
         $this->assertSame(0, DB::table('wallet_details')->count());
     }
+
+    /**
+     * @return array<string, array{0:string}>
+     */
+    public static function lintFailingPatterns(): array
+    {
+        return [
+            '.* 吞尾句' => ['SECRETPATTERN(?<merchant>[^\n]{1,10})消費NT\\$(?<amount>\\d+(?:\\.\\d{1,2})?).*'],
+            '(*ACCEPT)' => ['SECRETPATTERN(?<merchant>[^\n]{1,10})消費NT\\$(?<amount>\\d+(?:\\.\\d{1,2})?)(*ACCEPT)'],
+            '括號不平衡' => ['x)|SECRETPATTERN(?<merchant>[^\n]{1,10})消費NT\\$(?<amount>\\d+(?:\\.\\d{1,2})?)|(?:y'],
+            '(?s)' => ['(?s)SECRETPATTERN(?<merchant>[^\n]{1,10})消費NT\\$(?<amount>\\d+(?:\\.\\d{1,2})?)'],
+        ];
+    }
+
+    #[DataProvider('lintFailingPatterns')]
+    public function test_lint_failing_template_returns_500_without_leaking_pattern(string $pattern): void
+    {
+        config(['ingest_templates.templates' => [['name' => 'fixture-bad', 'pattern' => $pattern]]]);
+
+        $response = $this->ingest(['text' => 'SECRETPATTERN全家消費NT$85']);
+
+        $response->assertStatus(500)->assertJsonPath('message', '系統錯誤，請稍後再試');
+        $this->assertStringNotContainsString('SECRETPATTERN', (string) $response->getContent());
+        $this->assertStringNotContainsString('merchant', (string) $response->getContent());
+        $this->assertSame(0, DB::table('wallet_details')->count());
+    }
 }

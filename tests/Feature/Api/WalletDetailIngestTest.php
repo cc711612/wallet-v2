@@ -32,7 +32,8 @@ class WalletDetailIngestTest extends TestCase
     private const RULE_TEXT = '【玉山銀行】您末四碼5678的信用卡於全家便利商店消費金額NT$1,234，謝謝。';
 
     // 規則解析不到（中文數字金額、沒有商店語法），且不含排除字與外幣標記，會走 AI 備援
-    private const AI_TEXT = '某某咖啡 120 卡號末四碼 5678 感謝光臨';
+    // 規則解析不到（沒有「於／在／商店：」語法），但符合 AI 路徑的正向條件（台幣標記＋消費語境＋商店在金額前）
+    private const AI_TEXT = '某某咖啡 消費 NT$120 卡號末四碼 5678 感謝光臨';
 
     /** @var array<string, mixed> */
     private array $alice;
@@ -452,7 +453,7 @@ class WalletDetailIngestTest extends TestCase
         config(['services.ingest.ai_enabled' => true]);
         $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 120, 'merchant' => '某某咖啡', 'date' => null]);
 
-        $this->ingest(['text' => "EasyCard\0 120 @ 某某咖啡"])->assertJsonPath('status', true);
+        $this->ingest(['text' => "某某咖啡\0 消費 NT$120"])->assertJsonPath('status', true);
 
         Http::assertSent(static fn (HttpRequest $request): bool => ! str_contains($request->body(), '\\u0000'));
     }
@@ -550,19 +551,19 @@ class WalletDetailIngestTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0:string, 1:int|float}>
+     * @return array<string, array{0:string, 1:int|float, 2:int}>
      */
     public static function aiAmountNotInText(): array
     {
         return [
-            '原文 250、AI 回 2500' => ['某某咖啡 250 感謝光臨', 2500],
-            '原文中文數字、AI 回 2500' => ['某某咖啡 二百五十 感謝光臨', 2500],
-            '原文中文數字、AI 回 250' => ['某某咖啡 二百五十 感謝光臨', 250],
+            '原文 250、AI 回 2500（AI 有被呼叫）' => ['某某咖啡 消費 NT$250 感謝光臨', 2500, 1],
+            '原文中文數字、AI 回 2500（沒有台幣金額，不呼叫 AI）' => ['某某咖啡 二百五十 感謝光臨', 2500, 0],
+            '原文中文數字、AI 回 250（沒有台幣金額，不呼叫 AI）' => ['某某咖啡 二百五十 感謝光臨', 250, 0],
         ];
     }
 
     #[DataProvider('aiAmountNotInText')]
-    public function test_ai_amount_must_appear_in_original_text(string $text, int|float $amount): void
+    public function test_ai_amount_must_appear_in_original_text(string $text, int|float $amount, int $aiCalls): void
     {
         config(['services.ingest.ai_enabled' => true]);
         $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => $amount, 'merchant' => '某某咖啡', 'date' => null]);
@@ -572,7 +573,7 @@ class WalletDetailIngestTest extends TestCase
             ->assertJsonPath('code', 400)
             ->assertJsonPath('message', '無法解析推播內容');
 
-        Http::assertSentCount(1);
+        Http::assertSentCount($aiCalls);
         $this->assertSame(0, DB::table('wallet_details')->count());
         $this->assertNull(Cache::get($this->dedupKey($text)));
     }
@@ -582,7 +583,7 @@ class WalletDetailIngestTest extends TestCase
         config(['services.ingest.ai_enabled' => true]);
         $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 1350, 'merchant' => '某某咖啡', 'date' => null]);
 
-        $this->ingest(['text' => '某某咖啡 1,350.00 感謝光臨'])->assertJsonPath('status', true)->assertJsonPath('data.value', 1350);
+        $this->ingest(['text' => '某某咖啡 消費 NT$1,350.00 感謝光臨'])->assertJsonPath('status', true)->assertJsonPath('data.value', 1350);
     }
 
     public function test_ai_amount_is_rounded_to_two_decimals(): void
@@ -590,7 +591,7 @@ class WalletDetailIngestTest extends TestCase
         config(['services.ingest.ai_enabled' => true]);
         $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 250.123456, 'merchant' => '某某咖啡', 'date' => null]);
 
-        $this->ingest(['text' => '某某咖啡 250.12 感謝光臨'])
+        $this->ingest(['text' => '某某咖啡 消費 NT$250.12'])
             ->assertJsonPath('status', true)
             ->assertJsonPath('data.value', 250.12);
 
@@ -660,7 +661,7 @@ class WalletDetailIngestTest extends TestCase
         config(['services.ingest.ai_enabled' => true]);
         $this->geminiReturns(['is_expense' => true, 'currency' => 'TWD', 'amount' => 75, 'merchant' => '某某咖啡', 'date' => null]);
 
-        $this->ingest(['text' => '某某咖啡 $75'])->assertJsonPath('status', true)->assertJsonPath('data.parser', 'ai');
+        $this->ingest(['text' => '某某咖啡 消費 $75'])->assertJsonPath('status', true)->assertJsonPath('data.parser', 'ai');
     }
 
     public function test_ai_date_too_far_from_received_at_falls_back_to_received_date(): void

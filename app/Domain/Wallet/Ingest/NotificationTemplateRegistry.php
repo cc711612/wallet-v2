@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\Wallet\Ingest;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * 推播模板白名單：原文必須「整段」符合某個模板（首尾錨定）才會被解析成一筆消費。
- * 模板定義在 config/ingest_templates.php；格式錯誤（缺具名群組、非 TWD、regex 不合法）會丟 InvalidArgumentException。
+ * 模板定義在 config/ingest_templates.php；格式錯誤或沒通過 lint（NotificationTemplateLinter）會丟 InvalidArgumentException。
+ * 命中後還會對整段原文做強排除與外幣檢查（ExpenseTextScreen），作為模板過寬時的第二道防線。
  */
 class NotificationTemplateRegistry
 {
@@ -23,7 +26,12 @@ class NotificationTemplateRegistry
     /**
      * @param  array<int, array<string, mixed>>|null  $templates  null 時讀 config('ingest_templates.templates')
      */
-    public function __construct(private ?array $templates = null) {}
+    private ExpenseTextScreen $screen;
+
+    public function __construct(private ?array $templates = null, ?ExpenseTextScreen $screen = null)
+    {
+        $this->screen = $screen ?? new ExpenseTextScreen;
+    }
 
     /**
      * @param  array<int, array<string, mixed>>  $templates
@@ -61,19 +69,31 @@ class NotificationTemplateRegistry
      */
     public function match(string $text, ?string $source, CarbonImmutable $receivedAt): ?ParsedExpense
     {
+        $source = $this->normalizeSource($source);
+
         foreach ($this->templates() as $template) {
             if (! $this->sourceMatches($template['source'], $source)) {
                 continue;
             }
 
-            if (preg_match($template['regex'], $text, $m) !== 1) {
+            $matched = preg_match($template['regex'], $text, $m);
+            if ($matched === false) {
+                // preg 錯誤（例如回溯上限）：視為不命中，只記錯誤與長度，不記原文
+                $this->logPregError($template['name'], $text);
+
+                continue;
+            }
+            if ($matched !== 1) {
                 continue;
             }
 
             $parsed = $this->toExpense($template['name'], $m, $receivedAt);
-            if ($parsed !== null) {
-                return $parsed;
+            if ($parsed === null) {
+                continue;
             }
+
+            // 第二道防線：整段原文有強排除或外幣線索就不記帳（即使模板命中）
+            return $this->screen->rejects($text) ? null : $parsed;
         }
 
         return null;
@@ -110,14 +130,20 @@ class NotificationTemplateRegistry
             throw new InvalidArgumentException("ingest template '{$name}' pattern contains an invalid character");
         }
 
+        // 單獨編譯一次，確認 pattern 本身合法（括號不平衡等在包裹前就會失敗）
+        if (@preg_match(self::DELIMITER.$pattern.self::DELIMITER.'u', '') === false) {
+            throw new InvalidArgumentException("ingest template '{$name}' pattern is not a valid regex");
+        }
+        NotificationTemplateLinter::lint($name, $pattern);
+
         $currency = strtoupper((string) ($template['currency'] ?? 'TWD'));
         if ($currency !== 'TWD') {
             throw new InvalidArgumentException("ingest template '{$name}' currency {$currency} is not supported (TWD only)");
         }
 
         $source = $template['source'] ?? null;
-        if ($source !== null && (! is_string($source) || $source === '')) {
-            throw new InvalidArgumentException("ingest template '{$name}' source must be a non-empty string");
+        if ($source !== null && (! is_string($source) || $source === '' || $source !== trim($source) || preg_match('/[\p{Cc}\p{Cf}\s]/u', $source) !== 0)) {
+            throw new InvalidArgumentException("ingest template '{$name}' source must be a non-empty string without spaces or control characters");
         }
 
         // 首尾錨定：原文多出或少了模板之外的內容都不命中
@@ -129,13 +155,42 @@ class NotificationTemplateRegistry
         return ['name' => $name, 'regex' => $regex, 'currency' => $currency, 'source' => $source];
     }
 
+    /**
+     * request 的 source：trim；含控制或零寬字元視為沒帶。
+     */
+    private function normalizeSource(?string $source): ?string
+    {
+        if ($source === null) {
+            return null;
+        }
+
+        $source = trim($source);
+        if ($source === '' || preg_match('/[\p{Cc}\p{Cf}]/u', $source) !== 0) {
+            return null;
+        }
+
+        return $source;
+    }
+
+    /**
+     * 精確相等，或「前綴＋邊界」（前綴後必須是 . 或 /）：com.bank 命中 com.bank、com.bank.lite，不命中 com.bankfake。
+     */
     private function sourceMatches(?string $templateSource, ?string $requestSource): bool
     {
         if ($templateSource === null) {
             return true;
         }
 
-        return $requestSource !== null && str_starts_with($requestSource, $templateSource);
+        if ($requestSource === null) {
+            return false;
+        }
+
+        if ($requestSource === $templateSource) {
+            return true;
+        }
+
+        return str_starts_with($requestSource, $templateSource)
+            && in_array($requestSource[strlen($templateSource)], ['.', '/'], true);
     }
 
     /**
@@ -143,12 +198,13 @@ class NotificationTemplateRegistry
      */
     private function toExpense(string $name, array $m, CarbonImmutable $receivedAt): ?ParsedExpense
     {
-        $rawAmount = str_replace([',', ' '], '', (string) ($m['amount'] ?? ''));
-        if (preg_match('/^\d+(?:\.\d+)?$/', $rawAmount) !== 1) {
+        // 千分位格式必須正確：1,23、1,2,3,4、,,85 都拒絕
+        $rawAmount = (string) ($m['amount'] ?? '');
+        if (preg_match('/^(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{1,2})?$/', $rawAmount) !== 1) {
             return null;
         }
 
-        $amount = round((float) $rawAmount, 2);
+        $amount = round((float) str_replace(',', '', $rawAmount), 2);
         if ($amount <= 0 || $amount > RuleBasedNotificationParser::MAX_AMOUNT) {
             return null;
         }
@@ -177,11 +233,11 @@ class NotificationTemplateRegistry
     private function parseDate(string $raw, CarbonImmutable $receivedAt): ?string
     {
         if (preg_match('/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/', $raw, $d) === 1) {
-            return $this->formatDate((int) $d[1], (int) $d[2], (int) $d[3]);
+            return $this->withinRange($this->formatDate((int) $d[1], (int) $d[2], (int) $d[3]), $receivedAt);
         }
 
         if (preg_match('/^(1\d{2})\/(\d{1,2})\/(\d{1,2})$/', $raw, $d) === 1) {
-            return $this->formatDate((int) $d[1] + 1911, (int) $d[2], (int) $d[3]);
+            return $this->withinRange($this->formatDate((int) $d[1] + 1911, (int) $d[2], (int) $d[3]), $receivedAt);
         }
 
         if (preg_match('/^(\d{1,2})(?:\/|月)(\d{1,2})日?$/u', $raw, $d) === 1) {
@@ -195,6 +251,34 @@ class NotificationTemplateRegistry
         }
 
         return null;
+    }
+
+    /**
+     * 有年份的日期：須在 received_at 前 1 年內，且不晚於 received_at 後 1 天。
+     */
+    private function withinRange(?string $date, CarbonImmutable $receivedAt): ?string
+    {
+        if ($date === null) {
+            return null;
+        }
+
+        $earliest = $receivedAt->subYear()->toDateString();
+        $latest = $receivedAt->addDay()->toDateString();
+
+        return $date >= $earliest && $date <= $latest ? $date : null;
+    }
+
+    private function logPregError(string $template, string $text): void
+    {
+        try {
+            Log::warning('NotificationTemplateRegistry preg error', [
+                'template' => $template,
+                'error' => preg_last_error_msg(),
+                'length' => mb_strlen($text),
+            ]);
+        } catch (Throwable) {
+            // 沒有 Laravel 容器（純單元測試）時不記錄
+        }
     }
 
     private function formatDate(int $year, int $month, int $day): ?string

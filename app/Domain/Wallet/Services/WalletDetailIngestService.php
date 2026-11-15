@@ -151,15 +151,15 @@ class WalletDetailIngestService
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
-        // AI 路徑保守把關：整段原文有排除字或外幣線索就不送 AI，直接拒絕
-        if ($this->aiGuard->rejectsBeforeAi($text)) {
+        // AI 路徑（實驗性）保守把關：整段原文有排除詞或外幣線索、或找不到「台幣標記＋消費語境」的金額，就不送 AI
+        if ($this->aiGuard->rejectsBeforeAi($text) || ! $this->aiGuard->hasTwdExpenseAmount($text)) {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 
         $parsed = $this->aiParser->parse($text, $received);
 
-        // AI 給的金額必須真的出現在原文裡（防止幻覺或被原文中的指令誘導）
-        if (! $this->aiGuard->amountAppearsInText($parsed->amount, $text)) {
+        // 正向檢查：金額必須是原文唯一的台幣金額候選，商店必須是原文子字串且位置合理
+        if (! $this->aiGuard->acceptsAiResult($parsed, $text)) {
             throw new WalletDetailBusinessException(self::UNPARSEABLE_MESSAGE);
         }
 

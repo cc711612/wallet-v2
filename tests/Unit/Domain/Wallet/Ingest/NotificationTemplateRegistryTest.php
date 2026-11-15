@@ -101,11 +101,13 @@ class NotificationTemplateRegistryTest extends TestCase
         $this->assertNull($this->registry()->match($text, 'com.example.bank', $this->receivedAt()));
     }
 
-    public function test_amount_is_rounded_to_two_decimals(): void
+    public function test_loose_amount_and_merchant_groups_are_rejected_by_lint(): void
     {
-        $registry = $this->registry(['source' => null, 'pattern' => '在(?<merchant>\\S+)消費(?<amount>[\\d.]+)元']);
+        // 原本用來測「金額四捨五入」的寬鬆模板（\S+、[\d.]+），現在在載入時就被 lint 拒絕
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('rejected by lint');
 
-        $this->assertSame(12.35, $registry->match('在全家消費12.345元', null, $this->receivedAt())?->amount);
+        $this->registry(['source' => null, 'pattern' => '在(?<merchant>\\S+)消費(?<amount>[\\d.]+)元'])->templates();
     }
 
     /**
