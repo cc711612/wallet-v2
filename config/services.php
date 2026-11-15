@@ -89,6 +89,14 @@ return [
         'retry_delay_ms' => env('GEMINI_RETRY_DELAY_MS', 2000),
     ],
 
+    // 銀行刷卡推播自動記帳（POST /api/wallet/{wallet}/detail/ingest）
+    'ingest' => [
+        // 規則解析失敗時是否改用 Gemini 備援（預設關閉；開啟後遮罩過的推播原文會送到 Gemini）
+        'ai_enabled' => (bool) env('INGEST_AI_ENABLED', false),
+        // 同一則推播併發時，等待前一個請求完成的秒數
+        'lock_wait_seconds' => (int) env('INGEST_LOCK_WAIT_SECONDS', 10),
+    ],
+
     'easysplit' => [
         'app_url' => env('EASYSPLIT_APP_URL', 'https://easysplit.usongrat.tw'),
         'logo_path' => env('EASYSPLIT_LOGO_PATH', '/images/logo.png'),

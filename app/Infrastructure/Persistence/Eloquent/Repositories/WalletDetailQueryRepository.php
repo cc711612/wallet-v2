@@ -169,6 +169,31 @@ class WalletDetailQueryRepository implements WalletDetailQueryRepositoryInterfac
     }
 
     /**
+     * 取得單筆帳本明細摘要。
+     *
+     * @return array{id:int, title:string, value:float, date:string, category_id:int|null}|null
+     */
+    public function findDetailSummary(int $walletId, int $detailId): ?array
+    {
+        $detail = WalletDetailEntity::query()
+            ->where('wallet_id', $walletId)
+            ->where('id', $detailId)
+            ->first(['id', 'title', 'value', 'date', 'category_id']);
+
+        if ($detail === null) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $detail->id,
+            'title' => (string) $detail->title,
+            'value' => (float) $detail->value,
+            'date' => substr((string) $detail->date, 0, 10),
+            'category_id' => $detail->category_id === null ? null : (int) $detail->category_id,
+        ];
+    }
+
+    /**
      * 取得帳本資訊。
      *
      * @return array<string, mixed>|null

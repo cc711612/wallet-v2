@@ -121,5 +121,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('front-log', static fn (Request $request): Limit => Limit::perMinute(30)->by('front-log|'.$request->ip()));
+
+        // 自動記帳（推播 ingest）：每位帳本成員每分鐘 20 次；wallet_user 由 VerifyWalletMemberApi 寫入，取不到時退回 IP
+        RateLimiter::for('ingest', static function (Request $request): Limit {
+            $walletUserId = (int) data_get((array) $request->input('wallet_user', []), ((int) $request->route('wallet')).'.id', 0);
+
+            return Limit::perMinute(20)->by($walletUserId > 0 ? 'ingest|wallet-user|'.$walletUserId : 'ingest|ip|'.$request->ip());
+        });
     }
 }

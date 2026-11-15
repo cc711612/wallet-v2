@@ -71,10 +71,11 @@ class WalletDetailRepository implements WalletDetailRepositoryInterface
         /** @var array<string, mixed> $attributes */
         $attributes = $walletDetail->toPersistenceAttributes();
 
-        /** @var int $detailId */
-        $detailId = WalletDetailEntity::withoutTouching(function () use ($attributes, $now) {
-            return WalletEntity::withoutTouching(function () use ($attributes, $now) {
-                return DB::transaction(function () use ($attributes, $now): int {
+        // Model::withoutTouching() 回傳 void，id 需以參考帶出（否則 create() 一律回傳空陣列）
+        $detailId = 0;
+        WalletDetailEntity::withoutTouching(function () use ($attributes, $now, &$detailId): void {
+            WalletEntity::withoutTouching(function () use ($attributes, $now, &$detailId): void {
+                $detailId = DB::transaction(function () use ($attributes, $now): int {
                     /** @var array<int, int> $users */
                     $users = array_values(array_unique(array_map('intval', $attributes['users'] ?? [])));
 

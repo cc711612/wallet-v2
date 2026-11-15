@@ -268,6 +268,11 @@ class InMemoryWalletDetailRepository implements WalletDetailRepositoryInterface
 
 class InMemoryWalletDetailQueryRepository implements WalletDetailQueryRepositoryInterface
 {
+    public function findDetailSummary(int $walletId, int $detailId): ?array
+    {
+        return null;
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */
@@ -377,6 +382,11 @@ class RecordingWalletDetailRepository implements WalletDetailRepositoryInterface
 
 class RecordingWalletDetailQueryRepository implements WalletDetailQueryRepositoryInterface
 {
+    public function findDetailSummary(int $walletId, int $detailId): ?array
+    {
+        return null;
+    }
+
     /**
      * @param  array<int, string>  $callLog
      */
