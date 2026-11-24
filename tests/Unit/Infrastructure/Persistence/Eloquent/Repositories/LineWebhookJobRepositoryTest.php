@@ -44,6 +44,14 @@ class LineWebhookJobRepositoryTest extends TestCase
         $this->assertSame($user->id, $result);
     }
 
+    public function test_find_wallet_title_by_id_returns_title_or_null(): void
+    {
+        $wallet = \App\Domain\Wallet\Entities\WalletEntity::create(['title' => '我們的家', 'code' => 'TTL001', 'status' => 1]);
+
+        $this->assertSame('我們的家', $this->repository->findWalletTitleById((int) $wallet->id));
+        $this->assertNull($this->repository->findWalletTitleById(999999));
+    }
+
     public function test_find_user_id_by_line_user_id_returns_null_when_not_found(): void
     {
         $result = $this->repository->findUserIdByLineUserId('non-existent-user');

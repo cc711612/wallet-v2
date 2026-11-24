@@ -240,12 +240,30 @@ class LineWebhookJobService
         $this->lineWebhookJobRepository->replyConfirmTemplate(
             $replyToken,
             '請確認記帳資料',
-            sprintf("已分析記帳資料\n分類：%s\n金額：%d\n名稱：%s\n請確認是否正確？", $categoryName, $amount, $title),
+            sprintf("%s已分析記帳資料\n分類：%s\n金額：%d\n名稱：%s\n請確認是否正確？", $this->walletHeaderLine($walletId), $categoryName, $amount, $title),
             '完全正確',
             '完全正確',
             '錯誤資訊',
             '錯誤資訊'
         );
+    }
+
+    /**
+     * 確認訊息最上方的帳本名稱行；查不到名稱時不顯示。
+     * LINE confirm template 文字上限 240 字，帳本名稱截斷到 30 字避免超長。
+     */
+    private function walletHeaderLine(int $walletId): string
+    {
+        $title = trim((string) $this->lineWebhookJobRepository->findWalletTitleById($walletId));
+        if ($title === '') {
+            return '';
+        }
+
+        if (mb_strlen($title) > 30) {
+            $title = mb_substr($title, 0, 30).'…';
+        }
+
+        return '帳本：'.$title."\n";
     }
 
     /**
