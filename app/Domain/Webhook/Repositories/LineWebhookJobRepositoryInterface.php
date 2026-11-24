@@ -52,6 +52,11 @@ interface LineWebhookJobRepositoryInterface
     public function findWalletByCodeForUser(int $userId, string $code): ?array;
 
     /**
+     * 以帳本 ID 取得帳本名稱，找不到回傳 null。
+     */
+    public function findWalletTitleById(int $walletId): ?string;
+
+    /**
      * 更新 LINE social 綁定的預設帳本。
      */
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void;

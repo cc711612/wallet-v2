@@ -214,6 +214,16 @@ class LineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     }
 
     /**
+     * 以帳本 ID 取得帳本名稱。
+     */
+    public function findWalletTitleById(int $walletId): ?string
+    {
+        $title = WalletEntity::query()->whereKey($walletId)->value('title');
+
+        return $title === null ? null : (string) $title;
+    }
+
+    /**
      * 更新 LINE social 綁定的帳本 ID。
      */
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void

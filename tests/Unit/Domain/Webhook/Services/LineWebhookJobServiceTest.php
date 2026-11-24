@@ -67,6 +67,7 @@ class LineWebhookJobServiceTest extends TestCase
         $repo = new FakeLineWebhookJobRepository;
         $repo->lineUserToUserId['U3'] = 3;
         $repo->socialWalletIdByLineUser['U3'] = 63;
+        $repo->walletTitleById[63] = '我們的家';
         $repo->categories = [
             ['id' => 9, 'name' => '餐飲'],
         ];
@@ -90,6 +91,54 @@ class LineWebhookJobServiceTest extends TestCase
         Bus::assertNotDispatched(CreateWalletDetailJob::class);
         $this->assertCount(1, $repo->confirmTemplateReplies);
         $this->assertTrue(Cache::has('line_add_pending_U3'));
+        $this->assertStringStartsWith("帳本：我們的家\n已分析記帳資料\n", $repo->confirmTemplateReplies[0]['promptText']);
+    }
+
+    public function test_add_command_confirm_template_omits_wallet_line_when_title_missing(): void
+    {
+        Bus::fake();
+        Cache::flush();
+
+        $repo = new FakeLineWebhookJobRepository;
+        $repo->lineUserToUserId['U8'] = 8;
+        $repo->socialWalletIdByLineUser['U8'] = 63;
+        $repo->categories = [['id' => 9, 'name' => '餐飲']];
+
+        $service = new LineWebhookJobService($repo, $this->geminiReturning('{"categoryId":9,"amount":120,"title":"午餐"}'));
+        $service->relayWebhook($this->eventPayload('add 午餐 120', 'U8', 'r8'));
+
+        $this->assertCount(1, $repo->confirmTemplateReplies);
+        $this->assertStringStartsWith("已分析記帳資料\n", $repo->confirmTemplateReplies[0]['promptText']);
+        $this->assertStringNotContainsString('帳本：', $repo->confirmTemplateReplies[0]['promptText']);
+    }
+
+    public function test_add_command_confirm_template_truncates_long_wallet_title(): void
+    {
+        Bus::fake();
+        Cache::flush();
+
+        $repo = new FakeLineWebhookJobRepository;
+        $repo->lineUserToUserId['U9'] = 9;
+        $repo->socialWalletIdByLineUser['U9'] = 63;
+        $repo->walletTitleById[63] = str_repeat('長', 100);
+        $repo->categories = [['id' => 9, 'name' => '餐飲']];
+
+        $service = new LineWebhookJobService($repo, $this->geminiReturning('{"categoryId":9,"amount":120,"title":"午餐"}'));
+        $service->relayWebhook($this->eventPayload('add 午餐 120', 'U9', 'r9'));
+
+        $prompt = $repo->confirmTemplateReplies[0]['promptText'];
+        $this->assertStringStartsWith('帳本：'.str_repeat('長', 30)."…\n已分析記帳資料\n", $prompt);
+        $this->assertLessThanOrEqual(240, mb_strlen($prompt));
+    }
+
+    private function geminiReturning(string $json): GeminiService
+    {
+        $geminiService = Mockery::mock(GeminiService::class);
+        $geminiService->shouldReceive('chat')->once()->andReturn([
+            'candidates' => [['content' => ['parts' => [['text' => $json]]]]],
+        ]);
+
+        return $geminiService;
     }
 
     public function test_confirm_add_command_dispatches_wallet_detail_job(): void
@@ -222,6 +271,9 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     /** @var array<string, int> */
     public array $socialWalletIdByLineUser = [];
 
+    /** @var array<int, string> */
+    public array $walletTitleById = [];
+
     /** @var array<int, array{id:int,name:string}> */
     public array $categories = [];
 
@@ -285,6 +337,11 @@ class FakeLineWebhookJobRepository implements LineWebhookJobRepositoryInterface
     public function findWalletByCodeForUser(int $userId, string $code): ?array
     {
         return $this->walletByCodeAndUser[$userId.':'.$code] ?? null;
+    }
+
+    public function findWalletTitleById(int $walletId): ?string
+    {
+        return $this->walletTitleById[$walletId] ?? null;
     }
 
     public function updateSocialWalletIdByLineUserId(string $lineUserId, int $walletId): void
