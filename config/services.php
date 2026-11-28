@@ -85,7 +85,7 @@ return [
         'api_version' => env('GEMINI_API_VERSION', 'v1beta'),
         'default_model' => env('GEMINI_DEFAULT_MODEL', 'gemini-2.0-flash'),
         'timeout' => env('GEMINI_TIMEOUT', 15),
-        'retry_times' => env('GEMINI_RETRY_TIMES', 2),
+        'retry_times' => env('GEMINI_RETRY_TIMES', 3),
         'retry_delay_ms' => env('GEMINI_RETRY_DELAY_MS', 2000),
     ],
 
