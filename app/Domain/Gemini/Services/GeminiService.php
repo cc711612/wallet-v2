@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Gemini\Services;
 
+use App\Domain\Gemini\Exceptions\GeminiTransientException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +38,7 @@ class GeminiService
         $this->apiVersion = (string) config('services.gemini.api_version', 'v1beta');
         $this->defaultModel = (string) config('services.gemini.default_model', 'gemini-2.0-flash');
         $this->timeout = (int) config('services.gemini.timeout', 15);
-        $this->retryTimes = (int) config('services.gemini.retry_times', 2);
+        $this->retryTimes = (int) config('services.gemini.retry_times', 3);
         $this->retryDelayMs = (int) config('services.gemini.retry_delay_ms', 2000);
     }
 
@@ -130,11 +131,21 @@ class GeminiService
                 Log::warning('GeminiService rate limited, retrying...', [
                     'url' => $url,
                 ]);
-                throw new RuntimeException('gemini_rate_limited');
+                throw new GeminiTransientException('gemini_rate_limited');
             }
 
             if (! $response->successful()) {
                 $message = (string) data_get($response->json(), 'error.message', 'Gemini API request failed');
+
+                // 服務過載（503 / UNAVAILABLE / "high demand"）通常幾秒內恢復，值得重試；其他錯誤（400、401、403…）重試沒有意義
+                if ($this->isOverloaded($response->status(), $response->json())) {
+                    Log::warning('GeminiService overloaded, retrying...', [
+                        'url' => $url,
+                        'status' => $response->status(),
+                        'message' => $message,
+                    ]);
+                    throw new GeminiTransientException($message);
+                }
 
                 throw new RuntimeException($message);
             }
@@ -146,6 +157,21 @@ class GeminiService
             }
 
             return $json;
-        }, $this->retryDelayMs, static fn (\Throwable $e): bool => $e->getMessage() === 'gemini_rate_limited');
+        }, $this->retryDelayMs, static fn (\Throwable $e): bool => $e instanceof GeminiTransientException);
+    }
+
+    /**
+     * 判斷回應是否為「模型過載」這類暫時性錯誤。
+     */
+    private function isOverloaded(int $status, mixed $json): bool
+    {
+        if ($status === 503) {
+            return true;
+        }
+
+        $errorStatus = (string) data_get($json, 'error.status', '');
+        $message = strtolower((string) data_get($json, 'error.message', ''));
+
+        return $errorStatus === 'UNAVAILABLE' || str_contains($message, 'high demand');
     }
 }
