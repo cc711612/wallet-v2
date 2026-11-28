@@ -168,8 +168,9 @@ do_composer_install() {
             composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
             chown -R 0:0 vendor
             chmod -R u+rwX,go+rX,go-w vendor
-            # public/frankenphp-worker.php 不進版控；服務容器內程式碼唯讀、entrypoint 無法補，這裡補上（已存在不動）
-            if [ ! -f public/frankenphp-worker.php ]; then
+            # public/frankenphp-worker.php 不進版控；服務容器內程式碼唯讀、entrypoint 無法補，這裡補上。
+            # 與 vendor 內版本不同就更新（Octane 升版時腳本會變，例如 2.26 新增啟動錯誤處理與 operationReleased）。
+            if ! cmp -s vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php; then
                 cp vendor/laravel/octane/bin/frankenphp-worker.php public/frankenphp-worker.php
                 chmod 0644 public/frankenphp-worker.php
             fi
